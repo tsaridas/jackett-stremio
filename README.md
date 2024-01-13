@@ -52,3 +52,4 @@ Add `http://{{ YOUR IP }}:7000/{{my-jackett-key}}/manifest.json` (replace `{{my-
 - Add option for user to specify max limit in MB/GB etc.
 - Add dockerhub images
 - Update README for better understanding how to install.
+- Validate jackett http address
