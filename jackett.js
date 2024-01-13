@@ -24,94 +24,85 @@ const getIndexers = (apiKey, cb) => {
     });
 };
 
-module.exports = {
-    search: (apiKey, query, cb, end) => {
-        getIndexers(apiKey, (err, apiIndexers) => {
-            if (!err && apiIndexers && apiIndexers.length) {
-                const cat = query.type && query.type === 'movie' ? 2000 : 5000;
-                let results = [];
+const search = (apiKey, query, cb, end) => {
+    getIndexers(apiKey, (err, apiIndexers) => {
+        if (err || !apiIndexers || apiIndexers.length === 0) {
+            cb([]);
+            end([]);
+            return;
+        }
 
-                if (apiIndexers && apiIndexers.length) {
-                    const tick = helper.setTicker(apiIndexers.length, () => {
-                        end(results);
-                    });
+        const cat = query.type && query.type == 'movie' ? 2000 : 5000;
+        let results = [];
 
-                    let searchQuery = query.name;
+        const tick = helper.setTicker(apiIndexers.length, () => {
+            end(results);
+        });
 
-                    if (query.season && query.episode) {
-                        searchQuery += ' ' + helper.episodeTag(query.season, query.episode);
-                    }
+        let searchQuery = query.name;
 
-                    apiIndexers.forEach(indexer => {
-                        if (indexer && indexer.attributes && indexer.attributes.id) {
-                            needle.get(config.jackett.host + 'api/v2.0/indexers/' + indexer.attributes.id + '/results/torznab/api?apikey=' + apiKey + '&t=search&cat=' + cat + '&q=' + encodeURI(searchQuery), {
-                                open_timeout: config.jackett.openTimeout,
-                                read_timeout: config.jackett.readTimeout,
-                                parse_response: false
-                            }, (err, resp) => {
-                                if (!err && resp && resp.body) {
-                                    const tors = xmlJs.xml2js(resp.body);
+        if (query.season && query.episode) {
+            searchQuery += ' ' + helper.episodeTag(query.season, query.episode);
+        }
 
-                                    if (tors.elements && tors.elements[0] && tors.elements[0].elements && tors.elements[0].elements[0] && tors.elements[0].elements[0].elements) {
-                                        const elements = tors.elements[0].elements[0].elements;
-                                        const tempResults = [];
+        apiIndexers.forEach(indexer => {
+            if (indexer && indexer.attributes && indexer.attributes.id) {
+                needle.get(config.jackett.host + 'api/v2.0/indexers/' + indexer.attributes.id + '/results/torznab/api?apikey=' + apiKey + '&t=search&cat=' + cat + '&q=' + encodeURI(searchQuery), {
+                    open_timeout: config.jackett.openTimeout,
+                    read_timeout: config.jackett.readTimeout,
+                    parse_response: false
+                }, (err, resp) => {
+                    if (!err && resp && resp.body) {
+                        const tors = xmlJs.xml2js(resp.body);
 
-                                        elements.forEach(elem => {
-                                            if (elem.type === 'element' && elem.name === 'item' && elem.elements) {
-                                                const newObj = {};
-                                                const tempObj = {};
+                        if (tors.elements && tors.elements[0] && tors.elements[0].elements && tors.elements[0].elements[0] && tors.elements[0].elements[0].elements) {
+                            const elements = tors.elements[0].elements[0].elements;
+                            const tempResults = [];
 
-                                                elem.elements.forEach(subElm => {
-                                                    if (subElm.name === 'torznab:attr' && subElm.attributes && subElm.attributes.name && subElm.attributes.value) {
-                                                        tempObj[subElm.attributes.name] = subElm.attributes.value;
-                                                    } else if (subElm.elements && subElm.elements.length) {
-                                                        tempObj[subElm.name] = subElm.elements[0].text;
-                                                    }
-                                                });
+                            elements.forEach(elem => {
+                                if (elem.type == 'element' && elem.name == 'item' && elem.elements) {
+                                    const newObj = {};
+                                    const tempObj = {};
 
-                                                const ofInterest = ['title', 'link', 'magneturl'];
+                                    elem.elements.forEach(subElm => {
+                                        if (subElm.name == 'torznab:attr' && subElm.attributes && subElm.attributes.name && subElm.attributes.value)
+                                            tempObj[subElm.attributes.name] = subElm.attributes.value;
+                                        else if (subElm.elements && subElm.elements.length)
+                                            tempObj[subElm.name] = subElm.elements[0].text;
+                                    });
 
-                                                ofInterest.forEach(ofInterestElm => {
-                                                    if (tempObj[ofInterestElm]) {
-                                                        newObj[ofInterestElm] = tempObj[ofInterestElm];
-                                                    }
-                                                });
+                                    const ofInterest = ['title', 'link', 'magneturl'];
 
-                                                const toInt = ['seeders', 'peers', 'size', 'files'];
+                                    ofInterest.forEach(ofInterestElm => {
+                                        if (tempObj[ofInterestElm])
+                                            newObj[ofInterestElm] = tempObj[ofInterestElm];
+                                    });
 
-                                                toInt.forEach(toIntElm => {
-                                                    if (tempObj[toIntElm]) {
-                                                        newObj[toIntElm] = parseInt(tempObj[toIntElm]);
-                                                    }
-                                                });
+                                    const toInt = ['seeders', 'peers', 'size', 'files'];
 
-                                                if (tempObj.pubDate) {
-                                                    newObj.jackettDate = new Date(tempObj.pubDate).getTime();
-                                                }
+                                    toInt.forEach(toIntElm => {
+                                        if (tempObj[toIntElm])
+                                            newObj[toIntElm] = parseInt(tempObj[toIntElm]);
+                                    });
 
-                                                newObj.from = indexer.attributes.id;
+                                    if (tempObj.pubDate)
+                                        newObj.jackettDate = new Date(tempObj.pubDate).getTime();
 
-                                                newObj.extraTag = helper.extraTag(newObj.title, query.name);
-                                                tempResults.push(newObj);
-                                            }
-                                        });
+                                    newObj.from = indexer.attributes.id;
 
-                                        cb(tempResults);
-                                        results = results.concat(tempResults);
-                                    }
+                                    newObj.extraTag = helper.extraTag(newObj.title, query.name);
+                                    tempResults.push(newObj);
                                 }
-                                tick();
                             });
+                            cb(tempResults);
+                            results = results.concat(tempResults);
                         }
-                    });
-                } else {
-                    cb([]);
-                    end([]);
-                }
-            } else {
-                cb([]);
-                end([]);
+                    }
+                    tick();
+                });
             }
         });
-    }
+    });
 };
+
+module.exports = { search };
