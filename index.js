@@ -94,7 +94,7 @@ addon.get('/:jackettKey/manifest.json', (req, res) => {
 // utility function to create stream object from magnet or remote torrent
 const streamFromMagnet = (tor, uri, params, cb) => {
   const toStream = (parsed) => {
-    idx = 1; // this defines the number of the file that needs to be used for stream. settings this to 1 is wrong.
+    // idx = 1; // this defines the number of the file that needs to be used for stream. settings this to 1 is wrong.
     // console.log(parsed)
     const infoHash = parsed.infoHash;
 
@@ -158,11 +158,11 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
   const respondStreams = () => {
 
     if (sentResponse) return;
+
     sentResponse = true;
 
     // filter seeds
-    if (config.minimumSeeds)
-      results = results.filter(el => { return !!(el.seeders && el.seeders > config.minimumSeeds - 1); });
+    results = results.filter(el => { return !!(el.seeders && el.seeders > config.minimumSeeds - 1); });
 
     // filter size
     results = results.filter(el => { return !!(el.size && el.size < config.maximumSize - 1); });
@@ -171,12 +171,10 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
 
       let tempResults = results;
 
-      // order by seeds desc
-      // tempResults = tempResults.sort((a, b) => { return a.seeders < b.seeders ? 1 : -1 })
-
-      // limit to 15 results
-      if (config.maximumResults)
+      // Remove results by config
+      if (config.maximumResults) {
         tempResults = tempResults.slice(0, config.maximumResults);
+      }
 
       const streams = [];
 
@@ -214,8 +212,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
   const imdbId = idParts[0];
 
   needle.get('https://v3-cinemeta.strem.io/meta/' + req.params.type + '/' + imdbId + '.json', (err, resp, body) => {
-
-    if (body && body.meta && body.meta.name && body.meta.year) {
+    if (!err && body && body.meta && body.meta.name && body.meta.year) {
 
       const searchQuery = {
         name: body.meta.name,
@@ -244,6 +241,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
         setTimeout(respondStreams, config.responseTimeout);
 
     } else {
+      console.error('Could not get info from Cinemata.', err);
       respond(res, { streams: [] });
     }
   });

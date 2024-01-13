@@ -1,6 +1,6 @@
 const defaultConfig = {
 
-	"responseTimeout": process.env.RESPONSETIMEOUT || 11000,
+	"responseTimeout": process.env.RESPONSE_TIMEOUT || 11000,
 
 	"addonPort": process.env.PORT || 7000,
 

@@ -40,7 +40,7 @@ const helper = {
     },
 
     simpleName: (name) => {
-        // Warning: black magic ahead
+
         name = name.replace(/\.|_|\-|\–|\(|\)|\[|\]|\:|\,/g, ' ');
         name = name.replace(/\s+/g, ' ');
         name = name.replace(/\\\\/g, '\\').replace(/\\\\\'|\\\'|\\\\\"|\\\"/g, '');
@@ -48,7 +48,6 @@ const helper = {
     },
 
     extraTag: (name, searchQuery) => {
-        // Warning: black magic ahead
         const parsedName = videoNameParser(name + '.mp4');
         let extraTag = helper.simpleName(name);
         searchQuery = helper.simpleName(searchQuery);
