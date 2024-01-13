@@ -197,7 +197,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
           return;
         }
         callback();
-      }, 200);
+      }, config.maxQueueSize);
 
       q.drain = () => {
         respond(res, { streams: streams });

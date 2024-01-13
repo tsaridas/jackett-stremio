@@ -10,6 +10,8 @@ const defaultConfig = {
 
 	"maximumSize": process.env.MAX_SIZE || 10000000000, // 10GB
 
+	"maxQueueSize": process.env.MAX_QUEUE_SIZE || 100,
+
 	"jackett": {
 		"host": process.env.JACKETT_HOST || "http://127.0.0.1:9117/",
 
