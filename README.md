@@ -40,13 +40,15 @@ $ docker run -d \
 
 ### Add Jackett Add-on to Stremio
 
+Add `http://{{ YOUR IP }}:7000/{{my-jackett-key}}/manifest.json` (replace `{{my-jackett-key}}` with your Jackett API Key) as an Add-on URL in Stremio. Replace `{{ YOUR IP }}` with your LAN IP.
+
+
 ### ToDo
 
 - Add caching headers
 - Add fileIdx if possible for series
 - Add better searching for series
-- increase versions of npm modules
-
-Add `http://{{ YOUR IP }}:7000/{{my-jackett-key}}/manifest.json` (replace `{{my-jackett-key}}` with your Jackett API Key) as an Add-on URL in Stremio. Replace `{{ YOUR IP }}` with your LAN IP.
-
-![addlink](https://user-images.githubusercontent.com/1777923/43146711-65a33ccc-8f6a-11e8-978e-4c69640e63e3.png)
+- Increase versions of npm modules
+- Add option for user to specify max limit in MB/GB etc.
+- Add dockerhub images
+- Update README for better understanding how to install.
