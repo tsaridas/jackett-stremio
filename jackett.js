@@ -53,49 +53,54 @@ const search = (apiKey, query, cb, end) => {
                     parse_response: false
                 }, (err, resp) => {
                     if (!err && resp && resp.body) {
-                        const tors = xmlJs.xml2js(resp.body);
+                        try {
+                            const tors = xmlJs.xml2js(resp.body);
 
-                        if (tors.elements && tors.elements[0] && tors.elements[0].elements && tors.elements[0].elements[0] && tors.elements[0].elements[0].elements) {
-                            const elements = tors.elements[0].elements[0].elements;
-                            const tempResults = [];
+                            if (tors.elements && tors.elements[0] && tors.elements[0].elements && tors.elements[0].elements[0] && tors.elements[0].elements[0].elements) {
+                                const elements = tors.elements[0].elements[0].elements;
+                                const tempResults = [];
 
-                            elements.forEach(elem => {
-                                if (elem.type == 'element' && elem.name == 'item' && elem.elements) {
-                                    const newObj = {};
-                                    const tempObj = {};
+                                elements.forEach(elem => {
+                                    if (elem.type == 'element' && elem.name == 'item' && elem.elements) {
+                                        const newObj = {};
+                                        const tempObj = {};
 
-                                    elem.elements.forEach(subElm => {
-                                        if (subElm.name == 'torznab:attr' && subElm.attributes && subElm.attributes.name && subElm.attributes.value)
-                                            tempObj[subElm.attributes.name] = subElm.attributes.value;
-                                        else if (subElm.elements && subElm.elements.length)
-                                            tempObj[subElm.name] = subElm.elements[0].text;
-                                    });
+                                        elem.elements.forEach(subElm => {
+                                            if (subElm.name == 'torznab:attr' && subElm.attributes && subElm.attributes.name && subElm.attributes.value)
+                                                tempObj[subElm.attributes.name] = subElm.attributes.value;
+                                            else if (subElm.elements && subElm.elements.length)
+                                                tempObj[subElm.name] = subElm.elements[0].text;
+                                        });
 
-                                    const ofInterest = ['title', 'link', 'magneturl'];
+                                        const ofInterest = ['title', 'link', 'magneturl'];
 
-                                    ofInterest.forEach(ofInterestElm => {
-                                        if (tempObj[ofInterestElm])
-                                            newObj[ofInterestElm] = tempObj[ofInterestElm];
-                                    });
+                                        ofInterest.forEach(ofInterestElm => {
+                                            if (tempObj[ofInterestElm])
+                                                newObj[ofInterestElm] = tempObj[ofInterestElm];
+                                        });
 
-                                    const toInt = ['seeders', 'peers', 'size', 'files'];
+                                        const toInt = ['seeders', 'peers', 'size', 'files'];
 
-                                    toInt.forEach(toIntElm => {
-                                        if (tempObj[toIntElm])
-                                            newObj[toIntElm] = parseInt(tempObj[toIntElm]);
-                                    });
+                                        toInt.forEach(toIntElm => {
+                                            if (tempObj[toIntElm])
+                                                newObj[toIntElm] = parseInt(tempObj[toIntElm]);
+                                        });
 
-                                    if (tempObj.pubDate)
-                                        newObj.jackettDate = new Date(tempObj.pubDate).getTime();
+                                        if (tempObj.pubDate)
+                                            newObj.jackettDate = new Date(tempObj.pubDate).getTime();
 
-                                    newObj.from = indexer.attributes.id;
+                                        newObj.from = indexer.attributes.id;
 
-                                    newObj.extraTag = helper.extraTag(newObj.title, query.name);
-                                    tempResults.push(newObj);
-                                }
-                            });
-                            cb(tempResults);
-                            results = results.concat(tempResults);
+                                        newObj.extraTag = helper.extraTag(newObj.title, query.name);
+                                        tempResults.push(newObj);
+                                    }
+                                });
+                                cb(tempResults);
+                                results = results.concat(tempResults);
+                            }
+                        } catch (xmlError) {
+                            console.error('Error parsing XML:', xmlError);
+                            // Handle or log the error as needed
                         }
                     }
                     tick();
