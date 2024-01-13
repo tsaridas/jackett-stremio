@@ -11,11 +11,11 @@ const defaultConfig = {
 	"maximumSize": process.env.MAX_SIZE || 10000000000, // 10GB
 
 	"jackett": {
-		"host": process.env.JACKET_HOST || "http://127.0.0.1:9117/",
+		"host": process.env.JACKETT_HOST || "http://127.0.0.1:9117/",
 
-		"readTimeout": process.env.JACKET_RTIMEOUT || 10000,
+		"readTimeout": process.env.JACKETT_RTIMEOUT || 10000,
 
-		"openTimeout": process.env.JACKET_OTIMEOUT || 10000
+		"openTimeout": process.env.JACKETT_OTIMEOUT || 10000
 
 	}
 }

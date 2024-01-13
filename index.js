@@ -10,6 +10,7 @@ const jackettApi = require('./jackett')
 const helper = require('./helpers')
 
 const config = require('./config')
+console.log(config)
 
 const version = require('./package.json').version
 
