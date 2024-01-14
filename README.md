@@ -2,13 +2,13 @@
 
 ## General
 This is a stremio addon which requires Jackett application to search for torrents which is meant to be installed/ran locally. You add the addon to stremio by the URL it provides and it should send you results.
-This addon by default will only work if also stremio web player uses http. If you want to use this on a HTTPS stremio player then you need to also have this service in HTTPS. 
-Its out of the scope of this guide how to achieve that.
+This addon by default will only work if also stremio web player uses http. If you want to use this on a HTTPS stremio web player then you need to also have this service in HTTPS. 
+Its out of the scope of this guide how to achieve that. 
+
+You can take a look at my other repo if you want to have stremio run in HTTP in docker [stremio-docker](https://github.com/tsaridas/stremio-docker) .
 
 ## Run
-Images are push to dockerhub for each release automatically.
-
-Images saved in [Docker Hub](https://hub.docker.com/r/tsaridas/jackett-stremio)
+Images are pushed to [Docker Hub](https://hub.docker.com/r/tsaridas/jackett-stremio) for each release automatically.
 
 <pre>
 $ docker run -d \
@@ -24,10 +24,11 @@ One could also run it outside docker. You need nodejs installed.
 ```bash
 $ export JACKETT_HOST={{ YOUR JACKETT IP:PORT }} # Replace `{{ YOUR JACKETT IP:PORT }}` with your ip and Jackett port.
 $ npm install
-$ node index.js
+$ npm start
 ```
 
 ## Options
+The below options can be set as an evironment variable.
 
 | Env | Default | Example | Description |
 | - | - | - | - |
@@ -77,7 +78,7 @@ You need jackett installed for this addon to work. Going into detail on how to d
 
 ### Setup Jackett
 
-Open your browser, go on [http://{{ YOUR IP }}:9117/](http://{{ YOUR IP }}:9117/). Replace `{{ YOUR IP }}` with your LAN IP. Press "+ Add Indexer", add as many indexers as you want.
+Open your browser, go on `http://{{ YOUR IP }}:9117/`. Replace `{{ YOUR IP }}` with your LAN IP. Press "+ Add Indexer", add as many indexers as you want.
 
 Copy the text from the input where it writes "API Key" from top right of the menu in Jackett.
 
