@@ -3,6 +3,7 @@ FROM node:18-alpine3.19
 WORKDIR /srv
 EXPOSE 7000
 
+# Config vars
 ENV RESPONSE_TIMEOUT=
 ENV PORT=
 ENV MIN_SEED=
