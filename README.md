@@ -93,6 +93,5 @@ Add `http://{{ YOUR IP }}:7000/{{my-jackett-key}}/manifest.json` (replace `{{my-
 - Add better searching for series
 - Increase versions of npm modules
 - Add option for user to specify max limit in MB/GB etc.
-- Add dockerhub images
 - Update README for better understanding how to install.
 - Validate jackett http address
