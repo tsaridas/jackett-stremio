@@ -73,6 +73,7 @@ You need jacket installed for this addon to work. Going into detail on how to do
 - [Install Jackett on Windows](https://github.com/Jackett/Jackett#installation-on-windows)
 - [Install Jackett on OSX](https://github.com/Jackett/Jackett#installation-on-macos)
 - [Install Jackett on Linux](https://github.com/Jackett/Jackett#installation-on-linux)
+- [Install Jackett using Docker](https://github.com/Jackett/Jackett?tab=readme-ov-file#installation-using-docker)
 
 ### Setup Jackett
 
