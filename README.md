@@ -1,7 +1,7 @@
 # Stremio Jackett Add-on
 
 ## General
-This is a stremio addon which requires Jackett application to search for torrents. You add the addon to stremio by the URL it provides and it should send you results.
+This is a stremio addon which requires Jackett application to search for torrents which is meant to be installed/ran locally. You add the addon to stremio by the URL it provides and it should send you results.
 This addon by default will only work if also stremio web player uses http. If you want to use this on a HTTPS stremio player then you need to also have this service in HTTPS. 
 Its out of the scope of this guide how to achieve that.
 
