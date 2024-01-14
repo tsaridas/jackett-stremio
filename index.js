@@ -30,9 +30,6 @@ const respond = (res, data) => {
   // Step 2: Sort the list based on seeders
   const sortedStreams = uniqueStreams.sort((a, b) => b.seeders - a.seeders);
 
-  // sortedStreams.forEach(value => {
-  //     console.log(value);
-  // });
   const ret = { "streams": sortedStreams };
   console.log("Sending " + sortedStreams.length + " Streams.");
   res.send(ret);
@@ -96,7 +93,7 @@ const streamFromMagnet = (tor, uri, params, cb) => {
   const toStream = (parsed) => {
     // idx = 1; // this defines the number of the file that needs to be used for stream. settings this to 1 is wrong.
     // console.log(parsed)
-    const infoHash = parsed.infoHash;
+    const infoHash = parsed.infoHash.toLowerCase();
 
     let title = tor.title || parsed.name;
     const subtitle = `👤 ${tor.seeders}/${tor.peers}    💾 ${toHomanReadable(tor.size)}`;
