@@ -43,6 +43,7 @@ const helper = {
 
         name = name.replace(/\.|_|\-|\–|\(|\)|\[|\]|\:|\,/g, ' ');
         name = name.replace(/\s+/g, ' ');
+        name = name.replace(/'/g, '');
         name = name.replace(/\\\\/g, '\\').replace(/\\\\\'|\\\'|\\\\\"|\\\"/g, '');
         return name;
     },

@@ -39,7 +39,7 @@ const search = (apiKey, query, cb, end) => {
             end(results);
         });
 
-        let searchQuery = query.name;
+        let searchQuery = helper.simpleName(query.name);
 
         if (query.season && query.episode) {
             searchQuery += ' ' + helper.episodeTag(query.season, query.episode);
