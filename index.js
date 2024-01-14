@@ -211,12 +211,11 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
 
   const imdbId = idParts[0];
   const url = 'https://v3-cinemeta.strem.io/meta/' + req.params.type + '/' + imdbId + '.json';
-  needle.get(url, (err, resp, body) => {
+  needle.get(url, { follow: 1 }, (err, resp, body) => {
     if (!err && body && body.meta && body.meta.name) {
 
       const searchQuery = {
         name: body.meta.name,
-        year: body.meta.year,
         type: req.params.type
       };
 
