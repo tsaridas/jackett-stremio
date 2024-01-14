@@ -210,9 +210,9 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
   const idParts = req.params.id.split(':');
 
   const imdbId = idParts[0];
-
-  needle.get('https://v3-cinemeta.strem.io/meta/' + req.params.type + '/' + imdbId + '.json', (err, resp, body) => {
-    if (!err && body && body.meta && body.meta.name && body.meta.year) {
+  const url = 'https://v3-cinemeta.strem.io/meta/' + req.params.type + '/' + imdbId + '.json';
+  needle.get(url, (err, resp, body) => {
+    if (!err && body && body.meta && body.meta.name) {
 
       const searchQuery = {
         name: body.meta.name,
@@ -241,7 +241,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
         setTimeout(respondStreams, config.responseTimeout);
 
     } else {
-      console.error('Could not get info from Cinemata.', err);
+      console.error('Could not get info from Cinemata.', url, err);
       respond(res, { streams: [] });
     }
   });
