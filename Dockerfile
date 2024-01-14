@@ -1,4 +1,4 @@
-FROM node:18-alpine3.19
+FROM node:21-alpine3.19
 
 WORKDIR /srv
 EXPOSE 7000
@@ -13,8 +13,11 @@ ENV JACKETT_HOST=
 ENV JACKETT_RTIMEOUT=
 ENV JACKETT_OTIMEOUT=
 ENV MAX_QUEUE_SIZE=
+ENV SEARCH_BY_TYPE=
+ENV DEBUG=
 
 COPY . .
+RUN apk update && apk upgrade && rm -rf /var/cache/apk/*
 RUN npm install
 
 CMD ["node", "index.js"]

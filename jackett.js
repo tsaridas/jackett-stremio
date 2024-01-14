@@ -29,25 +29,44 @@ const search = (apiKey, query, cb, end) => {
         if (err || !apiIndexers || apiIndexers.length === 0) {
             cb([]);
             end([]);
+	    console.error("Could not find any available indexers in Jackett. Is Jacket service down ?");
             return;
         }
 
-        const cat = query.type && query.type == 'movie' ? 2000 : 5000;
+	let searchQuery = "";
         let results = [];
+
+	const simpleName = helper.simpleName(query.name);
+	if (config.searchByType) {
+        	const searchType = query.type && query.type == 'movie' ? "movie" : "tvsearch";
+		if (query.season && query.episode) {
+			searchQuery = '&t='+searchType+'&q='+simpleName+'&season='+query.season+'&ep='+query.episode;
+		} else {
+			year = (query.year) ? '&year='+query.year : '';
+			searchQuery = '&t='+searchType+'&q='+simpleName+year;
+		}
+
+	} else {
+        	const cat = query.type && query.type == 'movie' ? 2000 : 5000;
+		searchQuery = '&t=search&cat='+cat+'&q='+simpleName;
+        	if (query.season && query.episode) {
+            		searchQuery += ' ' + helper.episodeTag(query.season, query.episode);
+        	} else {
+			searchQuery += ' '+query.year;
+		}
+	}
+
 
         const tick = helper.setTicker(apiIndexers.length, () => {
             end(results);
         });
 
-        let searchQuery = helper.simpleName(query.name);
-
-        if (query.season && query.episode) {
-            searchQuery += ' ' + helper.episodeTag(query.season, query.episode);
-        }
 
         apiIndexers.forEach(indexer => {
             if (indexer && indexer.attributes && indexer.attributes.id) {
-                needle.get(config.jackett.host + 'api/v2.0/indexers/' + indexer.attributes.id + '/results/torznab/api?apikey=' + apiKey + '&t=search&cat=' + cat + '&q=' + encodeURI(searchQuery), {
+                const url = config.jackett.host + 'api/v2.0/indexers/' + indexer.attributes.id + '/results/torznab/api?apikey=' + apiKey + encodeURI(searchQuery);
+		config.debug && console.log(`Searching indexer ${indexer.attributes.id} with url ${url}`)
+                needle.get(url, {
                     open_timeout: config.jackett.openTimeout,
                     read_timeout: config.jackett.readTimeout,
                     parse_response: false

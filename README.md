@@ -41,6 +41,8 @@ The below options can be set as an evironment variable.
 | `JACKETT_HOST` | http://127.0.0.1:9117/ | `http://10.10.10.1:9117/` | Your Jackett host. Make sure there is a / in the end and its a valid url. |
 | `JACKETT_RTIMEOUT` | 10000 | `20000` | Jackett http read timeout in millisecond. |
 | `JACKETT_OTIMEOUT` | 10000 | `20000` | Jackett http open timeout in millisecond. |
+| `DEBUG` | false | `true` | Spam your terminal with info about requests being made. |
+| `SEARCH_BY_TYPE` | false | `true` | We search by movie or tvshow instead of default free search. |
 
 ## Builds
 

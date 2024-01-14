@@ -32,6 +32,7 @@ const respond = (res, data) => {
 
   const ret = { "streams": sortedStreams };
   console.log("Sending " + sortedStreams.length + " Streams.");
+  config.debug && console.log("Streams are :", sortedStreams);
   res.send(ret);
 };
 
@@ -85,6 +86,7 @@ addon.get('/:jackettKey/manifest.json', (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', '*');
   res.setHeader('Content-Type', 'application/json');
+  config.debug && console.log("Sending manifest.");
   res.send(manifest);
 });
 
@@ -92,22 +94,20 @@ addon.get('/:jackettKey/manifest.json', (req, res) => {
 const streamFromMagnet = (tor, uri, params, cb) => {
   const toStream = (parsed) => {
     // idx = 1; // this defines the number of the file that needs to be used for stream. settings this to 1 is wrong.
-    // console.log(parsed)
+    config.debug && console.log("Parsed torrent: ", parsed);
     const infoHash = parsed.infoHash.toLowerCase();
 
     let title = tor.title || parsed.name;
     const subtitle = `👤 ${tor.seeders}/${tor.peers}    💾 ${toHomanReadable(tor.size)}`;
 
     title += (title.indexOf('\n') > -1 ? '\r\n' : '\r\n\r\n') + subtitle;
-    // console.log("We got results", tor, infoHash)
-    const regex = /WEBRIP|HDTS|CAM|HD-TS|CINEMA|Xvid|DVDrip|DVDFull|TV|\d+p/i;
+    const regex = /WEBRIP|HDTS|CAM|HD-TS|CINEMA|Xvid|DVDrip|DVDFull|TV|WEB|\d+p/i;
     const match = tor.extraTag.match(regex);
     let quality = "";
     if (match !== null) {
       quality = match[0];
-    } else {
-      quality = "UnKnown";
-    }
+    } 
+     
     cb({
       name: "Jackett " + quality,
       // fileIdx: idx,
@@ -126,7 +126,6 @@ const streamFromMagnet = (tor, uri, params, cb) => {
   if (uri.startsWith("magnet:?")) {
     const parsedTorrent = parseTorrent(uri);
 
-    // console.log("The parsed Magnet is :", parsedTorrent, uri)
     toStream(parsedTorrent);
   } else {
     parseTorrent.remote(uri, (err, parsed) => {
@@ -134,7 +133,6 @@ const streamFromMagnet = (tor, uri, params, cb) => {
         cb(false);
         return;
       }
-      // console.log("Parsed Remote result is ", parsed, uri)
       toStream(parsed);
     });
   }
@@ -146,7 +144,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
   if (!req.params.id || !req.params.jackettKey)
     return respond(res, { streams: [] });
 
-  console.log("Received request for :", req.params.type, req.params.id);
+  config.debug && console.log("Received request for :", req.params.type, req.params.id);
 
   let results = [];
 
@@ -178,8 +176,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
       const q = async.queue((task, callback) => {
         if (task && (task.magneturl || task.link)) {
           const url = task.magneturl || task.link;
-          // jackett links can sometimes redirect to magnet links or torrent files
-          // we follow the redirect if needed and bring back the direct link
+	  // Need to change this. not reuiqre to have follow redirects like this
           helper.followRedirect(url, url => {
             // convert torrents and magnet links to stream object
             streamFromMagnet(task, url, req.params, stream => {
@@ -208,13 +205,18 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
 
   const imdbId = idParts[0];
   const url = 'https://v3-cinemeta.strem.io/meta/' + req.params.type + '/' + imdbId + '.json';
+  config.debug && console.log("Cinemata url", url);
   needle.get(url, { follow: 1 }, (err, resp, body) => {
     if (!err && body && body.meta && body.meta.name) {
+      const year = (body.meta.year) ? body.meta.year.replace(/-$/, '') : (body.meta.releaseInfo) ? body.meta.releaseInfo.replace(/-$/, '') : '';
 
       const searchQuery = {
         name: body.meta.name,
-        type: req.params.type
+        type: req.params.type,
+        year: year,
       };
+
+      console.log(`Looking for title: ${body.meta.name} - type: ${req.params.type} - year: ${year}.`);
 
       if (idParts.length == 3) {
         searchQuery.season = idParts[1];

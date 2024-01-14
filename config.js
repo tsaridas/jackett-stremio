@@ -1,6 +1,9 @@
 const { URL } = require('url');
 
 const defaultConfig = {
+	"debug": process.env.DEBUG || false,
+
+	"searchByType": process.env.SEARCH_BY_TYPE || false,
 
 	"responseTimeout": process.env.RESPONSE_TIMEOUT || 11000,
 
