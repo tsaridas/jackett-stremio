@@ -12,7 +12,7 @@ Images saved in [Docker Hub](https://hub.docker.com/r/tsaridas/jackett-stremio)
 
 <pre>
 $ docker run -d \
-  --name=jacket-stremio \
+  --name=jackett-stremio \
   -e JACKETT_HOST=http://{{ YOURIP }}:9117/ \ # Replace `{{ YOUR IP }}` with your LAN IP.
   -p 7000:7000/tcp \
   --restart unless-stopped \
@@ -22,7 +22,7 @@ $ docker run -d \
 One could also run it outside docker. You need nodejs installed.
 
 ```bash
-$ export JACKETT_HOST={{ YOUR JACKET IP:PORT }} # Replace `{{ YOUR JACKET IP:PORT }}` with your ip and Jackett port.
+$ export JACKETT_HOST={{ YOUR JACKETT IP:PORT }} # Replace `{{ YOUR JACKETT IP:PORT }}` with your ip and Jackett port.
 $ npm install
 $ node index.js
 ```
@@ -66,7 +66,7 @@ docker build -t jackett-stremio:myversion .
 ```
 
 ## Jackett
-You need jacket installed for this addon to work. Going into detail on how to do that is out of the scope of this project.
+You need jackett installed for this addon to work. Going into detail on how to do that is out of the scope of this project.
 
 ### Install Jackett
 
