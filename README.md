@@ -35,7 +35,6 @@ The below options can be set as an evironment variable.
 | `RESPONSE_TIMEOUT` | 12000 | `8000` | This will timeout any queries to jackett after this given value in millisecond. The higher the most result you will get |
 | `PORT` | 7000 | `8888` | The port which the Addon service will run on. |
 | `MIN_SEED` | 3 | `10` | The minimum amount of seeds we should return results for. |
-| `MAX_RESULTS` | 10 | `20` | Maximum amount of results we want to receive. |
 | `MAX_SIZE` | 10000000000 | `5000000000` | Maximum size of the results we want to receive. Value is in Bytes. Default is 10GB.  |
 | `MAX_QUEUE_SIZE` | 100 | `200` | Maximum amount queries we want to have parallel. |
 | `JACKETT_HOST` | http://127.0.0.1:9117/ | `http://10.10.10.1:9117/` | Your Jackett host. Make sure there is a / in the end and its a valid url. |

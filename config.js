@@ -2,31 +2,30 @@ const { URL } = require('url');
 
 const defaultConfig = {
   "interval": process.env.INTERVAL || 100,
-  
-	"debug": process.env.DEBUG || false,
 
-	"searchByType": process.env.SEARCH_BY_TYPE || false,
+  "debug": process.env.DEBUG || false,
 
-	"responseTimeout": process.env.RESPONSE_TIMEOUT || 8000,
+  "searchByType": process.env.SEARCH_BY_TYPE || false,
 
-	"addonPort": process.env.PORT || 7000,
+  "responseTimeout": process.env.RESPONSE_TIMEOUT || 8000,
 
-	"minimumSeeds": process.env.MIN_SEED || 3,
+  "addonPort": process.env.PORT || 7000,
 
-	"maximumResults": process.env.MAX_RESULTS || 10,
+  "minimumSeeds": process.env.MIN_SEED || 3,
 
-	"maximumSize": process.env.MAX_SIZE || 5000000000, // 5GB
+  "maximumResults": process.env.MAX_RESULTS || 10,
 
-	"maxQueueSize": process.env.MAX_QUEUE_SIZE || 1000,
+  "maximumSize": process.env.MAX_SIZE || 5000000000, // 5GB
 
-	"jackett": {
-		"host": process.env.JACKETT_HOST || "http://127.0.0.1:9117/",
+  "jackett": {
 
-		"readTimeout": process.env.JACKETT_RTIMEOUT || 10000,
+    "host": process.env.JACKETT_HOST || "http://127.0.0.1:9117/",
 
-		"openTimeout": process.env.JACKETT_OTIMEOUT || 5000
+    "readTimeout": process.env.JACKETT_RTIMEOUT || 10000,
 
-	}
+    "openTimeout": process.env.JACKETT_OTIMEOUT || 5000
+
+  }
 }
 
 function correctAndValidateURL(input) {
