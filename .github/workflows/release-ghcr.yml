@@ -1,9 +1,4 @@
 name: ghcr-publish
-author: tsaridas
-description: Publish a docker image to ghcr.i
-branding:
-  icon: upload-cloud
-  color: blue
 
 on:
   push:
@@ -101,4 +96,3 @@ jobs:
       - name: Inspect image
         run: |
           docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.REGISTRY_IMAGE }}:${{ env.REGISTRY_TAG }}
-          
