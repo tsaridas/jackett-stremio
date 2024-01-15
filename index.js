@@ -1,4 +1,5 @@
 const parseTorrent = require('parse-torrent')
+const ptt = require("parse-torrent-title");
 
 const needle = require('needle');
 const async = require('async');
@@ -8,40 +9,22 @@ const express = require('express');
 const addon = express();
 
 const jackettApi = require('./jackett');
-const helper = require('./helpers');
-
 const config = require('./config');
+
 console.log(config);
 
 const version = require('./package.json').version;
-
-function filterBySeedersAndRemoveDuplicates(torrents) {
-    // Check if torrents is an array and is not undefined
-    if (!Array.isArray(torrents) || torrents === undefined) {
-        console.error('Invalid input data. Expected an array.');
-        return [];
-    }
-
-    // Remove duplicates based on infohash
-    let uniqueTorrents = Array.from(new Map(torrents.map(torrent => [torrent.infoHash, torrent])).values());
-
-    uniqueTorrents = uniqueTorrents.sort((a, b) => b.seeders - a.seeders);
-    // slice to user needs
-    uniqueTorrents = uniqueTorrents.slice(0, config.maximumResults);
-
-    return uniqueTorrents;
-}
 
 const respond = (res, data) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
     res.setHeader('Content-Type', 'application/json');
 
+    const sortedData = data.streams.sort((a, b) => b.seeders - a.seeders);
+    slicedData = sortedData.slice(0, config.maximumResults)
+    config.debug && console.log("Sorted data ", slicedData);
 
-    const uniqueStreams = filterBySeedersAndRemoveDuplicates(data.streams);
-    config.debug && console.log("Sorted data ", uniqueStreams);
-
-    const ret = { "streams": uniqueStreams };
+    const ret = { "streams": slicedData };
     res.send(ret);
 };
 
@@ -99,18 +82,15 @@ addon.get('/:jackettKey/manifest.json', (req, res) => {
     res.send(manifest);
 });
 
-// utility function to create stream object from magnet or remote torrent
 const streamFromMagnet = (tor, uri, params, cb) => {
     const toStream = (parsed) => {
-        // idx = 1; // this defines the number of the file that needs to be used for stream. settings this to 1 is wrong.
-        //config.debug && console.log("Parsed torrent: ", parsed);
         const infoHash = parsed.infoHash.toLowerCase();
 
         let title = tor.title || parsed.name;
         const subtitle = `👤 ${tor.seeders}/${tor.peers}  💾 ${toHomanReadable(tor.size)}  ⚙️  ${tor.from}`;
 
         title += (title.indexOf('\n') > -1 ? '\r\n' : '\r\n\r\n') + subtitle;
-        const regex = /WEBRIP|HDTS|CAM|HD-TS|CINEMA|Xvid|DVDrip|DVDFull|TV|WEB|\d+p/i;
+        const regex = /HDTV|\b(DivX|XviD)\b|\b(?:DL|WEB|BD|BR)MUX\b|\bWEB-?Rip\b|\bWEB-?DL\b|\bBluray\b|\bVHSSCR\b|\bR5\b|\bPPVRip\b|\bTC\b|\b(?:HD-?)?TVRip\b|\bDVDscr\b|\bDVD(?:R[0-9])?\b|\bDVDRip\b|\bBDRip\b|\bBRRip\b|\bHD-?Rip\b|\b(?:HD-?)?T(?:ELE)?S(?:YNC)?\b|\b(?:HD-?)?CAM\b|(4k)|([0-9]{3,4}[pi])/i;
         const match = tor.extraTag.match(regex);
         let quality = "";
         if (match !== null) {
@@ -132,30 +112,9 @@ const streamFromMagnet = (tor, uri, params, cb) => {
             }
         });
     };
-    if (uri.startsWith("magnet:")) {
-        try {
-            const parsedTorrent = parseTorrent(uri);
-            toStream(parsedTorrent);
-        } catch (error) {
-            console.error("Error when getting magnet", uri, error);
-        }
-    } else {
-        try {
-            config.debug && console.log("Trying to get remote URI ", uri);
-            parseTorrent.remote(uri, { timeout: 5000 }, (err, parsedTorrent) => {
-                if (err) {
-                    cb(false)
-                    return
-                }
-                toStream(parsedTorrent);
-
-            });
-        }
-        catch (error) {
-            console.error("Error from the url", url, error);
-
-        }
-    }
+    config.debug && console.log("Parsing magnet", uri);
+    const parsedTorrent = parseTorrent(uri);
+    toStream(parsedTorrent);
 };
 
 // stream response
@@ -166,60 +125,46 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
 
     config.debug && console.log("Received request for :", req.params.type, req.params.id);
 
-    let results = [];
+    //let results = [];
 
     let myQueue;
+    let finished = false;
     let streams = [];
 
     let startTime = Date.now();
     const intervalId = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
 
-        // Check if X milliseconds have passed
-        if (elapsedTime >= config.responseTimeout) {
-            console.log("We reached the timelimit and we should exit with "+ streams.length +" results. Queue length is :" + myQueue.length())
-            // X milliseconds have passed, execute your function
-            if (myQueue.length() === 0) {
-                clearInterval(intervalId);
-                respond(res, { streams: streams });
-            }
-
-            myQueue.error((err, task) => {
-                console.error('Error processing task:', task, 'Error:', err);
-            });
+        if (elapsedTime >= config.responseTimeout || finished) {
+            config.debug && console.log("We reached the time-limit. Returning " + streams.length + " results.")
+            clearInterval(intervalId);
+            respond(res, { streams: streams });
 
         }
     }, config.interval);
 
-    const respondStreams = () => {
+    const respondStreams = (results) => {
 
         if (results && results.length) {
 
             let tempResults = results;
-            const sortedStreams = tempResults.sort((a, b) => b.seeders - a.seeders);
+            tempResults = tempResults.sort((a, b) => b.seeders - a.seeders);
+            config.debug && console.log("Sorted Streams are ", tempResults.length);
 
-
-            myQueue = async.queue((task, callback) => {
+            myQueue = async.queue((task) => {
                 try {
                     if (task && (task.magneturl || task.link)) {
                         const url = task.magneturl || task.link;
-                        // Need to change this.
-                        helper.followRedirect(url, url => {
-                            // convert torrents and magnet links to stream object
-                            streamFromMagnet(task, url, req.params, stream => {
-                                if (stream) {
-                                    streams.push(stream);
-                                }
-                                callback();
-                            });
+                        streamFromMagnet(task, url, req.params, stream => {
+                            if (stream) {
+                                streams.push(stream);
+                            }
                         });
                         return;
                     }
-                    callback();
                 } catch (error) {
                     // Handle the error
                     console.error("Error in myQueue:", error);
-                    callback(error); // Pass the error to the callback to indicate a failure
                 }
             }, config.maxQueueSize);
 
@@ -253,22 +198,12 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
 
                 partialResponse = (tempResults) => {
                     config.debug && console.log("Received partial " + tempResults.length + " partial results.");
-                    results = results.concat(tempResults);
-                    if (tempResults) {
-                        config.debug && console.log("Sending partial reults for processing :", tempResults.length);
-                        respondStreams();
-                    }
+                    respondStreams(tempResults);
                 },
 
                 endResponse = (tempResults) => {
-                    config.debug && console.log("Received all results. Sending streams", tempResults.length);
+                    config.debug && console.log("Received all results.");
                     finished = true;
-                    //results = tempResults;
-                    //if ( sentResponse === false) {
-                    //	sentResponse = true;
-                    //  respond(res, { streams: streams });
-                    //}
-                    //respondStreams();
                 });
 
 

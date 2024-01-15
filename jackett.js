@@ -35,7 +35,6 @@ const search = (apiKey, query, cb, end) => {
 		}
 		config.debug && console.log("Found " + apiIndexers.length + " indexers");
 		let searchQuery = "";
-		//let results = [];
 		let countResults = 0;
 		let countFinished = 0;
 		let maxSeeder = { number: 0, indexer: "" };
@@ -110,10 +109,15 @@ const search = (apiKey, query, cb, end) => {
 
 							const ofInterest = ['title', 'link', 'magneturl'];
 
+
 							ofInterest.forEach(ofInterestElm => {
 								if (tempObj[ofInterestElm])
 									newObj[ofInterestElm] = tempObj[ofInterestElm];
 							});
+
+							if (!newObj.magneturl || (newObj.link && !newObj.link.startsWith("magnet:"))) {
+								return;
+							}
 
 							const toInt = ['seeders', 'peers', 'size', 'files'];
 
@@ -122,11 +126,7 @@ const search = (apiKey, query, cb, end) => {
 									newObj[toIntElm] = parseInt(tempObj[toIntElm]);
 							});
 
-							if (newObj.seeders < config.minimumSeeds) {
-								return;
-							}
-
-							if (newObj.size > config.maximumSize) {
+							if (newObj.seeders < config.minimumSeeds || newObj.size > config.maximumSize) {
 								return;
 							}
 

@@ -1,3 +1,7 @@
+name: release-dockerhub
+description: Build and push Docker image to DockerHub
+author: tsaridas
+
 on:
   push:
     branches:

@@ -1,4 +1,3 @@
-const needle = require('needle');
 const videoNameParser = require('video-name-parser');
 
 const ticker = {};
