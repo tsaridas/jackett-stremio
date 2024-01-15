@@ -43,6 +43,7 @@ The below options can be set as an evironment variable.
 | `JACKETT_OTIMEOUT` | 10000 | `20000` | Jackett http open timeout in millisecond. |
 | `DEBUG` | false | `true` | Spam your terminal with info about requests being made. |
 | `SEARCH_BY_TYPE` | false | `true` | We search by movie or tvshow instead of default free search. |
+| `INTERVAL` | 100 | `400` | How often to check in miliseconds if we should return results based on user's timeout. |
 
 ## Builds
 

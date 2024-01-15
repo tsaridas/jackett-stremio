@@ -8,6 +8,9 @@
   },
   "license": "MIT",
   "dependencies": {
+    "magnet-uri": "^7.0.5",
+    "queue-microtask": "^1.2.3",
+    "uint8-util": "^2.2.2",
     "async": "^2.6.3",
     "express": "^4.18.2",
     "get-port": "^5.1.1",
