@@ -82,7 +82,7 @@ addon.get('/:jackettKey/manifest.json', (req, res) => {
     res.send(manifest);
 });
 
-const streamFromMagnet = (tor, uri, params, cb) => {
+const streamFromMagnet = (tor, parsedTorrent, params, cb) => {
     const toStream = (parsed) => {
         const infoHash = parsed.infoHash.toLowerCase();
 
@@ -104,16 +104,13 @@ const streamFromMagnet = (tor, uri, params, cb) => {
             infoHash: infoHash,
             seeders: tor.seeders,
             sources: (parsed.announce || []).map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]),
-            availability: 1,
             title: title,
             behaviorHints: {
-                bingieGroup: "Jackett|" + infoHash,
-                notWebReady: false
+                bingieGroup: "Jackett|" + infoHash
             }
         });
     };
-    config.debug && console.log("Parsing magnet", uri);
-    const parsedTorrent = parseTorrent(uri);
+
     toStream(parsedTorrent);
 };
 
@@ -125,9 +122,6 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
 
     config.debug && console.log("Received request for :", req.params.type, req.params.id);
 
-    //let results = [];
-
-    let myQueue;
     let finished = false;
     let streams = [];
 
@@ -136,14 +130,14 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
         const elapsedTime = Date.now() - startTime;
 
         if (elapsedTime >= config.responseTimeout || finished) {
-            config.debug && console.log("We reached the time-limit. Returning " + streams.length + " results.")
+            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + " Finished: "+ finished)
             clearInterval(intervalId);
             respond(res, { streams: streams });
 
         }
     }, config.interval);
 
-    const respondStreams = (results) => {
+    const respondStreams = async (results) => {
 
         if (results && results.length) {
 
@@ -151,24 +145,20 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
             tempResults = tempResults.sort((a, b) => b.seeders - a.seeders);
             config.debug && console.log("Sorted Streams are ", tempResults.length);
 
-            myQueue = async.queue((task) => {
-                try {
-                    if (task && (task.magneturl || task.link)) {
-                        const url = task.magneturl || task.link;
-                        streamFromMagnet(task, url, req.params, stream => {
-                            if (stream) {
-                                streams.push(stream);
-                            }
-                        });
-                        return;
-                    }
-                } catch (error) {
-                    // Handle the error
-                    console.error("Error in myQueue:", error);
+            const processMagnets = async (task) => {
+                if (finished) { // Check the flag before processing each task
+                    return;
                 }
-            }, config.maxQueueSize);
-
-            tempResults.forEach(elm => { myQueue.push(elm); });
+                const uri = task.magneturl || task.link;
+                config.debug && console.log("Parsing magnet", uri);
+                const parsedTorrent = parseTorrent(uri);
+                streamFromMagnet(task, parsedTorrent, req.params, stream => {
+                    if (stream) {
+                        streams.push(stream);
+                    }
+                });
+            }
+            await Promise.all(tempResults.map(processMagnets));
         }
     };
 
