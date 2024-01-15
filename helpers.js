@@ -21,20 +21,6 @@ const helper = {
         };
     },
 
-    followRedirect: (url, cb) => {
-        if (!url.startsWith('magnet:')) {
-            needle.get(url, (err, resp, body) => {
-                if (resp && resp.headers && resp.headers.location) {
-                    cb(resp.headers.location);
-                } else {
-                    cb(url);
-                }
-            });
-            return;
-        }
-        cb(url);
-    },
-
     episodeTag: (season, episode) => {
         return `S${('0' + season).slice(-2)}E${('0' + episode).slice(-2)}`;
     },
