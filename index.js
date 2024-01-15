@@ -104,10 +104,7 @@ const streamFromMagnet = (tor, parsedTorrent, params, cb) => {
             infoHash: infoHash,
             seeders: tor.seeders,
             sources: (parsed.announce || []).map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]),
-            title: title,
-            behaviorHints: {
-                bingieGroup: "Jackett|" + infoHash
-            }
+            title: title
         });
     };
 
