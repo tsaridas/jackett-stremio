@@ -1,38 +1,21 @@
-name: release-dockerhub
+name: ghcr-publish
 
 on:
   push:
     branches:
-      - main
-    paths:
-      - '*.js'
-      - 'Dockerfile'
-      - 'package.json'
+      - development
 
 env:
   TMP_LOCAL_IMAGE: localhost:5000/${{ github.repository }}
+  REGISTRY: ghcr.io
   REGISTRY_IMAGE: ${{ github.repository }}
-  TAG_NAME: ${{ github.event.inputs.TAG_NAME || github.event.release.tag_name }}
-  REGISTRY_TAG: latest
-  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  REGISTRY_TAG: testing
+  VERSION: testing
+  BRANCH: development
 
 jobs:
-  check_release:
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{steps.check.outputs.version }}
-    steps:
-      - name: CheckRelease
-        id: check
-        run: |
-          VERSION=$(curl -s https://api.github.com/repos/tsaridas/jackett-stremio/releases/latest | grep \"name | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+')
-          NEWVERSION=${VERSION:0:-1}$((${VERSION: -1}+1))
-          echo "We will release $NEWVERSION"
-          echo "version=$NEWVERSION" >> $GITHUB_OUTPUT
   build:
     runs-on: ubuntu-latest
-    needs:
-      - check_release
     strategy:
       fail-fast: false
       matrix:
@@ -65,12 +48,8 @@ jobs:
           platforms: ${{ matrix.platform }}
           tags: ${{ env.TAG }}
           outputs: type=docker,dest=/tmp/images/${{ env.TARFILE }}
-
-      - name: Load images
-        run: |
-          for image in /tmp/images/*.tar; do
-            docker load -i $image
-          done
+          #cache-from: type=gha
+          #cache-to: type=gha,mode=max
 
       - name: Upload image
         uses: actions/upload-artifact@v3
@@ -80,11 +59,11 @@ jobs:
           if-no-files-found: error
           retention-days: 1
   
+
   push:
     runs-on: ubuntu-latest
     needs:
       - build
-      - check_release
     services:
       registry:
         image: registry:2
@@ -96,41 +75,24 @@ jobs:
         with:
           name: images
           path: /tmp/images
-
       - name: Load images
         run: |
           for image in /tmp/images/*.tar; do
             docker load -i $image
           done
-
       - name: Push images to local registry
         run: |
           docker push -a ${{ env.TMP_LOCAL_IMAGE }}
-
-      - name: Login to DockerHUB
+      - name: Login to GitHub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_PASS }}
-
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Create manifest list and push
         run: |
-          docker buildx imagetools create -t ${{ env.REGISTRY_IMAGE }}:${{ env.REGISTRY_TAG }} -t ${{ env.REGISTRY_IMAGE }}:${{ needs.check_release.outputs.version }} \
+          docker buildx imagetools create -t ${{ env.REGISTRY }}/${{ env.REGISTRY_IMAGE }}:${{ env.REGISTRY_TAG }} \
             $(docker image ls --format '{{.Repository}}:{{.Tag}}' '${{ env.TMP_LOCAL_IMAGE }}' | tr '\n' ' ')
-
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ env.REGISTRY_TAG }}
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ needs.check_release.outputs.version }}
-  
-  release:
-    runs-on: ubuntu-latest
-    needs:
-      - build
-      - check_release
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Release
-        run: |
-          gh release create ${{ needs.check_release.outputs.version }} --title "Release ${{ needs.check_release.outputs.version }}" --notes "New Release" 
+          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.REGISTRY_IMAGE }}:${{ env.REGISTRY_TAG }}

@@ -32,7 +32,7 @@ The below options can be set as an evironment variable.
 
 | Env | Default | Example | Description |
 | - | - | - | - |
-| `RESPONSE_TIMEOUT` | 12000 | `8000` | This will timeout any queries to jackett after this given value in millisecond |
+| `RESPONSE_TIMEOUT` | 12000 | `8000` | This will timeout any queries to jackett after this given value in millisecond. The higher the most result you will get |
 | `PORT` | 7000 | `8888` | The port which the Addon service will run on. |
 | `MIN_SEED` | 3 | `10` | The minimum amount of seeds we should return results for. |
 | `MAX_RESULTS` | 10 | `20` | Maximum amount of results we want to receive. |
@@ -43,6 +43,7 @@ The below options can be set as an evironment variable.
 | `JACKETT_OTIMEOUT` | 10000 | `20000` | Jackett http open timeout in millisecond. |
 | `DEBUG` | false | `true` | Spam your terminal with info about requests being made. |
 | `SEARCH_BY_TYPE` | false | `true` | We search by movie or tvshow instead of default free search. |
+| `INTERVAL` | 100 | `400` | How often to check in miliseconds if we should return results based on user's timeout. |
 
 ## Builds
 

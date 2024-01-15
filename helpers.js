@@ -1,4 +1,3 @@
-const needle = require('needle');
 const videoNameParser = require('video-name-parser');
 
 const ticker = {};
@@ -19,20 +18,6 @@ const helper = {
                 cb();
             }
         };
-    },
-
-    followRedirect: (url, cb) => {
-        if (!url.startsWith('magnet:')) {
-            needle.get(url, (err, resp, body) => {
-                if (resp && resp.headers && resp.headers.location) {
-                    cb(resp.headers.location);
-                } else {
-                    cb(url);
-                }
-            });
-            return;
-        }
-        cb(url);
     },
 
     episodeTag: (season, episode) => {

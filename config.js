@@ -1,11 +1,13 @@
 const { URL } = require('url');
 
 const defaultConfig = {
+  "interval": process.env.INTERVAL || 100,
+  
 	"debug": process.env.DEBUG || false,
 
 	"searchByType": process.env.SEARCH_BY_TYPE || false,
 
-	"responseTimeout": process.env.RESPONSE_TIMEOUT || 11000,
+	"responseTimeout": process.env.RESPONSE_TIMEOUT || 8000,
 
 	"addonPort": process.env.PORT || 7000,
 
@@ -13,16 +15,16 @@ const defaultConfig = {
 
 	"maximumResults": process.env.MAX_RESULTS || 10,
 
-	"maximumSize": process.env.MAX_SIZE || 10000000000, // 10GB
+	"maximumSize": process.env.MAX_SIZE || 5000000000, // 5GB
 
-	"maxQueueSize": process.env.MAX_QUEUE_SIZE || 100,
+	"maxQueueSize": process.env.MAX_QUEUE_SIZE || 1000,
 
 	"jackett": {
 		"host": process.env.JACKETT_HOST || "http://127.0.0.1:9117/",
 
 		"readTimeout": process.env.JACKETT_RTIMEOUT || 10000,
 
-		"openTimeout": process.env.JACKETT_OTIMEOUT || 10000
+		"openTimeout": process.env.JACKETT_OTIMEOUT || 5000
 
 	}
 }
@@ -50,6 +52,6 @@ function correctAndValidateURL(input) {
   }
 }
 
-defaultConfig.jackett.host = correctAndValidateURL(defaultConfig.jackett.host) 
+defaultConfig.jackett.host = correctAndValidateURL(defaultConfig.jackett.host)
 
 module.exports = defaultConfig
