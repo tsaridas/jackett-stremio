@@ -1,6 +1,6 @@
 FROM node:18-alpine3.19
 
-WORKDIR /srv
+WORKDIR /srv 
 EXPOSE 7000
 
 # Config vars 
