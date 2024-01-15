@@ -1,6 +1,4 @@
 const parseTorrent = require('parse-torrent')
-const ptt = require("parse-torrent-title");
-
 const needle = require('needle');
 const async = require('async');
 const getPort = require('get-port');
