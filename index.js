@@ -88,7 +88,7 @@ const streamFromMagnet = (tor, parsedTorrent, params, cb) => {
         const subtitle = `👤 ${tor.seeders}/${tor.peers}  💾 ${toHomanReadable(tor.size)}  ⚙️  ${tor.from}`;
 
         title += (title.indexOf('\n') > -1 ? '\r\n' : '\r\n\r\n') + subtitle;
-        const regex = /HDTV|\b(DivX|XviD)\b|\b(?:DL|WEB|BD|BR)MUX\b|\bWEB-?Rip\b|\bWEB-?DL\b|\bBluray\b|\bVHSSCR\b|\bR5\b|\bPPVRip\b|\bTC\b|\b(?:HD-?)?TVRip\b|\bDVDscr\b|\bDVD(?:R[0-9])?\b|\bDVDRip\b|\bBDRip\b|\bBRRip\b|\bHD-?Rip\b|\b(?:HD-?)?T(?:ELE)?S(?:YNC)?\b|\b(?:HD-?)?CAM\b|(4k)|([0-9]{3,4}[pi])/i;
+        const regex = /DLRip|HDTV|\b(DivX|XviD)\b|\b(?:DL|WEB|BD|BR)MUX\b|\bWEB-?Rip\b|\bWEB-?DL\b|\bBluray\b|\bVHSSCR\b|\bR5\b|\bPPVRip\b|\bTC\b|\b(?:HD-?)?TVRip\b|\bDVDscr\b|\bDVD(?:R[0-9])?\b|\bDVDRip\b|\bBDRip\b|\bBRRip\b|\bHD-?Rip\b|\b(?:HD-?)?T(?:ELE)?S(?:YNC)?\b|\b(?:HD-?)?CAM\b|(4k)|([0-9]{3,4}[pi])/i;
         const match = tor.extraTag.match(regex);
         let quality = "";
         if (match !== null) {
@@ -125,8 +125,9 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
         const elapsedTime = Date.now() - startTime;
 
         if (elapsedTime >= config.responseTimeout || finished) {
-            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + " Finished: "+ finished)
+            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + ". Finished: "+ finished)
             clearInterval(intervalId);
+            finished = true;
             respond(res, { streams: streams });
 
         }
