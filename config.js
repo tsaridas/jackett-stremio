@@ -14,15 +14,15 @@ const defaultConfig = {
 
   "searchByType": process.env.SEARCH_BY_TYPE || false,
 
-  "responseTimeout": process.env.RESPONSE_TIMEOUT || 8000,
+  "responseTimeout": parseInt(process.env.RESPONSE_TIMEOUT) || 8000,
 
-  "addonPort": process.env.PORT || 7000,
+  "addonPort": parseInt(process.env.PORT) || 7000,
 
-  "minimumSeeds": process.env.MIN_SEED || 3,
+  "minimumSeeds": parseInt(process.env.MIN_SEED) || 3,
 
   "maximumResults": process.env.MAX_RESULTS || 10,
 
-  "maximumSize": process.env.MAX_SIZE || 5000000000, // 5GB
+  "maximumSize": parseInt(process.env.MAX_SIZE) || 5000000000, // 5GB
 
   "downloadTorrentQueue": process.env.DOWNLOAD_TORRENT_QUEUE || 5,
 
