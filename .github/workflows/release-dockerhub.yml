@@ -144,3 +144,4 @@ jobs:
       - name: Release
         run: |
           gh release create ${{ needs.check_release.outputs.version }} --title "Release ${{ needs.check_release.outputs.version }}" --notes "New Release" 
+
