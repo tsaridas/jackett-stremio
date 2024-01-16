@@ -22,7 +22,7 @@ const defaultConfig = {
 
   "maximumResults": parseInt(process.env.MAX_RESULTS) || 10,
 
-  "maximumSize": parseInt(process.env.MAX_SIZE) || 5000000000, // 5GB
+  "maximumSize": process.env.MAX_SIZE || "10GB",
 
   "downloadTorrentQueue": parseInt(process.env.DOWNLOAD_TORRENT_QUEUE) || 5,
 
@@ -60,6 +60,38 @@ function correctAndValidateURL(input) {
   }
 }
 
+
+function toBytes(humanSize) {
+  const sizeString = (typeof humanSize === 'string') ? humanSize : humanSize.toString();
+  const sizeRegex = /^(\d+(\.\d+)?)\s*([kKmMgGtT]?[bB]?)$/;
+  const match = sizeString.match(sizeRegex);
+
+  if (!match) {
+    console.error('Invalid maximumSize format set. Supported formats: B/KB/MB/GB/TB. Example : 5GB');
+    return 10000000000;
+  }
+
+  const numericPart = parseFloat(match[1]);
+  const unit = match[3].toUpperCase();
+
+  const units = {
+    'B': 1,
+    'KB': 1024,
+    'MB': 1024 * 1024,
+    'GB': 1024 * 1024 * 1024,
+    'TB': 1024 * 1024 * 1024 * 1024,
+  };
+
+  if (Object.prototype.hasOwnProperty.call(unit, units)) {
+    console.error('Invalid maximumSize format set. Supported formats: B/KB/MB/GB/TB. Example : 5GB');
+    return 10000000000;
+  }
+
+  return parseInt(numericPart * units[unit]);
+}
+
+
+defaultConfig.maximumSize = toBytes(defaultConfig.maximumSize);
 defaultConfig.jackett.host = correctAndValidateURL(defaultConfig.jackett.host);
 
 module.exports = defaultConfig;

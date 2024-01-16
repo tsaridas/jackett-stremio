@@ -35,7 +35,7 @@ The below options can be set as an evironment variable.
 | `RESPONSE_TIMEOUT` | 12000 | `8000` | This will timeout any queries to jackett after this given value in millisecond. The higher the most result you will get |
 | `PORT` | 7000 | `8888` | The port which the Addon service will run on. |
 | `MIN_SEED` | 3 | `10` | The minimum amount of seeds we should return results for. |
-| `MAX_SIZE` | 10000000000 | `5000000000` | Maximum size of the results we want to receive. Value is in Bytes. Default is 10GB.  |
+| `MAX_SIZE` | 10GB | `5GB` | Maximum size of the results we want to receive. Value is in Bytes. Default is 10GB. Supported formats: B/KB/MB/GB/TB . |
 | `MAX_QUEUE_SIZE` | 100 | `200` | Maximum amount queries we want to have parallel. |
 | `JACKETT_HOST` | http://127.0.0.1:9117/ | `http://10.10.10.1:9117/` | Your Jackett host. Make sure there is a / in the end and its a valid url. |
 | `JACKETT_RTIMEOUT` | 10000 | `20000` | Jackett http read timeout in millisecond. |
@@ -103,5 +103,4 @@ Add `http://{{ YOUR IP }}:7000/{{my-jackett-key}}/manifest.json` (replace `{{my-
 - Add a list of known trackers to all InfoHashes.
 - Add blacklisted trackers.
 - Increase versions of npm modules.
-- Add option for user to specify max limit in MB/GB etc.
 - Update README for better understanding how to install.
