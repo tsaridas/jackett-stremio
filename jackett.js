@@ -140,7 +140,7 @@ const search = (apiKey, query, cb, end) => {
 							newObj.jackettDate = new Date(tempObj.pubDate).getTime();
 
 						newObj.from = indexer.attributes.id;
-						
+
 						newObj.extraTag = helper.extraTag(newObj.title, query.name);
 
 						if (newObj.seeders > maxSeeder.number) {
