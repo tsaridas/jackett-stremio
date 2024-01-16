@@ -44,7 +44,11 @@ The below options can be set as an evironment variable.
 | `SEARCH_BY_TYPE` | false | `true` | We search by movie or tvshow instead of default free search. |
 | `INTERVAL` | 100 | `400` | How often to check in miliseconds if we should return results based on user's timeout. |
 | `DOWNLOAD_TORRENT_QUEUE` | 5 | `100` | Because external http downloads go through Jackett doing many downloads at the same time might cause some DDOS so I setup a queue for this. |
-| `ADD_BEST_TRACKERS` | false | `true` | We download a list of best trackers from [Best Trackers](https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt) and add them to all torrents found |
+| `ADD_BEST_TRACKERS` | true | `` | We download a list of best trackers from [Best Trackers](https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt) and add them to all torrents found |
+| `ADD_RUSSIAN_TRACKERS` | true | `` | We add some Russian trackers. |
+| `ADD_EXTRA_TRACKERS` | true | `` | We add some extra trackers. |
+
+
 
 ## Builds
 

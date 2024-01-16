@@ -9,15 +9,11 @@ const addon = express();
 const jackettApi = require('./jackett');
 const helper = require('./helpers');
 const config = require('./config');
-const { getBestTrackers } = require('./trackers');
+const { getTrackers } = require('./trackers');
 
 const version = require('./package.json').version;
 
-global.bestTrackers = [];
-
-function unique(array) {
-    return Array.from(new Set(array));
-}
+global.Trackers = [];
 
 const respond = (res, data) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -106,7 +102,7 @@ const streamFromMagnet = (tor, parsedTorrent, params, cb) => {
             quality = match[0];
         }
         
-        const trackers = unique([].concat(parsed.announce).concat(global.bestTrackers));
+        const trackers = helper.unique([].concat(parsed.announce).concat(global.bestTrackers));
 
         cb({
             name: "Jackett " + quality,
@@ -250,12 +246,9 @@ const runAddon = async () => {
 
     config.addonPort = await getPort({ port: config.addonPort });
 
-    if (config.addBestTrackers) {
-        global.bestTrackers = await getBestTrackers();
-    }
-
     console.log(config);
 
+    global.Trackers = await getTrackers();
 
     addon.listen(config.addonPort, () => {
 
