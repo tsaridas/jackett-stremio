@@ -2,7 +2,7 @@ const { URL } = require('url');
 
 const defaultConfig = {
 
-  "interval": process.env.INTERVAL || 100,
+  "interval": parseInt(process.env.INTERVAL) || 500,
 
   "addBestTrackers": process.env.ADD_BEST_TRACKERS || true,
 
@@ -20,19 +20,19 @@ const defaultConfig = {
 
   "minimumSeeds": parseInt(process.env.MIN_SEED) || 3,
 
-  "maximumResults": process.env.MAX_RESULTS || 10,
+  "maximumResults": parseInt(process.env.MAX_RESULTS) || 10,
 
   "maximumSize": parseInt(process.env.MAX_SIZE) || 5000000000, // 5GB
 
-  "downloadTorrentQueue": process.env.DOWNLOAD_TORRENT_QUEUE || 5,
+  "downloadTorrentQueue": parseInt(process.env.DOWNLOAD_TORRENT_QUEUE) || 5,
 
   "jackett": {
 
     "host": process.env.JACKETT_HOST || "http://127.0.0.1:9117/",
 
-    "readTimeout": process.env.JACKETT_RTIMEOUT || 10000,
+    "readTimeout": parseInt(process.env.JACKETT_RTIMEOUT) || 10000,
 
-    "openTimeout": process.env.JACKETT_OTIMEOUT || 5000
+    "openTimeout": parseInt(process.env.JACKETT_OTIMEOUT) || 5000
 
   }
 }
