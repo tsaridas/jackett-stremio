@@ -126,32 +126,31 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
 
     config.debug && console.log("Received request for :", req.params.type, req.params.id);
 
-    let finished = false;
+    let searchFinished = false;
+    let requestSent = false;
     const streams = [];
 
     const startTime = Date.now();
     const intervalId = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
 
-        if (elapsedTime >= config.responseTimeout || finished) {
-            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + ". Finished: " + finished)
+        if (elapsedTime >= config.responseTimeout || searchFinished ) {
+            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + ". Finished Searching: " + searchFinished)
             clearInterval(intervalId);
-            finished = true;
+            requestSent = true;
             respond(res, { streams: streams });
 
         }
     }, config.interval);
 
     const respondStreams = async (results) => {
-
         if (results && results.length) {
-
             let tempResults = results;
             tempResults = tempResults.sort((a, b) => b.seeders - a.seeders);
             config.debug && console.log("Sorted Streams are ", tempResults.length);
 
             const processMagnets = async (task) => {
-                if (finished) { // Check the flag before processing each task
+                if (requestSent) { // Check the flag before processing each task
                     return;
                 }
                 const uri = task.magneturl || task.link;
@@ -164,7 +163,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                 });
             }
             const processLinks = async (task) => {
-                if (finished) { // Check the flag before processing each task
+                if (requestSent) { // Check the flag before processing each task
                     return;
                 }
                 config.debug && console.log("Processing link", task.link);
@@ -227,7 +226,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
 
                 (tempResults) => {
                     config.debug && console.log("Received all results.", tempResults);
-                    finished = true;
+                    searchFinished = true;
                 });
 
 
