@@ -147,14 +147,14 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
         if (results && results.length) {
             let tempResults = results;
             tempResults = tempResults.sort((a, b) => b.seeders - a.seeders);
-            config.debug && console.log("Sorted Streams are ", tempResults.length);
+            config.debug && console.log("Sorted searches are : ", tempResults.length);
 
             const processMagnets = async (task) => {
                 if (requestSent) { // Check the flag before processing each task
                     return;
                 }
                 const uri = task.magneturl || task.link;
-                config.debug && console.log("Parsing magnet", uri);
+                config.debug && console.log("Parsing magnet : ", uri);
                 const parsedTorrent = parseTorrent(uri);
                 streamFromMagnet(task, parsedTorrent, req.params, stream => {
                     if (stream) {
@@ -166,7 +166,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                 if (requestSent) { // Check the flag before processing each task
                     return;
                 }
-                config.debug && console.log("Processing link", task.link);
+                config.debug && console.log("Processing link ", task.link);
                 needle('get', task.link, {
                     open_timeout: 5000,
                     read_timeout: 10000,
@@ -176,10 +176,10 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                         if (response.headers.location.startsWith("magnet:")) {
                             task.magneturl = response.headers.location;
                             task.link = response.headers.location;
-                            config.debug && console.log("Sending magnet task for process", task.magneturl);
+                            config.debug && console.log("Sending magnet task for process : ", task.magneturl);
                             processMagnets(task);
                         } else {
-                            config.debug && console.log("Not a magnet link", response.headers.location);
+                            config.debug && console.log("Not a magnet link : ", response.headers.location);
                         }
                     }
                 }).catch(function (err) {
@@ -220,12 +220,12 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
             jackettApi.search(req.params.jackettKey, searchQuery,
 
                 (tempResults) => {
-                    config.debug && console.log("Received partial " + tempResults.length + " partial results.");
+                    config.debug && console.log("Received " + tempResults.length + " partial results.");
                     respondStreams(tempResults);
                 },
 
-                (tempResults) => {
-                    config.debug && console.log("Received all results.", tempResults);
+                () => {
+                    config.debug && console.log("Received all search results.");
                     searchFinished = true;
                 });
 
