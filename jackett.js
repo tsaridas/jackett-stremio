@@ -52,9 +52,9 @@ const search = (apiKey, query, cb, end) => {
 			const cat = query.type && query.type == 'movie' ? 2000 : 5000;
 			searchQuery = '&t=search&cat=' + cat + '&q=' + simpleName;
 			if (query.season && query.episode) {
-				searchQuery += ' ' + helper.episodeTag(query.season, query.episode);
+				searchQuery += '%20' + helper.episodeTag(query.season, query.episode);
 			} else {
-				searchQuery += ' ' + query.year;
+				searchQuery += '%20' + query.year;
 			}
 		}
 
