@@ -25,8 +25,10 @@ const helper = {
     },
 
     simpleName: (name) => {
-        name = name.replace(/\.|_|-|–|\(|\)|\[|\]|:|,/g, ' ');
+
+        name = name.replace(/\.|_|\-|\–|\(|\)|\[|\]|\:|\,/g, ' ');
         name = name.replace(/\s+/g, ' ');
+        name = name.replace(/'/g, '');
         name = name.replace(/\\\\/g, '\\').replace(/\\\\\'|\\\'|\\\\\"|\\\"/g, '');
         name = encodeURIComponent(name);
         return name;
@@ -64,7 +66,7 @@ const helper = {
         const foundPart = name.toLowerCase().indexOf(extraParts[0].toLowerCase());
 
         if (foundPart > -1) {
-            extraTag = name.substr(foundPart).replace(/_|\(|\)|\[|\]|,/g, ' ');
+            extraTag = name.substr(foundPart).replace(/_|\(|\)|\[|\]|\,/g, ' ');
 
             if ((extraTag.match(/\./g) || []).length > 1) {
                 extraTag = extraTag.replace(/\./g, ' ');

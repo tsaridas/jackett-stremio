@@ -45,7 +45,7 @@ const search = (apiKey, query, cb, end) => {
 			if (query.season && query.episode) {
 				searchQuery = '&t=' + searchType + '&q=' + simpleName + '&season=' + query.season + '&ep=' + query.episode;
 			} else {
-				let year = (query.year) ? '&year=' + query.year : '';
+				const year = (query.year) ? '&year=' + query.year : '';
 				searchQuery = '&t=' + searchType + '&q=' + simpleName + year;
 			}
 		} else {
@@ -115,16 +115,6 @@ const search = (apiKey, query, cb, end) => {
 								newObj[ofInterestElm] = tempObj[ofInterestElm];
 						});
 
-						if (newObj.magneturl && newObj.magneturl.startsWith("magnet:") && (newObj.link && newObj.link.startsWith("http://"))) {
-							config.debug && console.log("Found magneturl " + newObj.magneturl + " and link " + newObj.link);
-							newObj.link = newObj.magneturl;
-						}
-
-						if (newObj.link && newObj.link.startsWith("magnet:") && !newObj.magneturl) {
-							config.debug && console.log("Found missing magneturl: " + newObj.link);
-							newObj.magneturl = newObj.link;
-						}
-
 						const toInt = ['seeders', 'peers', 'size', 'files'];
 
 						toInt.forEach(toIntElm => {
@@ -134,6 +124,16 @@ const search = (apiKey, query, cb, end) => {
 
 						if (newObj.seeders < config.minimumSeeds || newObj.size > config.maximumSize) {
 							return;
+						}
+						
+						if (newObj.magneturl && newObj.magneturl.startsWith("magnet:") && (newObj.link && newObj.link.startsWith("http://"))) {
+							config.debug && console.log("Found magneturl " + newObj.magneturl + " and link " + newObj.link);
+							newObj.link = newObj.magneturl;
+						}
+
+						if (newObj.link && newObj.link.startsWith("magnet:") && !newObj.magneturl) {
+							config.debug && console.log("Found missing magneturl: " + newObj.link);
+							newObj.magneturl = newObj.link;
 						}
 
 						if (tempObj.pubDate)
