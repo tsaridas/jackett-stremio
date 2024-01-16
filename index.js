@@ -213,7 +213,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
     config.debug && console.log("Cinemata url", url);
     needle.get(url, { follow: 1 }, (err, resp, body) => {
         if (!err && body && body.meta && body.meta.name) {
-            const year = (body.meta.year) ? body.meta.year.replace(/-$/, '') : (body.meta.releaseInfo) ? body.meta.releaseInfo.replace(/-$/, '') : '';
+            const year = (body.meta.year) ? body.meta.year.replace(/-/, '') : (body.meta.releaseInfo) ? body.meta.releaseInfo.replace(/-/, '') : '';
 
             const searchQuery = {
                 name: body.meta.name,
@@ -221,13 +221,17 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                 year: year,
             };
 
-            console.log(`Looking for title: ${body.meta.name} - type: ${req.params.type} - year: ${year}.`);
-
             if (idParts.length == 3) {
                 searchQuery.season = idParts[1];
                 searchQuery.episode = idParts[2];
+                console.log(`Looking for title: ${body.meta.name} - type: ${req.params.type} - year: ${year} - season: ${searchQuery.season} - episode: ${searchQuery.episode}.`);
+            } else {
+                console.log(`Looking for title: ${body.meta.name} - type: ${req.params.type} - year: ${year}.`);
+            
             }
 
+            console.log(`Looking for title: ${body.meta.name} - type: ${req.params.type} - year: ${year}.`);
+            
             jackettApi.search(req.params.jackettKey, searchQuery,
 
                 partialResponse = (tempResults) => {
