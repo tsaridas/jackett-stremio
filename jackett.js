@@ -39,7 +39,8 @@ const search = (apiKey, query, cb, end) => {
 		let countFinished = 0;
 		let maxSeeder = { number: 0, indexer: "" };
 
-		const simpleName = helper.simpleName(query.name);
+		const simpleName = encodeURIComponent(helper.simpleName(query.name));
+		
 		if (config.searchByType) {
 			const searchType = query.type && query.type == 'movie' ? "movie" : "tvsearch";
 			if (query.season && query.episode) {

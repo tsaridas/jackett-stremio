@@ -7,11 +7,13 @@ const express = require('express');
 const addon = express();
 
 const jackettApi = require('./jackett');
+const helper = require('./helpers');
 const config = require('./config');
-
-console.log(config);
+const { getTrackers } = require('./trackers');
 
 const version = require('./package.json').version;
+
+global.Trackers = [];
 
 const respond = (res, data) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -22,23 +24,8 @@ const respond = (res, data) => {
     const slicedData = sortedData.slice(0, config.maximumResults)
     config.debug && console.log("Sliced & Sorted data ", slicedData);
 
-    const ret = { "streams": slicedData };
-    res.send(ret);
+    res.send({ "streams": slicedData });
 };
-
-function toHomanReadable(bytes) {
-    if (Math.abs(bytes) < 1024) { return bytes + ' B'; }
-
-    const units = ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-
-    let i = -1;
-    do {
-        bytes /= 1024;
-        ++i;
-    } while (Math.abs(bytes) >= 1024 && i < units.length - 1);
-
-    return bytes.toFixed(1) + " " + units[i];
-}
 
 async function partitionURLAsync(list) {
     const results = await Promise.all(
@@ -105,7 +92,7 @@ const streamFromMagnet = (tor, parsedTorrent, params, cb) => {
         const infoHash = parsed.infoHash.toLowerCase();
 
         let title = tor.title || parsed.name;
-        const subtitle = `👤 ${tor.seeders}/${tor.peers}  💾 ${toHomanReadable(tor.size)}  ⚙️  ${tor.from}`;
+        const subtitle = `👤 ${tor.seeders}/${tor.peers}  💾 ${helper.toHomanReadable(tor.size)}  ⚙️  ${tor.from}`;
 
         title += (title.indexOf('\n') > -1 ? '\r\n' : '\r\n\r\n') + subtitle;
         const regex = /DLRip|HDTV|\b(DivX|XviD)\b|\b(?:DL|WEB|BD|BR)MUX\b|\bWEB-?Rip\b|\bWEB-?DL\b|\bBluray\b|\bVHSSCR\b|\bR5\b|\bPPVRip\b|\bTC\b|\b(?:HD-?)?TVRip\b|\bDVDscr\b|\bDVD(?:R[0-9])?\b|\bDVDRip\b|\bBDRip\b|\bBRRip\b|\bHD-?Rip\b|\b(?:HD-?)?T(?:ELE)?S(?:YNC)?\b|\b(?:HD-?)?CAM\b|(4k)|([0-9]{3,4}[pi])/i;
@@ -114,6 +101,8 @@ const streamFromMagnet = (tor, parsedTorrent, params, cb) => {
         if (match !== null) {
             quality = match[0];
         }
+        
+        const trackers = helper.unique([].concat(parsed.announce).concat(global.Trackers));
 
         cb({
             name: "Jackett " + quality,
@@ -121,7 +110,7 @@ const streamFromMagnet = (tor, parsedTorrent, params, cb) => {
             type: params.type,
             infoHash: infoHash,
             seeders: tor.seeders,
-            sources: (parsed.announce || []).map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]),
+            sources: trackers.map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]),
             title: title
         });
     };
@@ -137,36 +126,35 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
 
     config.debug && console.log("Received request for :", req.params.type, req.params.id);
 
-    let finished = false;
-    let streams = [];
+    let searchFinished = false;
+    let requestSent = false;
+    const streams = [];
 
-    let startTime = Date.now();
+    const startTime = Date.now();
     const intervalId = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
 
-        if (elapsedTime >= config.responseTimeout || finished) {
-            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + ". Finished: " + finished)
+        if (elapsedTime >= config.responseTimeout || searchFinished ) {
+            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + ". Finished Searching: " + searchFinished)
             clearInterval(intervalId);
-            finished = true;
+            requestSent = true;
             respond(res, { streams: streams });
 
         }
     }, config.interval);
 
     const respondStreams = async (results) => {
-
         if (results && results.length) {
-
             let tempResults = results;
             tempResults = tempResults.sort((a, b) => b.seeders - a.seeders);
-            config.debug && console.log("Sorted Streams are ", tempResults.length);
+            config.debug && console.log("Sorted searches are : ", tempResults.length);
 
             const processMagnets = async (task) => {
-                if (finished) { // Check the flag before processing each task
+                if (requestSent) { // Check the flag before processing each task
                     return;
                 }
                 const uri = task.magneturl || task.link;
-                config.debug && console.log("Parsing magnet", uri);
+                config.debug && console.log("Parsing magnet : ", uri);
                 const parsedTorrent = parseTorrent(uri);
                 streamFromMagnet(task, parsedTorrent, req.params, stream => {
                     if (stream) {
@@ -175,10 +163,10 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                 });
             }
             const processLinks = async (task) => {
-                if (finished) { // Check the flag before processing each task
+                if (requestSent) { // Check the flag before processing each task
                     return;
                 }
-                config.debug && console.log("Processing link", task.link);
+                config.debug && console.log("Processing link ", task.link);
                 needle('get', task.link, {
                     open_timeout: 5000,
                     read_timeout: 10000,
@@ -188,10 +176,10 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                         if (response.headers.location.startsWith("magnet:")) {
                             task.magneturl = response.headers.location;
                             task.link = response.headers.location;
-                            config.debug && console.log("Sending magnet task for process", task.magneturl);
+                            config.debug && console.log("Sending magnet task for process : ", task.magneturl);
                             processMagnets(task);
                         } else {
-                            config.debug && console.log("Not a magnet link", response.headers.location);
+                            config.debug && console.log("Not a magnet link : ", response.headers.location);
                         }
                     }
                 }).catch(function (err) {
@@ -228,17 +216,17 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
             } else {
                 console.log(`Looking for title: ${body.meta.name} - type: ${req.params.type} - year: ${year}.`);
             }
-            
+
             jackettApi.search(req.params.jackettKey, searchQuery,
 
                 (tempResults) => {
-                    config.debug && console.log("Received partial " + tempResults.length + " partial results.");
+                    config.debug && console.log("Received " + tempResults.length + " partial results.");
                     respondStreams(tempResults);
                 },
 
-                (tempResults) => {
-                    config.debug && console.log("Received all results.", tempResults);
-                    finished = true;
+                () => {
+                    config.debug && console.log("Received all search results.");
+                    searchFinished = true;
                 });
 
 
@@ -253,18 +241,13 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
 
 });
 
-if (process && process.argv)
-    process.argv.forEach((cmdLineArg) => {
-        if (cmdLineArg == '-v') {
-            // version check
-            console.log('v' + version);
-            process.exit();
-        }
-    });
-
 const runAddon = async () => {
 
     config.addonPort = await getPort({ port: config.addonPort });
+
+    console.log(config);
+
+    global.Trackers = await getTrackers();
 
     addon.listen(config.addonPort, () => {
 

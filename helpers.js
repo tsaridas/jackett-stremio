@@ -3,6 +3,24 @@ const videoNameParser = require('video-name-parser');
 const ticker = {};
 
 const helper = {
+    unique: (array) => {
+        return Array.from(new Set(array));
+    },
+
+    toHomanReadable: (bytes) => {
+        if (Math.abs(bytes) < 1024) { return bytes + ' B'; }
+
+        const units = ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+        let i = -1;
+        do {
+            bytes /= 1024;
+            ++i;
+        } while (Math.abs(bytes) >= 1024 && i < units.length - 1);
+
+        return bytes.toFixed(1) + " " + units[i];
+    },
+
     isObject: (s) => {
         return (s !== null && typeof s === 'object');
     },
@@ -26,11 +44,11 @@ const helper = {
 
     simpleName: (name) => {
 
-        name = name.replace(/\.|_|\-|\–|\(|\)|\[|\]|\:|\,/g, ' ');
+        name = name.replace(/\.|_|-|–|\(|\)|\[|\]|:|,/g, ' ');
         name = name.replace(/\s+/g, ' ');
         name = name.replace(/'/g, '');
-        name = name.replace(/\\\\/g, '\\').replace(/\\\\\'|\\\'|\\\\\"|\\\"/g, '');
-        name = encodeURIComponent(name);
+        name = name.replace(/\\\\/g, '\\').replace(/\\\\'|\\'|\\\\"|\\"/g, '');
+        
         return name;
     },
 
@@ -66,7 +84,7 @@ const helper = {
         const foundPart = name.toLowerCase().indexOf(extraParts[0].toLowerCase());
 
         if (foundPart > -1) {
-            extraTag = name.substr(foundPart).replace(/_|\(|\)|\[|\]|\,/g, ' ');
+            extraTag = name.substr(foundPart).replace(/_|\(|\)|\[|\]|,/g, ' ');
 
             if ((extraTag.match(/\./g) || []).length > 1) {
                 extraTag = extraTag.replace(/\./g, ' ');
