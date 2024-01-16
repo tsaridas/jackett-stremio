@@ -93,6 +93,9 @@ Add `http://{{ YOUR IP }}:7000/{{my-jackett-key}}/manifest.json` (replace `{{my-
 
 - Add caching headers.
 - Remove duplicate hashes that come from different indexers.
+- Add your own trackers config.
+- Add a list of known trackers to all InfoHashes.
+- Add blacklisted trackers.
 - Increase versions of npm modules.
 - Add option for user to specify max limit in MB/GB etc.
 - Update README for better understanding how to install.

@@ -19,8 +19,8 @@ const respond = (res, data) => {
     res.setHeader('Content-Type', 'application/json');
 
     const sortedData = data.streams.sort((a, b) => b.seeders - a.seeders);
-    slicedData = sortedData.slice(0, config.maximumResults)
-    config.debug && console.log("Sorted data ", slicedData);
+    const slicedData = sortedData.slice(0, config.maximumResults)
+    config.debug && console.log("Sliced & Sorted data ", slicedData);
 
     const ret = { "streams": slicedData };
     res.send(ret);
@@ -231,13 +231,13 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
             
             jackettApi.search(req.params.jackettKey, searchQuery,
 
-                partialResponse = (tempResults) => {
+                (tempResults) => {
                     config.debug && console.log("Received partial " + tempResults.length + " partial results.");
                     respondStreams(tempResults);
                 },
 
-                endResponse = (tempResults) => {
-                    config.debug && console.log("Received all results.");
+                (tempResults) => {
+                    config.debug && console.log("Received all results.", tempResults);
                     finished = true;
                 });
 
