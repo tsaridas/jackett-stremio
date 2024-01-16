@@ -30,7 +30,7 @@ const helper = {
             'YB': 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
         };
     
-        if (!units.hasOwnProperty(unit)) {
+        if (Object.prototype.hasOwnProperty.call(units, unit)) {
             throw new Error('Invalid unit in human-readable size');
         }
     

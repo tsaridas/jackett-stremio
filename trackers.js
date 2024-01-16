@@ -3,7 +3,7 @@ const config = require('./config');
 const helper = require('./helpers');
 
 const trackerURL = "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt";
-const TRACKERS = [];
+let TRACKERS = [];
 
 const EXTRA_TRACKERS = [
     "udp://47.ip-51-68-199.eu:6969/announce",
@@ -53,15 +53,15 @@ const getBestTrackers = async () => {
 const getTrackers = async () => {
     if (config.addBestTrackers) {
         const bestTrackers = await getBestTrackers();
-        helper.unique(TRACKERS.concat(bestTrackers));
+        TRACKERS = helper.unique(TRACKERS.concat(bestTrackers));
     }
 
     if (config.addRussianTrackers) {
-        helper.unique(TRACKERS.concat(RUSSIAN_TRACKERS));
+        TRACKERS = helper.unique(TRACKERS.concat(RUSSIAN_TRACKERS));
     }
 
     if (config.addExtraTrackers) {
-        helper.unique(TRACKERS.concat(EXTRA_TRACKERS));
+        TRACKERS = helper.unique(TRACKERS.concat(EXTRA_TRACKERS));
     }
     console.log(`Loading ${TRACKERS.length} trackers.`);
     return TRACKERS;
