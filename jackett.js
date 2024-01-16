@@ -132,11 +132,15 @@ const search = (apiKey, query, cb, end) => {
 								newObj[toIntElm] = parseInt(tempObj[toIntElm]);
 						});
 
+						if (newObj.seeders < config.minimumSeeds || newObj.size > config.maximumSize) {
+							return;
+						}
+
 						if (tempObj.pubDate)
 							newObj.jackettDate = new Date(tempObj.pubDate).getTime();
 
 						newObj.from = indexer.attributes.id;
-
+						
 						newObj.extraTag = helper.extraTag(newObj.title, query.name);
 
 						if (newObj.seeders > maxSeeder.number) {
@@ -149,7 +153,7 @@ const search = (apiKey, query, cb, end) => {
 				});
 				countResults += tempResults.length;
 				countFinished++;
-				console.log("Found " + countResults + " so far from overall " + apiIndexers.length + " indexers " + countFinished + " finished. MaxSeeder: " + maxSeeder.number + " from " + maxSeeder.indexer + " Object " + JSON.stringify(maxSeeder.obj, null, 2));
+				config.debug && console.log("Found " + countResults + " so far from overall " + apiIndexers.length + " indexers " + countFinished + " finished. MaxSeeder: " + maxSeeder.number + " from " + maxSeeder.indexer + " Object " + JSON.stringify(maxSeeder.obj, null, 2));
 				cb(tempResults);
 			}
 			tick();
