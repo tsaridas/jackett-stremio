@@ -37,9 +37,6 @@ const RUSSIAN_TRACKERS = [
 ];
 
 const getBestTrackers = async () => {
-
-
-
     const response = await needle('get', trackerURL, {
         open_timeout: 5000,
         read_timeout: 10000,
@@ -48,10 +45,9 @@ const getBestTrackers = async () => {
 
     if (response && response.headers && response.body) {
         const trackers = response.body.split('\n').filter(line => line.trim() !== '');
-        console.log(`Found ${trackers.length} best trackers.`);
+        config.debug && console.log(`Downloaded ${trackers.length} trackers.`);
         return trackers;
     }
-
 };
 
 const getTrackers = async () => {
@@ -67,9 +63,9 @@ const getTrackers = async () => {
     if (config.addExtraTrackers) {
         helper.unique(TRACKERS.concat(EXTRA_TRACKERS));
     }
-
+    console.log(`Loading ${TRACKERS.length} trackers.`);
     return TRACKERS;
-        
+
 }
 
 

@@ -17,7 +17,8 @@ ENV SEARCH_BY_TYPE=
 ENV DEBUG=
 ENV DOWNLOAD_TORRENT_QUEUE=
 ENV ADD_BEST_TRACKERS=
-
+ENV ADD_RUSSIAN_TRACKERS=
+ENV ADD_EXTRA_TRACKERS=
 
 ARG VERSION=testing
 LABEL org.opencontainers.image.source=https://github.com/tsaridas/jackett-stremio

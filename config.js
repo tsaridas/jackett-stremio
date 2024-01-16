@@ -4,7 +4,11 @@ const defaultConfig = {
 
   "interval": process.env.INTERVAL || 100,
 
-  "addBestTrackers": process.env.ADD_BEST_TRACKERS || false,
+  "addBestTrackers": process.env.ADD_BEST_TRACKERS || true,
+
+  "addRussianTrackers": process.env.ADD_RUSSIAN_TRACKERS || true,
+
+  "addExtraTrackers": process.env.ADD_EXTRA_TRACKERS || true,
 
   "debug": process.env.DEBUG || false,
 

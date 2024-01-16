@@ -7,6 +7,36 @@ const helper = {
         return Array.from(new Set(array));
     },
 
+    toBytes: (humanSize) => {
+        const sizeRegex = /^(\d+(\.\d+)?)\s*([kKmMgGtTpPeEzZyY]?[bB]?)$/;
+        const match = humanSize.match(sizeRegex);
+    
+        if (!match) {
+            throw new Error('Invalid human-readable size format');
+        }
+    
+        const numericPart = parseFloat(match[1]);
+        const unit = match[3].toUpperCase();
+    
+        const units = {
+            'B': 1,
+            'KB': 1024,
+            'MB': 1024 * 1024,
+            'GB': 1024 * 1024 * 1024,
+            'TB': 1024 * 1024 * 1024 * 1024,
+            'PB': 1024 * 1024 * 1024 * 1024 * 1024,
+            'EB': 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
+            'ZB': 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
+            'YB': 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
+        };
+    
+        if (!units.hasOwnProperty(unit)) {
+            throw new Error('Invalid unit in human-readable size');
+        }
+    
+        return parseInt(numericPart * units[unit]);
+    },
+
     toHomanReadable: (bytes) => {
         if (Math.abs(bytes) < 1024) { return bytes + ' B'; }
 

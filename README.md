@@ -99,6 +99,7 @@ Add `http://{{ YOUR IP }}:7000/{{my-jackett-key}}/manifest.json` (replace `{{my-
 - Add caching headers.
 - Remove duplicate hashes that come from different indexers.
 - Add your own trackers config.
+- Resolve trackers and add cache for trackers ip addresses instead of sending FQDNs.
 - Add a list of known trackers to all InfoHashes.
 - Add blacklisted trackers.
 - Increase versions of npm modules.
