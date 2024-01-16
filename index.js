@@ -102,7 +102,7 @@ const streamFromMagnet = (tor, parsedTorrent, params, cb) => {
             quality = match[0];
         }
         
-        const trackers = helper.unique([].concat(parsed.announce).concat(global.bestTrackers));
+        const trackers = helper.unique([].concat(parsed.announce).concat(global.Trackers));
 
         cb({
             name: "Jackett " + quality,
