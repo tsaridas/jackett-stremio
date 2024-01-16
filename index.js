@@ -227,10 +227,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                 console.log(`Looking for title: ${body.meta.name} - type: ${req.params.type} - year: ${year} - season: ${searchQuery.season} - episode: ${searchQuery.episode}.`);
             } else {
                 console.log(`Looking for title: ${body.meta.name} - type: ${req.params.type} - year: ${year}.`);
-            
             }
-
-            console.log(`Looking for title: ${body.meta.name} - type: ${req.params.type} - year: ${year}.`);
             
             jackettApi.search(req.params.jackettKey, searchQuery,
 
