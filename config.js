@@ -6,7 +6,7 @@ const defaultConfig = {
 
   "addBestTrackers": process.env.ADD_BEST_TRACKERS || true,
 
-  "addRussianTrackers": process.env.ADD_RUSSIAN_TRACKERS || true,
+  "addRussianTrackers": process.env.ADD_RUSSIAN_TRACKERS || false,
 
   "addExtraTrackers": process.env.ADD_EXTRA_TRACKERS || true,
 
