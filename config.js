@@ -1,7 +1,10 @@
 const { URL } = require('url');
 
 const defaultConfig = {
+
   "interval": process.env.INTERVAL || 100,
+
+  "addBestTrackers": process.env.ADD_BEST_TRACKERS || false,
 
   "debug": process.env.DEBUG || false,
 
@@ -53,6 +56,6 @@ function correctAndValidateURL(input) {
   }
 }
 
-defaultConfig.jackett.host = correctAndValidateURL(defaultConfig.jackett.host)
+defaultConfig.jackett.host = correctAndValidateURL(defaultConfig.jackett.host);
 
-module.exports = defaultConfig
+module.exports = defaultConfig;

@@ -8,10 +8,15 @@ const addon = express();
 
 const jackettApi = require('./jackett');
 const config = require('./config');
-
-console.log(config);
+const { getBestTrackers } = require('./trackers');
 
 const version = require('./package.json').version;
+
+global.bestTrackers = [];
+
+function unique(array) {
+    return Array.from(new Set(array));
+}
 
 const respond = (res, data) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -22,8 +27,7 @@ const respond = (res, data) => {
     const slicedData = sortedData.slice(0, config.maximumResults)
     config.debug && console.log("Sliced & Sorted data ", slicedData);
 
-    const ret = { "streams": slicedData };
-    res.send(ret);
+    res.send({ "streams": slicedData });
 };
 
 function toHomanReadable(bytes) {
@@ -114,6 +118,7 @@ const streamFromMagnet = (tor, parsedTorrent, params, cb) => {
         if (match !== null) {
             quality = match[0];
         }
+        const trackers = unique([].concat(parsed.announce).concat(global.bestTrackers));
 
         cb({
             name: "Jackett " + quality,
@@ -121,7 +126,7 @@ const streamFromMagnet = (tor, parsedTorrent, params, cb) => {
             type: params.type,
             infoHash: infoHash,
             seeders: tor.seeders,
-            sources: (parsed.announce || []).map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]),
+            sources: trackers.map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]),
             title: title
         });
     };
@@ -138,9 +143,9 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
     config.debug && console.log("Received request for :", req.params.type, req.params.id);
 
     let finished = false;
-    let streams = [];
+    const streams = [];
 
-    let startTime = Date.now();
+    const startTime = Date.now();
     const intervalId = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
 
@@ -228,7 +233,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
             } else {
                 console.log(`Looking for title: ${body.meta.name} - type: ${req.params.type} - year: ${year}.`);
             }
-            
+
             jackettApi.search(req.params.jackettKey, searchQuery,
 
                 (tempResults) => {
@@ -253,18 +258,16 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
 
 });
 
-if (process && process.argv)
-    process.argv.forEach((cmdLineArg) => {
-        if (cmdLineArg == '-v') {
-            // version check
-            console.log('v' + version);
-            process.exit();
-        }
-    });
-
 const runAddon = async () => {
 
     config.addonPort = await getPort({ port: config.addonPort });
+
+    if (config.addBestTrackers) {
+        global.bestTrackers = await getBestTrackers();
+    }
+
+    console.log(config);
+
 
     addon.listen(config.addonPort, () => {
 
