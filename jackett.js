@@ -69,7 +69,7 @@ const search = (apiKey, query, cb, end) => {
 				return;
 			}
 
-			const url = config.jackett.host + 'api/v2.0/indexers/' + indexer.attributes.id + '/results/torznab/api?apikey=' + apiKey + encodeURI(searchQuery);
+			const url = config.jackett.host + 'api/v2.0/indexers/' + indexer.attributes.id + '/results/torznab/api?apikey=' + apiKey + searchQuery;
 			config.debug && console.log(`Searching indexer ${indexer.attributes.id} with url ${url}`);
 
 			const response = await new Promise((resolve) => {
@@ -120,13 +120,9 @@ const search = (apiKey, query, cb, end) => {
 							newObj.link = newObj.magneturl;
 						}
 
-						if (newObj.link && newObj.link.startsWith("magnet:") && ! newObj.magneturl) {
+						if (newObj.link && newObj.link.startsWith("magnet:") && !newObj.magneturl) {
 							config.debug && console.log("Found missing magneturl: " + newObj.link);
 							newObj.magneturl = newObj.link;
-						}
-
-						if (!newObj.magneturl || (newObj.link && !newObj.link.startsWith("magnet:"))) {
-							return;
 						}
 
 						const toInt = ['seeders', 'peers', 'size', 'files'];

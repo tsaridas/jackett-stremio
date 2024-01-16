@@ -40,6 +40,26 @@ function toHomanReadable(bytes) {
     return bytes.toFixed(1) + " " + units[i];
 }
 
+async function partitionURLAsync(list) {
+    const results = await Promise.all(
+        list.map(async (item) => {
+            if ('magneturl' in item && item.magneturl && item.magneturl.startsWith("magnet:")) {
+                return { magnets: [item], links: [] };
+            } else {
+                return { magnets: [], links: [item] };
+            }
+        })
+    );
+
+    return results.reduce(
+        (acc, result) => ({
+            magnets: acc.magnets.concat(result.magnets),
+            links: acc.links.concat(result.links),
+        }),
+        { magnets: [], links: [] }
+    );
+}
+
 const manifest = {
     "id": "org.stremio.jackett",
     "version": version,
@@ -125,7 +145,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
         const elapsedTime = Date.now() - startTime;
 
         if (elapsedTime >= config.responseTimeout || finished) {
-            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + ". Finished: "+ finished)
+            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + ". Finished: " + finished)
             clearInterval(intervalId);
             finished = true;
             respond(res, { streams: streams });
@@ -154,7 +174,35 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                     }
                 });
             }
-            await Promise.all(tempResults.map(processMagnets));
+            const processLinks = async (task) => {
+                if (finished) { // Check the flag before processing each task
+                    return;
+                }
+                config.debug && console.log("Processing link", task.link);
+                needle('get', task.link, {
+                    open_timeout: 5000,
+                    read_timeout: 10000,
+                    parse_response: false
+                }).then(function (response) {
+                    if (response && response.headers && response.headers.location) {
+                        if (response.headers.location.startsWith("magnet:")) {
+                            task.magneturl = response.headers.location;
+                            task.link = response.headers.location;
+                            config.debug && console.log("Sending magnet task for process", task.magneturl);
+                            processMagnets(task);
+                        } else {
+                            config.debug && console.log("Not a magnet link", response.headers.location);
+                        }
+                    }
+                }).catch(function (err) {
+                    console.log('Error when following URL for torrent task.', err)
+                })
+            };
+
+            const { magnets, links } = await partitionURLAsync(tempResults);
+            const asyncQueue = async.queue(processLinks, config.downloadTorrentQueue);
+            links.forEach(item => asyncQueue.push(item));
+            await Promise.all([...magnets.map(processMagnets)]);
         }
     };
 
@@ -165,7 +213,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
     config.debug && console.log("Cinemata url", url);
     needle.get(url, { follow: 1 }, (err, resp, body) => {
         if (!err && body && body.meta && body.meta.name) {
-            const year = (body.meta.year) ? body.meta.year.replace(/-$/, '') : (body.meta.releaseInfo) ? body.meta.releaseInfo.replace(/-$/, '') : '';
+            const year = (body.meta.year) ? body.meta.year.match(/\b\d{4}\b/) : (body.meta.releaseInfo) ? body.meta.releaseInfo.match(/\b\d{4}\b/) : ''
 
             const searchQuery = {
                 name: body.meta.name,
@@ -173,13 +221,14 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                 year: year,
             };
 
-            console.log(`Looking for title: ${body.meta.name} - type: ${req.params.type} - year: ${year}.`);
-
             if (idParts.length == 3) {
                 searchQuery.season = idParts[1];
                 searchQuery.episode = idParts[2];
+                console.log(`Looking for title: ${body.meta.name} - type: ${req.params.type} - year: ${year} - season: ${searchQuery.season} - episode: ${searchQuery.episode}.`);
+            } else {
+                console.log(`Looking for title: ${body.meta.name} - type: ${req.params.type} - year: ${year}.`);
             }
-
+            
             jackettApi.search(req.params.jackettKey, searchQuery,
 
                 partialResponse = (tempResults) => {

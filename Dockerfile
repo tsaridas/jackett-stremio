@@ -15,6 +15,16 @@ ENV JACKETT_RTIMEOUT=
 ENV JACKETT_OTIMEOUT=
 ENV SEARCH_BY_TYPE=
 ENV DEBUG=
+ENV DOWNLOAD_TORRENT_QUEUE=
+
+
+ARG VERSION=testing
+LABEL org.opencontainers.image.source=https://github.com/tsaridas/jackett-stremio
+LABEL org.opencontainers.image.description="Jackett Local Addon for Stremio"
+LABEL org.opencontainers.image.licenses=MIT
+LABEL version=${VERSION}
+
+
 
 COPY . .
 RUN apk update && apk upgrade && rm -rf /var/cache/apk/*

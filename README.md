@@ -43,6 +43,7 @@ The below options can be set as an evironment variable.
 | `DEBUG` | false | `true` | Spam your terminal with info about requests being made. |
 | `SEARCH_BY_TYPE` | false | `true` | We search by movie or tvshow instead of default free search. |
 | `INTERVAL` | 100 | `400` | How often to check in miliseconds if we should return results based on user's timeout. |
+| `DOWNLOAD_TORRENT_QUEUE` | 5 | `100` | Because external http downloads go through Jackett doing many downloads at the same time might cause some DDOS so I setup a queue for this. |
 
 ## Builds
 
@@ -90,9 +91,8 @@ Add `http://{{ YOUR IP }}:7000/{{my-jackett-key}}/manifest.json` (replace `{{my-
 
 ### ToDo
 
-- Add caching headers
-- Add fileIdx if possible for series
-- Add better searching for series
-- Increase versions of npm modules
+- Add caching headers.
+- Remove duplicate hashes that come from different indexers.
+- Increase versions of npm modules.
 - Add option for user to specify max limit in MB/GB etc.
 - Update README for better understanding how to install.

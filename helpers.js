@@ -30,6 +30,7 @@ const helper = {
         name = name.replace(/\s+/g, ' ');
         name = name.replace(/'/g, '');
         name = name.replace(/\\\\/g, '\\').replace(/\\\\\'|\\\'|\\\\\"|\\\"/g, '');
+        name = encodeURIComponent(name);
         return name;
     },
 
