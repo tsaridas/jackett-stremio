@@ -120,7 +120,7 @@ const search = (apiKey, query, cb, end) => {
 							newObj.link = newObj.magneturl;
 						}
 
-						if (newObj.link && newObj.link.startsWith("magnet:") && ! newObj.magneturl) {
+						if (newObj.link && newObj.link.startsWith("magnet:") && !newObj.magneturl) {
 							config.debug && console.log("Found missing magneturl: " + newObj.link);
 							newObj.magneturl = newObj.link;
 						}
@@ -149,7 +149,7 @@ const search = (apiKey, query, cb, end) => {
 				});
 				countResults += tempResults.length;
 				countFinished++;
-				config.debug && console.log("Found " + countResults + " so far from overall " + apiIndexers.length + " indexers " + countFinished + " finished. MaxSeeder: " + maxSeeder.number + " from " + maxSeeder.indexer + " Object " + JSON.stringify(maxSeeder.obj, null, 2));
+				console.log("Found " + countResults + " so far from overall " + apiIndexers.length + " indexers " + countFinished + " finished. MaxSeeder: " + maxSeeder.number + " from " + maxSeeder.indexer + " Object " + JSON.stringify(maxSeeder.obj, null, 2));
 				cb(tempResults);
 			}
 			tick();

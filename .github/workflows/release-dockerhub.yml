@@ -35,7 +35,7 @@ jobs:
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
           git add package.json
-          git commit -m "Update version to $new_version"
+          git commit -m "Update version to $NEWVERSION"
           git push
   build:
     runs-on: ubuntu-latest
