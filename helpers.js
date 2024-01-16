@@ -4,7 +4,7 @@ const ticker = {};
 
 const helper = {
 
-    toHomanReadable: (bytes) {
+    toHomanReadable: (bytes) => {
         if (Math.abs(bytes) < 1024) { return bytes + ' B'; }
 
         const units = ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];

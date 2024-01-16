@@ -1,8 +1,12 @@
 const needle = require('needle');
+const config = require('./config');
 
 const trackerURL = "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt";
 
 const getBestTrackers = async () => {
+    if ( ! config.addBestTrackers) {
+        return [];
+    }
     try {
         const response = await needle('get', trackerURL, {
             open_timeout: 5000,

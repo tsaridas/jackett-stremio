@@ -105,6 +105,7 @@ const streamFromMagnet = (tor, parsedTorrent, params, cb) => {
         if (match !== null) {
             quality = match[0];
         }
+        
         const trackers = unique([].concat(parsed.announce).concat(global.bestTrackers));
 
         cb({
