@@ -3,6 +3,9 @@ const videoNameParser = require('video-name-parser');
 const ticker = {};
 
 const helper = {
+    unique: (array) => {
+        return Array.from(new Set(array));
+    },
 
     toHomanReadable: (bytes) => {
         if (Math.abs(bytes) < 1024) { return bytes + ' B'; }
