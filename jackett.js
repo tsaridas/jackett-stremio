@@ -45,7 +45,7 @@ const search = (apiKey, query, cb, end) => {
 			if (query.season && query.episode) {
 				searchQuery = '&t=' + searchType + '&q=' + simpleName + '&season=' + query.season + '&ep=' + query.episode;
 			} else {
-				year = (query.year) ? '&year=' + query.year : '';
+				let year = (query.year) ? '&year=' + query.year : '';
 				searchQuery = '&t=' + searchType + '&q=' + simpleName + year;
 			}
 		} else {
