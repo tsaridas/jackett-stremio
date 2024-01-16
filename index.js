@@ -213,7 +213,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
     config.debug && console.log("Cinemata url", url);
     needle.get(url, { follow: 1 }, (err, resp, body) => {
         if (!err && body && body.meta && body.meta.name) {
-            const year = (body.meta.year) ? body.meta.year.replace(/-/, '') : (body.meta.releaseInfo) ? body.meta.releaseInfo.replace(/-/, '') : '';
+            const year = (body.meta.year) ? body.meta.year.match(/\b\d{4}\b/) : (body.meta.releaseInfo) ? body.meta.releaseInfo.match(/\b\d{4}\b/) : ''
 
             const searchQuery = {
                 name: body.meta.name,
