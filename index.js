@@ -228,7 +228,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
             } else {
                 console.log(`Looking for title: ${body.meta.name} - type: ${req.params.type} - year: ${year}.`);
             }
-
+            
             jackettApi.search(req.params.jackettKey, searchQuery,
 
                 (tempResults) => {
