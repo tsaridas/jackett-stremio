@@ -69,7 +69,7 @@ const search = (apiKey, query, cb, end) => {
 				return;
 			}
 
-			const url = config.jackett.host + 'api/v2.0/indexers/' + indexer.attributes.id + '/results/torznab/api?apikey=' + apiKey + encodeURI(searchQuery);
+			const url = config.jackett.host + 'api/v2.0/indexers/' + indexer.attributes.id + '/results/torznab/api?apikey=' + apiKey + encodeURIComponent(searchQuery);
 			config.debug && console.log(`Searching indexer ${indexer.attributes.id} with url ${url}`);
 
 			const response = await new Promise((resolve) => {
