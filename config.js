@@ -17,6 +17,8 @@ const defaultConfig = {
 
   "maximumSize": process.env.MAX_SIZE || 5000000000, // 5GB
 
+  "downloadTorrentQueue": process.env.DOWNLOAD_TORRENT_QUEUE || 5,
+
   "jackett": {
 
     "host": process.env.JACKETT_HOST || "http://127.0.0.1:9117/",

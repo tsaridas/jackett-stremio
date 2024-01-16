@@ -125,20 +125,12 @@ const search = (apiKey, query, cb, end) => {
 							newObj.magneturl = newObj.link;
 						}
 
-						if (!newObj.magneturl || (newObj.link && !newObj.link.startsWith("magnet:"))) {
-							return;
-						}
-
 						const toInt = ['seeders', 'peers', 'size', 'files'];
 
 						toInt.forEach(toIntElm => {
 							if (tempObj[toIntElm])
 								newObj[toIntElm] = parseInt(tempObj[toIntElm]);
 						});
-
-						if (newObj.seeders < config.minimumSeeds || newObj.size > config.maximumSize) {
-							return;
-						}
 
 						if (tempObj.pubDate)
 							newObj.jackettDate = new Date(tempObj.pubDate).getTime();
