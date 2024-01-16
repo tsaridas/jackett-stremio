@@ -7,6 +7,7 @@ const express = require('express');
 const addon = express();
 
 const jackettApi = require('./jackett');
+const helper = require('./helpers');
 const config = require('./config');
 const { getBestTrackers } = require('./trackers');
 
@@ -29,20 +30,6 @@ const respond = (res, data) => {
 
     res.send({ "streams": slicedData });
 };
-
-function toHomanReadable(bytes) {
-    if (Math.abs(bytes) < 1024) { return bytes + ' B'; }
-
-    const units = ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-
-    let i = -1;
-    do {
-        bytes /= 1024;
-        ++i;
-    } while (Math.abs(bytes) >= 1024 && i < units.length - 1);
-
-    return bytes.toFixed(1) + " " + units[i];
-}
 
 async function partitionURLAsync(list) {
     const results = await Promise.all(
@@ -109,7 +96,7 @@ const streamFromMagnet = (tor, parsedTorrent, params, cb) => {
         const infoHash = parsed.infoHash.toLowerCase();
 
         let title = tor.title || parsed.name;
-        const subtitle = `👤 ${tor.seeders}/${tor.peers}  💾 ${toHomanReadable(tor.size)}  ⚙️  ${tor.from}`;
+        const subtitle = `👤 ${tor.seeders}/${tor.peers}  💾 ${helper.toHomanReadable(tor.size)}  ⚙️  ${tor.from}`;
 
         title += (title.indexOf('\n') > -1 ? '\r\n' : '\r\n\r\n') + subtitle;
         const regex = /DLRip|HDTV|\b(DivX|XviD)\b|\b(?:DL|WEB|BD|BR)MUX\b|\bWEB-?Rip\b|\bWEB-?DL\b|\bBluray\b|\bVHSSCR\b|\bR5\b|\bPPVRip\b|\bTC\b|\b(?:HD-?)?TVRip\b|\bDVDscr\b|\bDVD(?:R[0-9])?\b|\bDVDRip\b|\bBDRip\b|\bBRRip\b|\bHD-?Rip\b|\b(?:HD-?)?T(?:ELE)?S(?:YNC)?\b|\b(?:HD-?)?CAM\b|(4k)|([0-9]{3,4}[pi])/i;
