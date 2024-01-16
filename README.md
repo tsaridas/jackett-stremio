@@ -91,9 +91,7 @@ Add `http://{{ YOUR IP }}:7000/{{my-jackett-key}}/manifest.json` (replace `{{my-
 
 ### ToDo
 
-- Add caching headers
-- Add fileIdx if possible for series
-- Add better searching for series
-- Increase versions of npm modules
+- Add caching headers.
+- Increase versions of npm modules.
 - Add option for user to specify max limit in MB/GB etc.
 - Update README for better understanding how to install.
