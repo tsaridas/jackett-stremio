@@ -36,11 +36,12 @@ const getBlacklistTrackers = async () => {
         parse_response: false
     });
 
-    if (response && response.headers && response.body) {
+    if (response && response.statusCode >= 200 && response.statusCode < 300 && response.headers && response.body) {
         const trackers = response.body.split('\n').filter(line => line.trim() !== '');
         config.debug && console.log(`Downloaded : ${trackers.length} blacklisted trackers.`);
         return trackers;
     }
+    return [];
 };
 
 const getBestTrackers = async () => {
@@ -50,11 +51,12 @@ const getBestTrackers = async () => {
         parse_response: false
     });
 
-    if (response && response.headers && response.body) {
+    if (response && response.statusCode >= 200 && response.statusCode < 300 && response.headers && response.body) {
         const trackers = response.body.split('\n').map(line => line.split('#')[0].trim()).filter(line => line.trim() !== '');
         config.debug && console.log(`Downloaded : ${trackers.length} trackers.`);
         return trackers;
     }
+    return [];
 };
 
 const getTrackers = async () => {
