@@ -30,7 +30,7 @@ const search = (apiKey, query, cb, end) => {
 		if (err || !apiIndexers || apiIndexers.length === 0) {
 			cb([]);
 			end([]);
-			console.error("Could not find any available indexers in Jackett. Is Jacket service down ?");
+			console.error("Could not find any available indexers in Jackett. Is Jacket service down or wrong API key ?");
 			return;
 		}
 		config.debug && console.log("Found " + apiIndexers.length + " indexers");
@@ -127,7 +127,7 @@ const search = (apiKey, query, cb, end) => {
 							return;
 						}
 
-						if (config.parseTorrentFiles && (!newObj.magneturl || (newObj.link && !newObj.link.startsWith("magnet:")))) {
+						if (! config.parseTorrentFiles && (!newObj.magneturl || (newObj.link && !newObj.link.startsWith("magnet:")))) {
 							return;
 						}
 						
