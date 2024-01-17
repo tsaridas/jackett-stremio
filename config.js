@@ -1,31 +1,42 @@
 const { URL } = require('url');
 
 const defaultConfig = {
-  "interval": process.env.INTERVAL || 100,
+
+  "parseTorrentFiles": process.env.PARSE_TORRENT_FILES || false,
+
+  "interval": parseInt(process.env.INTERVAL) || 500,
+
+  "addBestTrackers": process.env.ADD_BEST_TRACKERS || false,
+
+  "addRussianTrackers": process.env.ADD_RUSSIAN_TRACKERS || false,
+
+  "addExtraTrackers": process.env.ADD_EXTRA_TRACKERS || false,
+
+  "removeBlacklistTrackers": process.env.REMOVE_BLACKLIST_TRACKERS || false,
 
   "debug": process.env.DEBUG || false,
 
   "searchByType": process.env.SEARCH_BY_TYPE || false,
 
-  "responseTimeout": process.env.RESPONSE_TIMEOUT || 8000,
+  "responseTimeout": parseInt(process.env.RESPONSE_TIMEOUT) || 8000,
 
-  "addonPort": process.env.PORT || 7000,
+  "addonPort": parseInt(process.env.PORT) || 7000,
 
-  "minimumSeeds": process.env.MIN_SEED || 3,
+  "minimumSeeds": parseInt(process.env.MIN_SEED) || 3,
 
-  "maximumResults": process.env.MAX_RESULTS || 10,
+  "maximumResults": parseInt(process.env.MAX_RESULTS) || 10,
 
-  "maximumSize": process.env.MAX_SIZE || 5000000000, // 5GB
+  "maximumSize": process.env.MAX_SIZE || "10GB",
 
-  "downloadTorrentQueue": process.env.DOWNLOAD_TORRENT_QUEUE || 5,
+  "downloadTorrentQueue": parseInt(process.env.DOWNLOAD_TORRENT_QUEUE) || 5,
 
   "jackett": {
 
     "host": process.env.JACKETT_HOST || "http://127.0.0.1:9117/",
 
-    "readTimeout": process.env.JACKETT_RTIMEOUT || 10000,
+    "readTimeout": parseInt(process.env.JACKETT_RTIMEOUT) || 10000,
 
-    "openTimeout": process.env.JACKETT_OTIMEOUT || 5000
+    "openTimeout": parseInt(process.env.JACKETT_OTIMEOUT) || 5000
 
   }
 }
@@ -53,6 +64,38 @@ function correctAndValidateURL(input) {
   }
 }
 
-defaultConfig.jackett.host = correctAndValidateURL(defaultConfig.jackett.host)
 
-module.exports = defaultConfig
+function toBytes(humanSize) {
+  const sizeString = (typeof humanSize === 'string') ? humanSize : humanSize.toString();
+  const sizeRegex = /^(\d+(\.\d+)?)\s*([kKmMgGtT]?[bB]?)$/;
+  const match = sizeString.match(sizeRegex);
+
+  if (!match) {
+    console.error('Invalid maximumSize format set. Supported formats: B/KB/MB/GB/TB. Example : 5GB');
+    return 10000000000;
+  }
+
+  const numericPart = parseFloat(match[1]);
+  const unit = match[3].toUpperCase();
+
+  const units = {
+    'B': 1,
+    'KB': 1024,
+    'MB': 1024 * 1024,
+    'GB': 1024 * 1024 * 1024,
+    'TB': 1024 * 1024 * 1024 * 1024,
+  };
+
+  if (Object.prototype.hasOwnProperty.call(unit, units)) {
+    console.error('Invalid maximumSize format set. Supported formats: B/KB/MB/GB/TB. Example : 5GB');
+    return 10000000000;
+  }
+
+  return parseInt(numericPart * units[unit]);
+}
+
+
+defaultConfig.maximumSize = toBytes(defaultConfig.maximumSize);
+defaultConfig.jackett.host = correctAndValidateURL(defaultConfig.jackett.host);
+
+module.exports = defaultConfig;
