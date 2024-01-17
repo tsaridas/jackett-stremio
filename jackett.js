@@ -132,7 +132,7 @@ const search = (apiKey, query, cb, end) => {
 							return;
 						}
 
-						if (!config.parseTorrentFiles && (!newObj.magneturl || (newObj.link && !newObj.link.startsWith("magnet:")))) {
+						if (! config.parseTorrentFiles && (!newObj.magneturl || (newObj.link && !newObj.link.startsWith("magnet:")))) {
 							return;
 						}
 
