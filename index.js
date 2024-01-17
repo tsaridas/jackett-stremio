@@ -168,8 +168,8 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
             inProgressCount++;
             console.log("Processing link ", task.link);
             const response = await needle('get', task.link, {
-                open_timeout: 5000,
-                read_timeout: 5000,
+                open_timeout: 3000,
+                read_timeout: 3000,
                 parse_response: false
             });
 

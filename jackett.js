@@ -126,6 +126,10 @@ const search = (apiKey, query, cb, end) => {
 						if (newObj.seeders < config.minimumSeeds || newObj.size > config.maximumSize) {
 							return;
 						}
+
+						if (config.parseTorrentFiles && (!newObj.magneturl || (newObj.link && !newObj.link.startsWith("magnet:")))) {
+							return;
+						}
 						
 						if (newObj.magneturl && newObj.magneturl.startsWith("magnet:") && (newObj.link && newObj.link.startsWith("http://"))) {
 							config.debug && console.log("Found magneturl " + newObj.magneturl + " and link " + newObj.link);
