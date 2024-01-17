@@ -63,6 +63,7 @@ const getTrackers = async () => {
     if (config.addBestTrackers) {
         const bestTrackers = await getBestTrackers();
         TRACKERS = helper.unique(TRACKERS.concat(bestTrackers));
+        console.log(`Loading ${TRACKERS.length} best trackers.`);
     }
 
     if (config.addRussianTrackers) {
@@ -72,9 +73,12 @@ const getTrackers = async () => {
     if (config.addExtraTrackers) {
         TRACKERS = helper.unique(TRACKERS.concat(EXTRA_TRACKERS));
     }
-
-    BLACKLIST_TRACKERS = await getBlacklistTrackers();
-    console.log(`Loading ${TRACKERS.length} trackers.`);
+    if (config.removeBlacklistTrackers) {
+        BLACKLIST_TRACKERS = await getBlacklistTrackers();
+        console.log(`Loading ${TRACKERS.length} blacklisted trackers.`);
+    }
+    
+    
     return TRACKERS, BLACKLIST_TRACKERS;
 
 }

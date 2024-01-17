@@ -6,11 +6,11 @@ const defaultConfig = {
 
   "interval": parseInt(process.env.INTERVAL) || 500,
 
-  "addBestTrackers": process.env.ADD_BEST_TRACKERS || true,
+  "addBestTrackers": process.env.ADD_BEST_TRACKERS || false,
 
   "addRussianTrackers": process.env.ADD_RUSSIAN_TRACKERS || false,
 
-  "addExtraTrackers": process.env.ADD_EXTRA_TRACKERS || true,
+  "addExtraTrackers": process.env.ADD_EXTRA_TRACKERS || false,
 
   "removeBlacklistTrackers": process.env.REMOVE_BLACKLIST_TRACKERS || true,
 

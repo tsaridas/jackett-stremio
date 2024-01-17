@@ -102,18 +102,24 @@ const streamFromParsed = (tor, parsedTorrent, params, cb) => {
         if (match !== null) {
             quality = match[0];
         }
+        let trackers = [];
+        if (global.TRACKERS){
+            trackers = helper.unique([].concat(parsed.announce).concat(global.TRACKERS));
+            config.debug && console.log("Added extra trackers : "+ (parsed.announce.length - trackers.length) + " trackers.");
+        }
 
-        const trackers = helper.unique([].concat(parsed.announce).concat(global.Trackers));
-        const filteredTrackers = trackers.filter(item => !global.BLACKLIST_TRACKERS.includes(item));
-        config.debug && console.log("Removed blacklisted : "+ (trackers.length - filteredTrackers) + " trackers.");
-
+        if (global.BLACKLIST_TRACKERS){
+            trackers = trackers.filter(item => !global.BLACKLIST_TRACKERS.includes(item));
+            config.debug && console.log("Removed blacklisted : "+ (trackers.length - parsed.announce.length) + " trackers.");
+        }
+        
         cb({
             name: "Jackett " + quality,
             // fileIdx: idx,
             type: params.type,
             infoHash: infoHash,
             seeders: tor.seeders,
-            sources: filteredTrackers.map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]),
+            sources: trackers.map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]),
             title: title,
             behaviorHints: {
                 bingieGroup: "Jackett-" + quality,
