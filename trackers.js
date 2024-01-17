@@ -104,8 +104,8 @@ const getTrackers = async () => {
 
     config.debug && console.log(trackers);
     return {
-        TRACKERS: trackers,
-        BLACKLIST_TRACKERS: blacklist_trackers
+        trackers: trackers,
+        blacklist_trackers: blacklist_trackers
     };
 
 }
