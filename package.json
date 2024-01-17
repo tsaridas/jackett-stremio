@@ -1,6 +1,6 @@
 {
   "name": "jackett-stremio",
-  "version": "v0.0.13",
+  "version": "0.0.15",
   "description": "Stremio Add-on to get torrent results from Jackett",
   "main": "index.js",
   "scripts": {
