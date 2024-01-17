@@ -47,7 +47,7 @@ The below options can be set as an evironment variable.
 | `ADD_BEST_TRACKERS` | true | `` | We download a list of best trackers from [Best Trackers](https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt) and add them to all torrents found |
 | `ADD_RUSSIAN_TRACKERS` | false | `true` | We add some Russian trackers. Check trackers.js for more info.|
 | `ADD_EXTRA_TRACKERS` | true | `` | We add some extra trackers. Check trackers.js for more info. |
-
+| `PARSE_TORRENT_FILES` | false | `true` | Parsing torrent files ( not magnets) takes time and is slow. This is disabled by default. |
 
 
 ## Builds
@@ -104,3 +104,4 @@ Add `http://{{ YOUR IP }}:7000/{{my-jackett-key}}/manifest.json` (replace `{{my-
 - Add blacklisted trackers.
 - Increase versions of npm modules.
 - Update README for better understanding how to install.
+- Catch errors from bad jackett requests.

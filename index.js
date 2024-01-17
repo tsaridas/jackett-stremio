@@ -87,7 +87,7 @@ addon.get('/:jackettKey/manifest.json', (req, res) => {
     res.send(manifest);
 });
 
-const streamFromMagnet = (tor, parsedTorrent, params, cb) => {
+const streamFromParsed = (tor, parsedTorrent, params, cb) => {
     const toStream = (parsed) => {
         const infoHash = parsed.infoHash.toLowerCase();
 
@@ -101,7 +101,7 @@ const streamFromMagnet = (tor, parsedTorrent, params, cb) => {
         if (match !== null) {
             quality = match[0];
         }
-        
+
         const trackers = helper.unique([].concat(parsed.announce).concat(global.Trackers));
 
         cb({
@@ -131,11 +131,13 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
     const streams = [];
 
     const startTime = Date.now();
+
     const intervalId = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
 
-        if (elapsedTime >= config.responseTimeout || searchFinished ) {
-            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + ". Finished Searching: " + searchFinished)
+        if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && inProgressCount === 0 && asyncQueue.idle))) {
+            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + " / Finished Searching: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / inProgressCount : " + inProgressCount)
+            asyncQueue.kill();
             clearInterval(intervalId);
             requestSent = true;
             respond(res, { streams: streams });
@@ -143,62 +145,84 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
         }
     }, config.interval);
 
+    const processMagnets = async (task) => {
+        if (requestSent) { // Check the flag before processing each task
+            return;
+        }
+        const uri = task.magneturl || task.link;
+        config.debug && console.log("Parsing magnet : ", uri);
+        const parsedTorrent = parseTorrent(uri);
+        streamFromParsed(task, parsedTorrent, req.params, stream => {
+            if (stream) {
+                streams.push(stream);
+            }
+        });
+    };
+
+    let inProgressCount = 0;
+    const processLinks = async (task) => {
+        if (requestSent) { // Check the flag before processing each task
+            return;
+        }
+        try {
+            inProgressCount++;
+            console.log("Processing link ", task.link);
+            const response = await needle('get', task.link, {
+                open_timeout: 3000,
+                read_timeout: 3000,
+                parse_response: false
+            });
+
+            if (response && response.headers && response.headers.location) {
+                if (response.headers.location.startsWith("magnet:")) {
+                    task.magneturl = response.headers.location;
+                    task.link = response.headers.location;
+                    console.log("Sending magnet task for process : ", task.magneturl);
+                    processMagnets(task);
+                    inProgressCount--;
+                } else {
+                    config.debug && console.log("Not a magnet link : ", response.headers.location);
+                }
+            } else {
+                console.log(`Processing task: ${task.link}, Queue length: ${asyncQueue.length()}`);
+                const parsedTorrent = parseTorrent(response.body);
+                streamFromParsed(task, parsedTorrent, req.params, stream => {
+                    if (stream) {
+                        streams.push(stream);
+                    }
+                });
+                console.log("Parsed torrent from body", parsedTorrent);
+                inProgressCount--;
+            }
+        } catch (err) {
+            console.log("error", err);
+            inProgressCount--;
+        }
+    };
+
+    const asyncQueue = async.queue(processLinks, config.downloadTorrentQueue);
+
     const respondStreams = async (results) => {
+        if (requestSent) { // Check the flag before processing each task
+            return;
+        }
         if (results && results.length) {
             let tempResults = results;
             tempResults = tempResults.sort((a, b) => b.seeders - a.seeders);
             config.debug && console.log("Sorted searches are : ", tempResults.length);
 
-            const processMagnets = async (task) => {
-                if (requestSent) { // Check the flag before processing each task
-                    return;
-                }
-                const uri = task.magneturl || task.link;
-                config.debug && console.log("Parsing magnet : ", uri);
-                const parsedTorrent = parseTorrent(uri);
-                streamFromMagnet(task, parsedTorrent, req.params, stream => {
-                    if (stream) {
-                        streams.push(stream);
-                    }
-                });
-            }
-            const processLinks = async (task) => {
-                if (requestSent) { // Check the flag before processing each task
-                    return;
-                }
-                config.debug && console.log("Processing link ", task.link);
-                needle('get', task.link, {
-                    open_timeout: 5000,
-                    read_timeout: 10000,
-                    parse_response: false
-                }).then(function (response) {
-                    if (response && response.headers && response.headers.location) {
-                        if (response.headers.location.startsWith("magnet:")) {
-                            task.magneturl = response.headers.location;
-                            task.link = response.headers.location;
-                            config.debug && console.log("Sending magnet task for process : ", task.magneturl);
-                            processMagnets(task);
-                        } else {
-                            config.debug && console.log("Not a magnet link : ", response.headers.location);
-                        }
-                    }
-                }).catch(function (err) {
-                    console.log('Error when following URL for torrent task.', err)
-                })
-            };
-
             const { magnets, links } = await partitionURLAsync(tempResults);
-            const asyncQueue = async.queue(processLinks, config.downloadTorrentQueue);
+
+            Promise.all([...magnets.map(processMagnets)]);
             links.forEach(item => asyncQueue.push(item));
-            await Promise.all([...magnets.map(processMagnets)]);
         }
     };
 
     const idParts = req.params.id.split(':');
-
     const imdbId = idParts[0];
     const url = 'https://v3-cinemeta.strem.io/meta/' + req.params.type + '/' + imdbId + '.json';
     config.debug && console.log("Cinemata url", url);
+
     needle.get(url, { follow: 1 }, (err, resp, body) => {
         if (!err && body && body.meta && body.meta.name) {
             const year = (body.meta.year) ? body.meta.year.match(/\b\d{4}\b/) : (body.meta.releaseInfo) ? body.meta.releaseInfo.match(/\b\d{4}\b/) : ''

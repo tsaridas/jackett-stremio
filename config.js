@@ -2,6 +2,8 @@ const { URL } = require('url');
 
 const defaultConfig = {
 
+  "parseTorrentFiles": process.env.PARSE_TORRENT_FILES || false,
+
   "interval": parseInt(process.env.INTERVAL) || 500,
 
   "addBestTrackers": process.env.ADD_BEST_TRACKERS || true,
