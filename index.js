@@ -192,9 +192,12 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                     processMagnets(task);
 
                 } else {
-                    config.debug && console.log("Not a magnet link : ", response.headers.location);
+                    config.debug && console.error("Not a magnet link : ", response.headers.location);
                 }
             } else {
+                if (requestSent) { // It usually takes some time to dowload the torrent file and we don't wait that long
+                    return;
+                }
                 config.debug && console.log(`Processing torrent : ${task.link}.`);
                 const parsedTorrent = parseTorrent(response.body);
                 streamFromParsed(task, parsedTorrent, req.params, stream => {
