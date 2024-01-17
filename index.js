@@ -91,46 +91,44 @@ async function partitionURLAsync(list) {
 }
 
 const streamFromParsed = (tor, parsedTorrent, params, cb) => {
-    const toStream = (parsed) => {
-        const infoHash = parsed.infoHash.toLowerCase();
 
-        let title = tor.title || parsed.name;
-        const subtitle = `👤 ${tor.seeders}/${tor.peers}  💾 ${helper.toHomanReadable(tor.size)}  ⚙️  ${tor.from}`;
+    const infoHash = parsedTorrent.infoHash.toLowerCase();
 
-        title += (title.indexOf('\n') > -1 ? '\r\n' : '\r\n\r\n') + subtitle;
-        const regex = /DLRip|HDTV|\b(DivX|XviD)\b|\b(?:DL|WEB|BD|BR)MUX\b|\bWEB-?Rip\b|\bWEB-?DL\b|\bBluray\b|\bVHSSCR\b|\bR5\b|\bPPVRip\b|\bTC\b|\b(?:HD-?)?TVRip\b|\bDVDscr\b|\bDVD(?:R[0-9])?\b|\bDVDRip\b|\bBDRip\b|\bBRRip\b|\bHD-?Rip\b|\b(?:HD-?)?T(?:ELE)?S(?:YNC)?\b|\b(?:HD-?)?CAM\b|(4k)|([0-9]{3,4}[pi])/i;
-        const match = tor.extraTag.match(regex);
-        let quality = "";
-        if (match !== null) {
-            quality = match[0];
+    let title = tor.title || parsedTorrent.name;
+    const subtitle = `👤 ${tor.seeders}/${tor.peers}  💾 ${helper.toHomanReadable(tor.size)}  ⚙️  ${tor.from}`;
+
+    title += (title.indexOf('\n') > -1 ? '\r\n' : '\r\n\r\n') + subtitle;
+    const regex = /DLRip|HDTV|\b(DivX|XviD)\b|\b(?:DL|WEB|BD|BR)MUX\b|\bWEB-?Rip\b|\bWEB-?DL\b|\bBluray\b|\bVHSSCR\b|\bR5\b|\bPPVRip\b|\bTC\b|\b(?:HD-?)?TVRip\b|\bDVDscr\b|\bDVD(?:R[0-9])?\b|\bDVDRip\b|\bBDRip\b|\bBRRip\b|\bHD-?Rip\b|\b(?:HD-?)?T(?:ELE)?S(?:YNC)?\b|\b(?:HD-?)?CAM\b|(4k)|([0-9]{3,4}[pi])/i;
+    const match = tor.extraTag.match(regex);
+    let quality = "";
+    if (match !== null) {
+        quality = match[0];
+    }
+    let trackers = [];
+    if (global.TRACKERS) {
+        trackers = helper.unique([].concat(parsedTorrent.announce).concat(global.TRACKERS));
+        config.debug && console.log("Added extra trackers : " + (trackers.length - parsedTorrent.announce.length) + " trackers.");
+    }
+
+    if (global.BLACKLIST_TRACKERS) {
+        const filteredTrackers = trackers.filter(item => !global.BLACKLIST_TRACKERS.includes(item));
+        config.debug && console.log("Removed : " + (trackers.length - filteredTrackers.length) + " blacklisted trackers.");
+        trackers = filteredTrackers;
+    }
+
+    cb({
+        name: "Jackett " + quality,
+        // fileIdx: idx,
+        type: params.type,
+        infoHash: infoHash,
+        seeders: tor.seeders,
+        sources: trackers.map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]),
+        title: title,
+        behaviorHints: {
+            bingieGroup: "Jackett|" + quality,
         }
-        let trackers = [];
-        if (global.TRACKERS) {
-            trackers = helper.unique([].concat(parsed.announce).concat(global.TRACKERS));
-            config.debug && console.log("Added extra trackers : " + (trackers.length - parsed.announce.length) + " trackers.");
-        }
-
-        if (global.BLACKLIST_TRACKERS) {
-            const filteredTrackers = trackers.filter(item => !global.BLACKLIST_TRACKERS.includes(item));
-            config.debug && console.log("Removed : " + (trackers.length - filteredTrackers.length) + " blacklisted trackers.");
-            trackers = filteredTrackers;
-        }
-
-        cb({
-            name: "Jackett " + quality,
-            // fileIdx: idx,
-            type: params.type,
-            infoHash: infoHash,
-            seeders: tor.seeders,
-            sources: trackers.map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]),
-            title: title,
-            behaviorHints: {
-                bingieGroup: "Jackett|" + quality,
-            }
-        });
-    };
-
-    toStream(parsedTorrent);
+    });
+    
 };
 
 // stream response
@@ -179,7 +177,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
             return;
         }
         try {
-            
+
             console.log("Processing link ", task.link);
             const response = await needle('get', task.link, {
                 open_timeout: 3000,
@@ -193,7 +191,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                     task.link = response.headers.location;
                     config.debug && console.log("Sending magnet task for process : ", task.magneturl);
                     processMagnets(task);
-                    
+
                 } else {
                     config.debug && console.log("Not a magnet link : ", response.headers.location);
                 }
