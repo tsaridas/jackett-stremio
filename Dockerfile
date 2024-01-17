@@ -21,6 +21,7 @@ ENV ADD_RUSSIAN_TRACKERS=
 ENV ADD_EXTRA_TRACKERS=
 ENV PARSE_TORRENT_FILES=
 
+
 ARG VERSION=testing
 LABEL org.opencontainers.image.source=https://github.com/tsaridas/jackett-stremio
 LABEL org.opencontainers.image.description="Jackett Local Addon for Stremio"
