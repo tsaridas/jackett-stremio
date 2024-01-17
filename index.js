@@ -221,7 +221,6 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
         if (results && results.length) {
             let tempResults = results;
             tempResults = tempResults.sort((a, b) => b.seeders - a.seeders);
-            config.debug && console.log("Sorted searches are : ", tempResults.length);
 
             const { magnets, links } = await partitionURLAsync(tempResults);
 

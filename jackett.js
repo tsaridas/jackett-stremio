@@ -162,8 +162,13 @@ const search = (apiKey, query, cb, end) => {
 				});
 				countResults += tempResults.length;
 				countFinished++;
-				config.debug && console.log("Found " + countResults + " so far from overall " + apiIndexers.length + " indexers " + countFinished + " finished. MaxSeeder: " + maxSeeder.number + " from: " + maxSeeder.indexer);
-				cb(tempResults);
+				
+				config.debug && console.log(`Max seeder is ${maxSeeder.number} from ${maxSeeder.indexer}`);
+				if (tempResults) {
+					config.debug && console.log(`Found ${countResults} result from ${indexer.attributes.id}. ${countFinished} of ${apiIndexers.length} indexers finished.`);
+					cb(tempResults);
+				}
+				
 			}
 			tick();
 		}));
