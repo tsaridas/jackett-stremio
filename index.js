@@ -13,7 +13,8 @@ const { getTrackers } = require('./trackers');
 
 const version = require('./package.json').version;
 
-global.Trackers = [];
+global.TRACKERS = [];
+global.BLACKLIST_TRACKERS = [];
 
 const respond = (res, data) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -103,6 +104,8 @@ const streamFromParsed = (tor, parsedTorrent, params, cb) => {
         }
 
         const trackers = helper.unique([].concat(parsed.announce).concat(global.Trackers));
+        const filteredTrackers = trackers.filter(item => !global.BLACKLIST_TRACKERS.includes(item));
+        config.debug && console.log("Removed blacklisted : "+ (trackers.length - filteredTrackers) + " trackers.");
 
         cb({
             name: "Jackett " + quality,
@@ -110,8 +113,11 @@ const streamFromParsed = (tor, parsedTorrent, params, cb) => {
             type: params.type,
             infoHash: infoHash,
             seeders: tor.seeders,
-            sources: trackers.map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]),
-            title: title
+            sources: filteredTrackers.map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]),
+            title: title,
+            behaviorHints: {
+                bingieGroup: "Jackett-" + quality,
+            }
         });
     };
 
@@ -271,7 +277,7 @@ const runAddon = async () => {
 
     console.log(config);
 
-    global.Trackers = await getTrackers();
+    global.TRACKERS, global.BLACKLIST_TRACKERS  = await getTrackers();
 
     addon.listen(config.addonPort, () => {
 

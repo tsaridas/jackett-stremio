@@ -2,16 +2,16 @@ const needle = require('needle');
 const config = require('./config');
 const helper = require('./helpers');
 
-const trackerURL = "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt";
+const bestTrackersURL = "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt";
+const blacklistURL = "https://raw.githubusercontent.com/ngosang/trackerslist/master/blacklist.txt";
 let TRACKERS = [];
+let BLACKLIST_TRACKERS = [];
 
 const EXTRA_TRACKERS = [
     "udp://47.ip-51-68-199.eu:6969/announce",
     "udp://exodus.desync.com:6969/announce",
     "udp://explodie.org:6969/announce",
-    "udp://ipv4.tracker.harry.lu:80/announce",
     "udp://open.stealth.si:80/announce",
-    "udp://opentor.org:2710/announce",
     "udp://opentracker.i2p.rocks:6969/announce",
     "udp://tracker.dler.org:6969/announce",
     "udp://tracker.internetwarriors.net:1337",
@@ -21,8 +21,6 @@ const EXTRA_TRACKERS = [
     "udp://tracker.torrent.eu.org:451/announce",
     "udp://valakas.rollo.dnsabr.com:2710/announce",
     "udp://www.torrent.eu.org:451/announce",
-    // "udp://9.rarbg.me:2940",
-    // "udp://9.rarbg.to:2820",
 ]
 
 const RUSSIAN_TRACKERS = [
@@ -33,8 +31,22 @@ const RUSSIAN_TRACKERS = [
     "http://bt4.t-ru.org/ann?magnet",
 ];
 
+const getBlacklistTrackers = async () => {
+    const response = await needle('get', blacklistURL, {
+        open_timeout: 5000,
+        read_timeout: 10000,
+        parse_response: false
+    });
+
+    if (response && response.headers && response.body) {
+        const trackers = response.body.split('\n').filter(line => line.trim() !== '');
+        config.debug && console.log(`Downloaded ${trackers.length} blacklisted trackers.`);
+        return trackers;
+    }
+};
+
 const getBestTrackers = async () => {
-    const response = await needle('get', trackerURL, {
+    const response = await needle('get', bestTrackersURL, {
         open_timeout: 5000,
         read_timeout: 10000,
         parse_response: false
@@ -60,8 +72,10 @@ const getTrackers = async () => {
     if (config.addExtraTrackers) {
         TRACKERS = helper.unique(TRACKERS.concat(EXTRA_TRACKERS));
     }
+
+    BLACKLIST_TRACKERS = await getBlacklistTrackers();
     console.log(`Loading ${TRACKERS.length} trackers.`);
-    return TRACKERS;
+    return TRACKERS, BLACKLIST_TRACKERS;
 
 }
 

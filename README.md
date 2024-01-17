@@ -48,6 +48,8 @@ The below options can be set as an evironment variable.
 | `ADD_RUSSIAN_TRACKERS` | false | `true` | We add some Russian trackers. Check trackers.js for more info.|
 | `ADD_EXTRA_TRACKERS` | true | `` | We add some extra trackers. Check trackers.js for more info. |
 | `PARSE_TORRENT_FILES` | false | `true` | Parsing torrent files ( not magnets) takes time and is slow. This is disabled by default. |
+| `REMOVE_BLACKLIST_TRACKERS` | true | `` | Remove trackers that are blacklisted. Download list from : [Blacklisted trackers](https://raw.githubusercontent.com/ngosang/trackerslist/master/blacklist.txt") |
+
 
 
 ## Builds

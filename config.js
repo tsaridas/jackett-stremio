@@ -12,6 +12,8 @@ const defaultConfig = {
 
   "addExtraTrackers": process.env.ADD_EXTRA_TRACKERS || true,
 
+  "removeBlacklistTrackers": process.env.REMOVE_BLACKLIST_TRACKERS || true,
+
   "debug": process.env.DEBUG || false,
 
   "searchByType": process.env.SEARCH_BY_TYPE || false,
