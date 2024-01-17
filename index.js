@@ -123,7 +123,7 @@ const streamFromParsed = (tor, parsedTorrent, params, cb) => {
             sources: trackers.map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]),
             title: title,
             behaviorHints: {
-                bingieGroup: "Jackett-" + quality,
+                bingieGroup: "Jackett " + quality,
             }
         });
     };
