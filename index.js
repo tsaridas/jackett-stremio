@@ -128,7 +128,7 @@ const streamFromParsed = (tor, parsedTorrent, params, cb) => {
             bingieGroup: "Jackett|" + quality,
         }
     });
-    
+
 };
 
 // stream response
@@ -147,12 +147,11 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
 
     const intervalId = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
-
         if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && asyncQueue.idle))) {
             console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + " / Finished Searching: " + searchFinished + " / Queue Idle: " + asyncQueue.idle())
+            requestSent = true;
             asyncQueue.kill();
             clearInterval(intervalId);
-            requestSent = true;
             respond(res, { streams: streams });
 
         }
@@ -180,8 +179,8 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
 
             console.log("Processing link ", task.link);
             const response = await needle('get', task.link, {
-                open_timeout: 3000,
-                read_timeout: 3000,
+                open_timeout: config.jackett.openTimeout,
+                read_timeout: config.jackett.readTimeout,
                 parse_response: false
             });
 
@@ -203,10 +202,10 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                         streams.push(stream);
                     }
                 });
-                console.log("Parsed torrent from body", parsedTorrent.title);
+                config.debug && console.log("Parsed torrent : ", task.link);
             }
         } catch (err) {
-            console.log("error", err);
+            console.log("Error processing link :", task.link, err);
         }
     };
 
