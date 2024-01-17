@@ -205,7 +205,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                         streams.push(stream);
                     }
                 });
-                console.log("Parsed torrent from body", parsedTorrent);
+                console.log("Parsed torrent from body", parsedTorrent.title);
             }
         } catch (err) {
             console.log("error", err);
