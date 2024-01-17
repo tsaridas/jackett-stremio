@@ -177,7 +177,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
         }
         try {
 
-            console.log("Processing link ", task.link);
+            config.debug && console.log("Processing link: ", task.link);
             const response = await needle('get', task.link, {
                 open_timeout: config.jackett.openTimeout,
                 read_timeout: config.jackett.readTimeout,
