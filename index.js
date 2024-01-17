@@ -183,7 +183,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                 } else {
                     config.debug && console.log("Not a magnet link : ", response.headers.location);
                 }
-            } else if(config.parseTorrentFiles) {
+            } else {
                 console.log(`Processing task: ${task.link}, Queue length: ${asyncQueue.length()}`);
                 const parsedTorrent = parseTorrent(response.body);
                 streamFromParsed(task, parsedTorrent, req.params, stream => {
