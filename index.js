@@ -107,13 +107,15 @@ const streamFromParsed = (tor, parsedTorrent, params, cb) => {
     let trackers = [];
     if (global.TRACKERS) {
         trackers = helper.unique([].concat(parsedTorrent.announce).concat(global.TRACKERS));
-        config.debug && console.log("Added extra trackers : " + (trackers.length - parsedTorrent.announce.length) + " trackers.");
+        config.debug && console.log("Added :" + (trackers.length - parsedTorrent.announce.length) + " extra trackers.");
     }
 
     if (global.BLACKLIST_TRACKERS) {
         const filteredTrackers = trackers.filter(item => !global.BLACKLIST_TRACKERS.includes(item));
-        config.debug && console.log("Removed : " + (trackers.length - filteredTrackers.length) + " blacklisted trackers.");
-        trackers = filteredTrackers;
+        if ((trackers.length - filteredTrackers.length) != 0) {
+            config.debug && console.log("Removed : " + (trackers.length - filteredTrackers.length) + " blacklisted trackers.");
+            trackers = filteredTrackers;
+        }
     }
 
     cb({
@@ -183,7 +185,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                 read_timeout: config.jackett.readTimeout,
                 parse_response: false
             });
-            if (requestSent) { // It usually takes some time to dowload the torrent file and we don't wait that long
+            if (requestSent) { // It usually takes some time to dowload the torrent file and we don't want to continue.
                 return;
             }
             if (response && response.headers && response.headers.location) {

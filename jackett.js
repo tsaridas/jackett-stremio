@@ -164,7 +164,7 @@ const search = (apiKey, query, cb, end) => {
 				countFinished++;
 				
 				config.debug && console.log(`Max seeder is ${maxSeeder.number} from ${maxSeeder.indexer}`);
-				if (tempResults) {
+				if (tempResults.length > 0) {
 					config.debug && console.log(`Found ${countResults} result from ${indexer.attributes.id}. ${countFinished}/${apiIndexers.length} indexers finished.`);
 					cb(tempResults);
 				}
