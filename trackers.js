@@ -4,8 +4,6 @@ const helper = require('./helpers');
 
 const bestTrackersURL = "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt";
 const blacklistURL = "https://raw.githubusercontent.com/ngosang/trackerslist/master/blacklist.txt";
-let TRACKERS = [];
-let BLACKLIST_TRACKERS = [];
 
 const EXTRA_TRACKERS = [
     "udp://47.ip-51-68-199.eu:6969/announce",
@@ -40,7 +38,7 @@ const getBlacklistTrackers = async () => {
 
     if (response && response.headers && response.body) {
         const trackers = response.body.split('\n').filter(line => line.trim() !== '');
-        config.debug && console.log(`Downloaded ${trackers.length} blacklisted trackers.`);
+        config.debug && console.log(`Downloaded : ${trackers.length} blacklisted trackers.`);
         return trackers;
     }
 };
@@ -53,33 +51,40 @@ const getBestTrackers = async () => {
     });
 
     if (response && response.headers && response.body) {
-        const trackers = response.body.split('\n').filter(line => line.trim() !== '');
-        config.debug && console.log(`Downloaded ${trackers.length} trackers.`);
+        const trackers = response.body.split('\n').map(line => line.split('#')[0].trim()).filter(line => line.trim() !== '');
+        config.debug && console.log(`Downloaded : ${trackers.length} trackers.`);
         return trackers;
     }
 };
 
 const getTrackers = async () => {
+    let trackers = [];
+    let blacklist_trackers = [];
     if (config.addBestTrackers) {
         const bestTrackers = await getBestTrackers();
-        TRACKERS = helper.unique(TRACKERS.concat(bestTrackers));
-        console.log(`Loading ${TRACKERS.length} best trackers.`);
+        trackers = helper.unique(trackers.concat(bestTrackers));
+        console.log(`Loading : ${trackers.length} best trackers.`);
     }
 
     if (config.addRussianTrackers) {
-        TRACKERS = helper.unique(TRACKERS.concat(RUSSIAN_TRACKERS));
+        trackers = helper.unique(trackers.concat(RUSSIAN_TRACKERS));
+        console.log(`Loading : ${RUSSIAN_TRACKERS.length} Russian trackers.`);
     }
 
     if (config.addExtraTrackers) {
-        TRACKERS = helper.unique(TRACKERS.concat(EXTRA_TRACKERS));
+        trackers = helper.unique(trackers.concat(EXTRA_TRACKERS));
+        console.log(`Loading : ${EXTRA_TRACKERS.length} extra trackers.`);
     }
     if (config.removeBlacklistTrackers) {
-        BLACKLIST_TRACKERS = await getBlacklistTrackers();
-        console.log(`Loading ${TRACKERS.length} blacklisted trackers.`);
+        const blacklist_trackers = await getBlacklistTrackers();
+        console.log(`Loading : ${blacklist_trackers.length} blacklisted trackers.`);
     }
     
     
-    return TRACKERS, BLACKLIST_TRACKERS;
+    return {
+        TRACKERS: trackers,
+        BLACKLIST_TRACKERS: blacklist_trackers
+    };
 
 }
 

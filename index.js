@@ -103,16 +103,17 @@ const streamFromParsed = (tor, parsedTorrent, params, cb) => {
             quality = match[0];
         }
         let trackers = [];
-        if (global.TRACKERS){
+        if (global.TRACKERS) {
             trackers = helper.unique([].concat(parsed.announce).concat(global.TRACKERS));
-            config.debug && console.log("Added extra trackers : "+ (parsed.announce.length - trackers.length) + " trackers.");
+            config.debug && console.log("Added extra trackers : " + (trackers.length - parsed.announce.length) + " trackers.");
         }
 
-        if (global.BLACKLIST_TRACKERS){
-            trackers = trackers.filter(item => !global.BLACKLIST_TRACKERS.includes(item));
-            config.debug && console.log("Removed blacklisted : "+ (trackers.length - parsed.announce.length) + " trackers.");
+        if (global.BLACKLIST_TRACKERS) {
+            const filteredTrackers = trackers.filter(item => !global.BLACKLIST_TRACKERS.includes(item));
+            config.debug && console.log("Removed : " + (trackers.length - filteredTrackers.length) + " blacklisted trackers.");
+            trackers = filteredTrackers;
         }
-        
+
         cb({
             name: "Jackett " + quality,
             // fileIdx: idx,
@@ -283,7 +284,10 @@ const runAddon = async () => {
 
     console.log(config);
 
-    global.TRACKERS, global.BLACKLIST_TRACKERS  = await getTrackers();
+    const { trackers, blacklist_trackers } = await getTrackers();
+
+    global.TRACKERS = trackers;
+    global.BLACKLIST_TRACKERS = blacklist_trackers;
 
     addon.listen(config.addonPort, () => {
 
