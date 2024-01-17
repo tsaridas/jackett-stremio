@@ -80,7 +80,11 @@ const getTrackers = async () => {
         console.log(`Loading : ${blacklist_trackers.length} blacklisted trackers.`);
     }
     
-    
+    if (trackers.length > 0) {
+        console.log(`Loaded : ${trackers.length} trackers.`);
+    }
+
+    config.debug && console.log(trackers);
     return {
         TRACKERS: trackers,
         BLACKLIST_TRACKERS: blacklist_trackers
