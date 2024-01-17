@@ -260,7 +260,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                 },
 
                 () => {
-                    config.debug && console.log("Received all search results.");
+                    config.debug && console.log("Searching finished.");
                     searchFinished = true;
                 });
 
