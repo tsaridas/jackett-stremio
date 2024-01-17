@@ -150,7 +150,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
     const intervalId = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
 
-        if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && inProgressCount === 0 && asyncQueue.idle))) {
+        if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && asyncQueue.idle))) {
             console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + " / Finished Searching: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / inProgressCount : " + inProgressCount)
             asyncQueue.kill();
             clearInterval(intervalId);
@@ -174,13 +174,12 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
         });
     };
 
-    let inProgressCount = 0;
     const processLinks = async (task) => {
         if (requestSent) { // Check the flag before processing each task
             return;
         }
         try {
-            inProgressCount++;
+            
             console.log("Processing link ", task.link);
             const response = await needle('get', task.link, {
                 open_timeout: 3000,
@@ -192,14 +191,14 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                 if (response.headers.location.startsWith("magnet:")) {
                     task.magneturl = response.headers.location;
                     task.link = response.headers.location;
-                    console.log("Sending magnet task for process : ", task.magneturl);
+                    config.debug && console.log("Sending magnet task for process : ", task.magneturl);
                     processMagnets(task);
-                    inProgressCount--;
+                    
                 } else {
                     config.debug && console.log("Not a magnet link : ", response.headers.location);
                 }
             } else {
-                console.log(`Processing task: ${task.link}, Queue length: ${asyncQueue.length()}`);
+                config.debug && console.log(`Processing torrent : ${task.link}.`);
                 const parsedTorrent = parseTorrent(response.body);
                 streamFromParsed(task, parsedTorrent, req.params, stream => {
                     if (stream) {
@@ -207,11 +206,9 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                     }
                 });
                 console.log("Parsed torrent from body", parsedTorrent);
-                inProgressCount--;
             }
         } catch (err) {
             console.log("error", err);
-            inProgressCount--;
         }
     };
 
