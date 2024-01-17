@@ -20,6 +20,7 @@ ENV ADD_BEST_TRACKERS=
 ENV ADD_RUSSIAN_TRACKERS=
 ENV ADD_EXTRA_TRACKERS=
 ENV PARSE_TORRENT_FILES=
+ENV REMOVE_BLACKLIST_TRACKERS=
 
 ARG VERSION=testing
 LABEL org.opencontainers.image.source=https://github.com/tsaridas/jackett-stremio

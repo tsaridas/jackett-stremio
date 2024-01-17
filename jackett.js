@@ -13,8 +13,13 @@ const getIndexers = (apiKey, cb) => {
 			cb(err || new Error('No Indexers'));
 			return;
 		}
+		let indexers = null;
 
-		let indexers = xmlJs.xml2js(resp.body);
+		try {
+			indexers = xmlJs.xml2js(resp.body);
+		} catch (err) {
+			cb(new Error("Couldn't get indexers from Jackett."));
+		}
 
 		if (indexers && indexers.elements && indexers.elements[0] && indexers.elements[0].elements) {
 			indexers = indexers.elements[0].elements;
@@ -40,7 +45,7 @@ const search = (apiKey, query, cb, end) => {
 		let maxSeeder = { number: 0, indexer: "" };
 
 		const simpleName = encodeURIComponent(helper.simpleName(query.name));
-		
+
 		if (config.searchByType) {
 			const searchType = query.type && query.type == 'movie' ? "movie" : "tvsearch";
 			if (query.season && query.episode) {
@@ -130,7 +135,7 @@ const search = (apiKey, query, cb, end) => {
 						if (! config.parseTorrentFiles && (!newObj.magneturl || (newObj.link && !newObj.link.startsWith("magnet:")))) {
 							return;
 						}
-						
+
 						if (newObj.magneturl && newObj.magneturl.startsWith("magnet:") && (newObj.link && newObj.link.startsWith("http://"))) {
 							config.debug && console.log("Found magneturl " + newObj.magneturl + " and link " + newObj.link);
 							newObj.link = newObj.magneturl;
@@ -151,15 +156,19 @@ const search = (apiKey, query, cb, end) => {
 						if (newObj.seeders > maxSeeder.number) {
 							maxSeeder.number = newObj.seeders;
 							maxSeeder.indexer = indexer.attributes.id;
-							maxSeeder.obj = newObj;
 						}
 						tempResults.push(newObj);
 					}
 				});
 				countResults += tempResults.length;
 				countFinished++;
-				config.debug && console.log("Found " + countResults + " so far from overall " + apiIndexers.length + " indexers " + countFinished + " finished. MaxSeeder: " + maxSeeder.number + " from " + maxSeeder.indexer + " Object " + JSON.stringify(maxSeeder.obj, null, 2));
-				cb(tempResults);
+				
+				config.debug && console.log(`Max seeder is ${maxSeeder.number} from ${maxSeeder.indexer}`);
+				if (tempResults.length > 0) {
+					config.debug && console.log(`Found ${countResults} result from ${indexer.attributes.id}. ${countFinished}/${apiIndexers.length} indexers finished.`);
+					cb(tempResults);
+				}
+				
 			}
 			tick();
 		}));

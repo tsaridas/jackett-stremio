@@ -15,5 +15,8 @@
     "parse-torrent": "^9.1.5",
     "video-name-parser": "^1.4.6",
     "xml-js": "^1.6.11"
+  },
+  "devDependencies": {
+    "eslint-plugin-node": "^11.1.0"
   }
 }

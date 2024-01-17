@@ -44,10 +44,12 @@ The below options can be set as an evironment variable.
 | `SEARCH_BY_TYPE` | false | `true` | We search by movie or tvshow instead of default free search. |
 | `INTERVAL` | 500 | `100` | How often to check in miliseconds if we should return results based on user's timeout. |
 | `DOWNLOAD_TORRENT_QUEUE` | 5 | `100` | Because external http downloads go through Jackett doing many downloads at the same time might cause some DDOS so I setup a queue for this. |
-| `ADD_BEST_TRACKERS` | true | `` | We download a list of best trackers from [Best Trackers](https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt) and add them to all torrents found |
+| `ADD_BEST_TRACKERS` | false | `true` | We download a list of best trackers from [Best Trackers](https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt) and add them to all torrents found |
 | `ADD_RUSSIAN_TRACKERS` | false | `true` | We add some Russian trackers. Check trackers.js for more info.|
-| `ADD_EXTRA_TRACKERS` | true | `` | We add some extra trackers. Check trackers.js for more info. |
+| `ADD_EXTRA_TRACKERS` | false | `true` | We add some extra trackers. Check trackers.js for more info. |
 | `PARSE_TORRENT_FILES` | false | `true` | Parsing torrent files ( not magnets) takes time and is slow. This is disabled by default. |
+| `REMOVE_BLACKLIST_TRACKERS` | false | `true` | Remove trackers that are blacklisted. Download list from : [Blacklisted trackers](https://raw.githubusercontent.com/ngosang/trackerslist/master/blacklist.txt") |
+
 
 
 ## Builds
@@ -100,8 +102,6 @@ Add `http://{{ YOUR IP }}:7000/{{my-jackett-key}}/manifest.json` (replace `{{my-
 - Remove duplicate hashes that come from different indexers.
 - Add your own trackers config.
 - Resolve trackers and add cache for trackers ip addresses instead of sending FQDNs.
-- Add a list of known trackers to all InfoHashes.
-- Add blacklisted trackers.
 - Increase versions of npm modules.
 - Update README for better understanding how to install.
 - Catch errors from bad jackett requests.

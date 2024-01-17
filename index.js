@@ -13,7 +13,8 @@ const { getTrackers } = require('./trackers');
 
 const version = require('./package.json').version;
 
-global.Trackers = [];
+global.TRACKERS = [];
+global.BLACKLIST_TRACKERS = [];
 
 const respond = (res, data) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -27,25 +28,7 @@ const respond = (res, data) => {
     res.send({ "streams": slicedData });
 };
 
-async function partitionURLAsync(list) {
-    const results = await Promise.all(
-        list.map(async (item) => {
-            if ('magneturl' in item && item.magneturl && item.magneturl.startsWith("magnet:")) {
-                return { magnets: [item], links: [] };
-            } else {
-                return { magnets: [], links: [item] };
-            }
-        })
-    );
 
-    return results.reduce(
-        (acc, result) => ({
-            magnets: acc.magnets.concat(result.magnets),
-            links: acc.links.concat(result.links),
-        }),
-        { magnets: [], links: [] }
-    );
-}
 
 const manifest = {
     "id": "org.stremio.jackett",
@@ -87,35 +70,67 @@ addon.get('/:jackettKey/manifest.json', (req, res) => {
     res.send(manifest);
 });
 
+async function partitionURLAsync(list) {
+    const results = await Promise.all(
+        list.map(async (item) => {
+            if ('magneturl' in item && item.magneturl && item.magneturl.startsWith("magnet:")) {
+                return { magnets: [item], links: [] };
+            } else {
+                return { magnets: [], links: [item] };
+            }
+        })
+    );
+
+    return results.reduce(
+        (acc, result) => ({
+            magnets: acc.magnets.concat(result.magnets),
+            links: acc.links.concat(result.links),
+        }),
+        { magnets: [], links: [] }
+    );
+}
+
 const streamFromParsed = (tor, parsedTorrent, params, cb) => {
-    const toStream = (parsed) => {
-        const infoHash = parsed.infoHash.toLowerCase();
 
-        let title = tor.title || parsed.name;
-        const subtitle = `👤 ${tor.seeders}/${tor.peers}  💾 ${helper.toHomanReadable(tor.size)}  ⚙️  ${tor.from}`;
+    const infoHash = parsedTorrent.infoHash.toLowerCase();
 
-        title += (title.indexOf('\n') > -1 ? '\r\n' : '\r\n\r\n') + subtitle;
-        const regex = /DLRip|HDTV|\b(DivX|XviD)\b|\b(?:DL|WEB|BD|BR)MUX\b|\bWEB-?Rip\b|\bWEB-?DL\b|\bBluray\b|\bVHSSCR\b|\bR5\b|\bPPVRip\b|\bTC\b|\b(?:HD-?)?TVRip\b|\bDVDscr\b|\bDVD(?:R[0-9])?\b|\bDVDRip\b|\bBDRip\b|\bBRRip\b|\bHD-?Rip\b|\b(?:HD-?)?T(?:ELE)?S(?:YNC)?\b|\b(?:HD-?)?CAM\b|(4k)|([0-9]{3,4}[pi])/i;
-        const match = tor.extraTag.match(regex);
-        let quality = "";
-        if (match !== null) {
-            quality = match[0];
+    let title = tor.title || parsedTorrent.name;
+    const subtitle = `👤 ${tor.seeders}/${tor.peers}  💾 ${helper.toHomanReadable(tor.size)}  ⚙️  ${tor.from}`;
+
+    title += (title.indexOf('\n') > -1 ? '\r\n' : '\r\n\r\n') + subtitle;
+    const regex = /DLRip|HDTV|\b(DivX|XviD)\b|\b(?:DL|WEB|BD|BR)MUX\b|\bWEB-?Rip\b|\bWEB-?DL\b|\bBluray\b|\bVHSSCR\b|\bR5\b|\bPPVRip\b|\bTC\b|\b(?:HD-?)?TVRip\b|\bDVDscr\b|\bDVD(?:R[0-9])?\b|\bDVDRip\b|\bBDRip\b|\bBRRip\b|\bHD-?Rip\b|\b(?:HD-?)?T(?:ELE)?S(?:YNC)?\b|\b(?:HD-?)?CAM\b|(4k)|([0-9]{3,4}[pi])/i;
+    const match = tor.extraTag.match(regex);
+    let quality = "";
+    if (match !== null) {
+        quality = match[0];
+    }
+    let trackers = [];
+    if (global.TRACKERS) {
+        trackers = helper.unique([].concat(parsedTorrent.announce).concat(global.TRACKERS));
+        config.debug && console.log("Added :" + (trackers.length - parsedTorrent.announce.length) + " extra trackers.");
+    }
+
+    if (global.BLACKLIST_TRACKERS) {
+        const filteredTrackers = trackers.filter(item => !global.BLACKLIST_TRACKERS.includes(item));
+        if ((trackers.length - filteredTrackers.length) != 0) {
+            config.debug && console.log("Removed : " + (trackers.length - filteredTrackers.length) + " blacklisted trackers.");
+            trackers = filteredTrackers;
         }
+    }
 
-        const trackers = helper.unique([].concat(parsed.announce).concat(global.Trackers));
+    cb({
+        name: "Jackett " + quality,
+        // fileIdx: idx,
+        type: params.type,
+        infoHash: infoHash,
+        seeders: tor.seeders,
+        sources: trackers.map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]),
+        title: title,
+        behaviorHints: {
+            bingieGroup: "Jackett|" + quality,
+        }
+    });
 
-        cb({
-            name: "Jackett " + quality,
-            // fileIdx: idx,
-            type: params.type,
-            infoHash: infoHash,
-            seeders: tor.seeders,
-            sources: trackers.map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]),
-            title: title
-        });
-    };
-
-    toStream(parsedTorrent);
 };
 
 // stream response
@@ -134,12 +149,11 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
 
     const intervalId = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
-
-        if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && inProgressCount === 0 && asyncQueue.idle))) {
-            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + " / Finished Searching: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / inProgressCount : " + inProgressCount)
+        if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && asyncQueue.idle))) {
+            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + " / Finished Searching: " + searchFinished + " / Queue Idle: " + asyncQueue.idle())
+            requestSent = true;
             asyncQueue.kill();
             clearInterval(intervalId);
-            requestSent = true;
             respond(res, { streams: streams });
 
         }
@@ -159,44 +173,44 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
         });
     };
 
-    let inProgressCount = 0;
     const processLinks = async (task) => {
         if (requestSent) { // Check the flag before processing each task
             return;
         }
         try {
-            inProgressCount++;
-            console.log("Processing link ", task.link);
+
+            config.debug && console.log("Processing link: ", task.link);
             const response = await needle('get', task.link, {
-                open_timeout: 3000,
-                read_timeout: 3000,
+                open_timeout: config.jackett.openTimeout,
+                read_timeout: config.jackett.readTimeout,
                 parse_response: false
             });
-
+            if (requestSent) { // It usually takes some time to dowload the torrent file and we don't want to continue.
+                return;
+            }
             if (response && response.headers && response.headers.location) {
                 if (response.headers.location.startsWith("magnet:")) {
                     task.magneturl = response.headers.location;
                     task.link = response.headers.location;
-                    console.log("Sending magnet task for process : ", task.magneturl);
+                    config.debug && console.log("Sending magnet task for process : ", task.magneturl);
                     processMagnets(task);
-                    inProgressCount--;
+
                 } else {
-                    config.debug && console.log("Not a magnet link : ", response.headers.location);
+                    config.debug && console.error("Not a magnet link : ", response.headers.location);
                 }
             } else {
-                console.log(`Processing task: ${task.link}, Queue length: ${asyncQueue.length()}`);
+
+                config.debug && console.log(`Processing torrent : ${task.link}.`);
                 const parsedTorrent = parseTorrent(response.body);
                 streamFromParsed(task, parsedTorrent, req.params, stream => {
                     if (stream) {
                         streams.push(stream);
                     }
                 });
-                console.log("Parsed torrent from body", parsedTorrent);
-                inProgressCount--;
+                config.debug && console.log("Parsed torrent : ", task.link);
             }
         } catch (err) {
-            console.log("error", err);
-            inProgressCount--;
+            console.log("Error processing link :", task.link, err);
         }
     };
 
@@ -209,7 +223,6 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
         if (results && results.length) {
             let tempResults = results;
             tempResults = tempResults.sort((a, b) => b.seeders - a.seeders);
-            config.debug && console.log("Sorted searches are : ", tempResults.length);
 
             const { magnets, links } = await partitionURLAsync(tempResults);
 
@@ -249,7 +262,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                 },
 
                 () => {
-                    config.debug && console.log("Received all search results.");
+                    config.debug && console.log("Searching finished.");
                     searchFinished = true;
                 });
 
@@ -271,7 +284,10 @@ const runAddon = async () => {
 
     console.log(config);
 
-    global.Trackers = await getTrackers();
+    const { trackers, blacklist_trackers } = await getTrackers();
+
+    global.TRACKERS = trackers;
+    global.BLACKLIST_TRACKERS = blacklist_trackers;
 
     addon.listen(config.addonPort, () => {
 
