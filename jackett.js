@@ -156,14 +156,13 @@ const search = (apiKey, query, cb, end) => {
 						if (newObj.seeders > maxSeeder.number) {
 							maxSeeder.number = newObj.seeders;
 							maxSeeder.indexer = indexer.attributes.id;
-							maxSeeder.obj = newObj;
 						}
 						tempResults.push(newObj);
 					}
 				});
 				countResults += tempResults.length;
 				countFinished++;
-				config.debug && console.log("Found " + countResults + " so far from overall " + apiIndexers.length + " indexers " + countFinished + " finished. MaxSeeder: " + maxSeeder.number + " from " + maxSeeder.indexer + " Object " + JSON.stringify(maxSeeder.obj, null, 2));
+				config.debug && console.log("Found " + countResults + " so far from overall " + apiIndexers.length + " indexers " + countFinished + " finished. MaxSeeder: " + maxSeeder.number + " from: " + maxSeeder.indexer);
 				cb(tempResults);
 			}
 			tick();
