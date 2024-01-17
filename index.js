@@ -28,25 +28,7 @@ const respond = (res, data) => {
     res.send({ "streams": slicedData });
 };
 
-async function partitionURLAsync(list) {
-    const results = await Promise.all(
-        list.map(async (item) => {
-            if ('magneturl' in item && item.magneturl && item.magneturl.startsWith("magnet:")) {
-                return { magnets: [item], links: [] };
-            } else {
-                return { magnets: [], links: [item] };
-            }
-        })
-    );
 
-    return results.reduce(
-        (acc, result) => ({
-            magnets: acc.magnets.concat(result.magnets),
-            links: acc.links.concat(result.links),
-        }),
-        { magnets: [], links: [] }
-    );
-}
 
 const manifest = {
     "id": "org.stremio.jackett",
@@ -87,6 +69,26 @@ addon.get('/:jackettKey/manifest.json', (req, res) => {
     config.debug && console.log("Sending manifest.");
     res.send(manifest);
 });
+
+async function partitionURLAsync(list) {
+    const results = await Promise.all(
+        list.map(async (item) => {
+            if ('magneturl' in item && item.magneturl && item.magneturl.startsWith("magnet:")) {
+                return { magnets: [item], links: [] };
+            } else {
+                return { magnets: [], links: [item] };
+            }
+        })
+    );
+
+    return results.reduce(
+        (acc, result) => ({
+            magnets: acc.magnets.concat(result.magnets),
+            links: acc.links.concat(result.links),
+        }),
+        { magnets: [], links: [] }
+    );
+}
 
 const streamFromParsed = (tor, parsedTorrent, params, cb) => {
     const toStream = (parsed) => {
