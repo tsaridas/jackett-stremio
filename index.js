@@ -259,7 +259,6 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
             jackettApi.search(req.params.jackettKey, searchQuery,
 
                 (tempResults) => {
-                    config.debug && console.log("Received " + tempResults.length + " partial results.");
                     respondStreams(tempResults);
                 },
 

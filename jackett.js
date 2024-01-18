@@ -132,7 +132,7 @@ const search = (apiKey, query, cb, end) => {
 							return;
 						}
 
-						if (! config.parseTorrentFiles && (!newObj.magneturl || (newObj.link && !newObj.link.startsWith("magnet:")))) {
+						if (!config.parseTorrentFiles && (!newObj.magneturl || (newObj.link && !newObj.link.startsWith("magnet:")))) {
 							return;
 						}
 
@@ -162,13 +162,14 @@ const search = (apiKey, query, cb, end) => {
 				});
 				countResults += tempResults.length;
 				countFinished++;
-				
-				config.debug && console.log(`Maximum seeders found ${maxSeeder.number} from ${maxSeeder.indexer}`);
+
+				config.debug && console.log(`Found ${countResults} result from ${indexer.attributes.id}. ${countFinished}/${apiIndexers.length} indexers finished.`);
 				if (tempResults.length > 0) {
-					config.debug && console.log(`Found ${countResults} result from ${indexer.attributes.id}. ${countFinished}/${apiIndexers.length} indexers finished.`);
+					config.debug && console.log(`Maximum seeders found ${maxSeeder.number} from ${maxSeeder.indexer}`);
+
 					cb(tempResults);
 				}
-				
+
 			}
 			tick();
 		}));
