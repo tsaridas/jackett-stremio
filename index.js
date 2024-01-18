@@ -294,7 +294,7 @@ const runAddon = async () => {
 
         console.log('Add-on URL: http://127.0.0.1:' + config.addonPort + '/[my-jackett-key]/manifest.json');
 
-        console.log('Replace "[my-jackett-key]" with your Jackett API Key');
+        console.log('Replace "[my-jackett-key]" with your Jackett API Key' );
 
     });
 };
