@@ -32,6 +32,6 @@ LABEL version=${VERSION}
 
 COPY . .
 RUN apk update && apk upgrade && rm -rf /var/cache/apk/*
-RUN npm install
+RUN npm install --no-audit --no-optional --production
 
 CMD ["node", "index.js"]
