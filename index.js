@@ -107,7 +107,7 @@ const streamFromParsed = (tor, parsedTorrent, params, cb) => {
     let trackers = [];
     if (global.TRACKERS) {
         trackers = helper.unique([].concat(parsedTorrent.announce).concat(global.TRACKERS));
-        config.debug && console.log("Added :" + (trackers.length - parsedTorrent.announce.length) + " extra trackers.");
+        config.debug && console.log("Added " + (trackers.length - parsedTorrent.announce.length) + " extra trackers.");
     }
 
     if (global.BLACKLIST_TRACKERS) {
@@ -164,7 +164,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
             return;
         }
         const uri = task.magneturl || task.link;
-        config.debug && console.log("Parsing magnet : ", uri);
+        config.debug && console.log("Parsing magnet :", uri);
         const parsedTorrent = parseTorrent(uri);
         streamFromParsed(task, parsedTorrent, req.params, stream => {
             if (stream) {
@@ -193,11 +193,11 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                 if (response.headers.location.startsWith("magnet:")) {
                     task.magneturl = response.headers.location;
                     task.link = response.headers.location;
-                    config.debug && console.log("Sending magnet task for process : ", task.magneturl);
+                    config.debug && console.log("Sending magnet task for process :", task.magneturl);
                     processMagnets(task);
 
                 } else {
-                    config.debug && console.error("Not a magnet link : ", response.headers.location);
+                    config.debug && console.error("Not a magnet link :", response.headers.location);
                 }
             } else {
 
