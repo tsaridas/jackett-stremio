@@ -144,13 +144,13 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
     let searchFinished = false;
     let requestSent = false;
     const streams = [];
-
+    let inProgressCount = 0;
     const startTime = Date.now();
 
     const intervalId = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
-        if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && asyncQueue.idle))) {
-            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + " / Finished Searching: " + searchFinished + " / Queue Idle: " + asyncQueue.idle())
+        if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && inProgressCount === 0 && asyncQueue.idle))) {
+            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + " / Finished Searching: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / inProgressCount : " + inProgressCount)
             requestSent = true;
             asyncQueue.kill();
             clearInterval(intervalId);
@@ -177,6 +177,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
         if (requestSent) { // Check the flag before processing each task
             return;
         }
+        inProgressCount++;
         try {
 
             config.debug && console.log("Processing link: ", task.link);
@@ -212,6 +213,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
         } catch (err) {
             console.log("Error processing link :", task.link, err);
         }
+        inProgressCount--;
     };
 
     const asyncQueue = async.queue(processLinks, config.downloadTorrentQueue);
