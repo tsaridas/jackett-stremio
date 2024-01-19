@@ -2,3 +2,4 @@ node_modules
 *.swp
 .git
 beamup.json
+deploy.sh
