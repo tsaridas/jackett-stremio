@@ -63,16 +63,14 @@ addon.get('/:jackettKey/manifest.json', (req, res) => {
     res.send(manifest);
 });
 
-async function partitionURLAsync(list) {
-    const results = await Promise.all(
-        list.map(async (item) => {
-            if ('magneturl' in item && item.magneturl && item.magneturl.startsWith("magnet:")) {
-                return { magnets: [item], links: [] };
-            } else {
-                return { magnets: [], links: [item] };
-            }
-        })
-    );
+function partitionURL(list) {
+    const results = list.map((item) => {
+        if ('magneturl' in item && item.magneturl && item.magneturl.startsWith("magnet:")) {
+            return { magnets: [item], links: [] };
+        } else {
+            return { magnets: [], links: [item] };
+        }
+    });
 
     return results.reduce(
         (acc, result) => ({
@@ -223,7 +221,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
             let tempResults = results;
             tempResults = tempResults.sort((a, b) => b.seeders - a.seeders);
 
-            const { magnets, links } = await partitionURLAsync(tempResults);
+            const { magnets, links } = await partitionURL(tempResults);
 
             Promise.all([...magnets.map(processMagnets)]);
             links.forEach(item => asyncQueue.push(item));
