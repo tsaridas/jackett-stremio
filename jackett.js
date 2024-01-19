@@ -154,7 +154,6 @@ const search = (apiKey, query, cb, end) => {
 						newObj.extraTag = helper.extraTag(newObj.title, query.name);
 
 						if (newObj.seeders > maxSeeder.number) {
-							config.debug && console.log(`Maximum seeders found is ${maxSeeder.number} from ${maxSeeder.indexer}.`);
 							maxSeeder.number = newObj.seeders;
 							maxSeeder.indexer = indexer.attributes.id;
 						}
@@ -165,8 +164,8 @@ const search = (apiKey, query, cb, end) => {
 				countFinished++;
 
 				config.debug && console.log(`Found ${countResults} result from ${indexer.attributes.id}. ${countFinished}/${apiIndexers.length} indexers finished.`);
-				
 				if (tempResults.length > 0) {
+					config.debug && console.log(`Maximum seeders found is ${maxSeeder.number} from ${maxSeeder.indexer}`);
 					cb(tempResults);
 				}
 
