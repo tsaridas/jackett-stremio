@@ -323,10 +323,7 @@ const runAddon = async () => {
 
     addon.listen(config.addonPort, () => {
 
-        console.log('Add-on URL: http://127.0.0.1:' + config.addonPort + '/[my-jackett-key]/manifest.json');
-
-        console.log('Replace "[my-jackett-key]" with your Jackett API Key');
-
+        console.log('Add-on Manifest URL: http://{{ YOUR IP ADDRESS }}:' + config.addonPort + '/manifest.json');
     });
 };
 
