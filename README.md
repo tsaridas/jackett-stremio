@@ -104,6 +104,7 @@ Add `http://{{ YOUR IP }}:7000/manifest.json`. Replace `{{ YOUR IP }}` with your
 ### ToDo
 
 - Add caching headers.
+- Reorg code to avoid iterating through the same data multiple times.
 - Add your own trackers config.
 - Resolve trackers and add cache for trackers ip addresses instead of sending FQDNs.
 - Increase versions of npm modules.
