@@ -150,7 +150,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
     const intervalId = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
         if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && inProgressCount === 0 && asyncQueue.idle))) {
-            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + " / Finished Searching: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / inProgressCount : " + inProgressCount)
+            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + " / Finished Searching: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount)
             requestSent = true;
             asyncQueue.kill();
             clearInterval(intervalId);
