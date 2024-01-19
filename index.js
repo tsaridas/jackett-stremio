@@ -107,7 +107,6 @@ function processTorrentList(torrentList) {
 
     // Sort the array by seeders in descending order
     uniqueTorrents.sort((a, b) => b.seeders - a.seeders);
-
     // Move the sources starting with 'dht' to the end of the list
     uniqueTorrents.forEach(torrent => {
         const dhtSources = torrent.sources.filter(source => source.startsWith('dht'));
