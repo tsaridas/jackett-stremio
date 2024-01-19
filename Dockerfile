@@ -22,7 +22,7 @@ ENV ADD_EXTRA_TRACKERS=
 ENV PARSE_TORRENT_FILES=
 ENV REMOVE_BLACKLIST_TRACKERS=
 
-# avoid dev dependencies install
+
 ENV NODE_ENV=production
 
 ARG VERSION=testing
