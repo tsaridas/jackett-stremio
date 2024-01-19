@@ -94,7 +94,7 @@ const getTrackers = async () => {
         console.log(`Loading : ${EXTRA_TRACKERS.length} extra trackers.`);
     }
     if (config.removeBlacklistTrackers) {
-        const blacklist_trackers = await getBlacklistTrackers();
+        blacklist_trackers = await getBlacklistTrackers();
         console.log(`Loading : ${blacklist_trackers.length} blacklisted trackers.`);
     }
     
