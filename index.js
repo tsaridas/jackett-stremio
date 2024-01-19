@@ -20,15 +20,8 @@ const respond = (res, data) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
     res.setHeader('Content-Type', 'application/json');
-
-    const sortedData = data.streams.sort((a, b) => b.seeders - a.seeders);
-    const slicedData = sortedData.slice(0, config.maximumResults)
-    config.debug && console.log("Sliced & Sorted data ", slicedData);
-
-    res.send({ "streams": slicedData });
+    res.send(data);
 };
-
-
 
 const manifest = {
     "id": "org.stremio.jackett",
@@ -154,7 +147,11 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
             requestSent = true;
             asyncQueue.kill();
             clearInterval(intervalId);
-            respond(res, { streams: streams });
+            const sortedData = streams.streams.sort((a, b) => b.seeders - a.seeders);
+            const slicedData = sortedData.slice(0, config.maximumResults)
+            config.debug && console.log("Sliced & Sorted data ", slicedData);
+
+            respond(res, { streams: slicedData });
 
         }
     }, config.interval);
@@ -294,7 +291,7 @@ const runAddon = async () => {
 
         console.log('Add-on URL: http://127.0.0.1:' + config.addonPort + '/[my-jackett-key]/manifest.json');
 
-        console.log('Replace "[my-jackett-key]" with your Jackett API Key' );
+        console.log('Replace "[my-jackett-key]" with your Jackett API Key');
 
     });
 };

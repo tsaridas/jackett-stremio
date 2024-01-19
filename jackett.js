@@ -165,7 +165,7 @@ const search = (apiKey, query, cb, end) => {
 
 				config.debug && console.log(`Found ${countResults} result from ${indexer.attributes.id}. ${countFinished}/${apiIndexers.length} indexers finished.`);
 				if (tempResults.length > 0) {
-					config.debug && console.log(`Maximum seeders found is ${maxSeeder.number} from ${maxSeeder.indexer}`);
+					config.debug && console.log(`Maximum seeders found is ${maxSeeder.number} from ${maxSeeder.indexer} .`);
 					cb(tempResults);
 				}
 			}
