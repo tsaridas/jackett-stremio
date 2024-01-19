@@ -102,7 +102,7 @@ const getTrackers = async () => {
         console.log(`Loaded : ${trackers.length} trackers.`);
     }
 
-    config.debug && console.log(trackers);
+    config.debug && console.log(trackers, blacklist_trackers);
     return {
         trackers: trackers,
         blacklist_trackers: blacklist_trackers
