@@ -35,6 +35,10 @@ LABEL version=${VERSION}
 
 COPY . .
 RUN apk update && apk upgrade && rm -rf /var/cache/apk/*
+<<<<<<< HEAD
 RUN npm install --no-fund --omit=optional --production
+=======
+RUN npm install --no-fund --no-audit --no-optional --production
+>>>>>>> 07a27efec2fc3ee3543c9a15ffc176ae0727f419
 
 CMD ["node", "index.js"]
