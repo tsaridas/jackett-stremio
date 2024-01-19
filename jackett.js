@@ -42,7 +42,6 @@ const search = (apiKey, query, cb, end) => {
 		let searchQuery = "";
 		let countResults = 0;
 		let countFinished = 0;
-		let maxSeeder = { number: 0, indexer: "" };
 
 		const simpleName = encodeURIComponent(helper.simpleName(query.name));
 
@@ -152,11 +151,6 @@ const search = (apiKey, query, cb, end) => {
 						newObj.from = indexer.attributes.id;
 
 						newObj.extraTag = helper.extraTag(newObj.title, query.name);
-
-						if (newObj.seeders > maxSeeder.number) {
-							maxSeeder.number = newObj.seeders;
-							maxSeeder.indexer = indexer.attributes.id;
-						}
 						tempResults.push(newObj);
 					}
 				});
@@ -165,7 +159,6 @@ const search = (apiKey, query, cb, end) => {
 
 				config.debug && console.log(`Found ${countResults} result from ${indexer.attributes.id}. ${countFinished}/${apiIndexers.length} indexers finished.`);
 				if (tempResults.length > 0) {
-					config.debug && console.log(`Maximum seeders found is ${maxSeeder.number} from ${maxSeeder.indexer} .`);
 					cb(tempResults);
 				}
 			}
