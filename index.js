@@ -81,6 +81,40 @@ function partitionURL(list) {
     );
 }
 
+function processTorrentList(torrentList) {
+    const duplicatesMap = new Map();
+
+    torrentList.forEach(torrent => {
+        const infoHash = torrent.infoHash;
+
+        // Check if infoHash is already in the map
+        if (duplicatesMap.has(infoHash)) {
+            // If duplicate, update if the current torrent has higher seeders
+            const existingTorrent = duplicatesMap.get(infoHash);
+            if (torrent.seeders > existingTorrent.seeders) {
+                duplicatesMap.set(infoHash, {
+                    ...torrent,
+                    sources: helper.unique([...existingTorrent.sources, ...torrent.sources]),
+                });
+            }
+        } else {
+            duplicatesMap.set(infoHash, torrent);
+        }
+    });
+
+    // Filter out torrents with the same infoHash
+    const uniqueTorrents = [...duplicatesMap.values()];
+
+    // Sort the array by seeders in descending order
+    uniqueTorrents.sort((a, b) => b.seeders - a.seeders);
+    
+    const slicedTorrents = uniqueTorrents.slice(0, config.maximumResults);
+
+    return slicedTorrents;
+}
+
+
+
 const streamFromParsed = (tor, parsedTorrent, params, cb) => {
 
     const infoHash = parsedTorrent.infoHash.toLowerCase();
@@ -145,11 +179,9 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
             requestSent = true;
             asyncQueue.kill();
             clearInterval(intervalId);
-            const sortedData = streams.streams.sort((a, b) => b.seeders - a.seeders);
-            const slicedData = sortedData.slice(0, config.maximumResults)
-            config.debug && console.log("Sliced & Sorted data ", slicedData);
-
-            respond(res, { streams: slicedData });
+            finalData = processTorrentList(streams);
+            config.debug && console.log("Sliced & Sorted data ", finalData);
+            respond(res, { streams: finalData });
 
         }
     }, config.interval);
