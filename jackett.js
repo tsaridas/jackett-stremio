@@ -3,8 +3,8 @@ const needle = require('needle');
 const helper = require('./helpers');
 const config = require('./config');
 
-const getIndexers = (apiKey, cb) => {
-	needle.get(config.jackett.host + 'api/v2.0/indexers/all/results/torznab/api?apikey=' + apiKey + '&t=indexers&configured=true', {
+const getIndexers = (cb) => {
+	needle.get(config.jackett.host + 'api/v2.0/indexers/all/results/torznab/api?apikey=' + config.jackett.apiKey + '&t=indexers&configured=true', {
 		open_timeout: config.jackett.openTimeout,
 		read_timeout: config.jackett.readTimeout,
 		parse_response: false
@@ -30,8 +30,8 @@ const getIndexers = (apiKey, cb) => {
 	});
 };
 
-const search = (apiKey, query, cb, end) => {
-	getIndexers(apiKey, async (err, apiIndexers) => {
+const search = (query, cb, end) => {
+	getIndexers(async (err, apiIndexers) => {
 		if (err || !apiIndexers || apiIndexers.length === 0) {
 			cb([]);
 			end([]);
@@ -74,7 +74,7 @@ const search = (apiKey, query, cb, end) => {
 				return;
 			}
 
-			const url = config.jackett.host + 'api/v2.0/indexers/' + indexer.attributes.id + '/results/torznab/api?apikey=' + apiKey + searchQuery;
+			const url = config.jackett.host + 'api/v2.0/indexers/' + indexer.attributes.id + '/results/torznab/api?apikey=' + config.jackett.apiKey + searchQuery;
 			config.debug && console.log(`Searching indexer ${indexer.attributes.id} with url ${url}`);
 
 			const response = await new Promise((resolve) => {

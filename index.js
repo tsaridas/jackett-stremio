@@ -55,7 +55,7 @@ const manifest = {
     "catalogs": []
 };
 
-addon.get('/:jackettKey/manifest.json', (req, res) => {
+addon.get('/manifest.json', (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
     res.setHeader('Content-Type', 'application/json');
@@ -163,9 +163,9 @@ const streamFromParsed = (tor, parsedTorrent, params, cb) => {
 };
 
 // stream response
-addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
+addon.get('/stream/:type/:id.json', (req, res) => {
 
-    if (!req.params.id || !req.params.jackettKey)
+    if (!req.params.id)
         return respond(res, { streams: [] });
 
     config.debug && console.log("Received request for :", req.params.type, req.params.id);
@@ -287,7 +287,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                 console.log(`Looking for title: ${body.meta.name} - type: ${req.params.type} - year: ${year}.`);
             }
 
-            jackettApi.search(req.params.jackettKey, searchQuery,
+            jackettApi.search(searchQuery,
 
                 (tempResults) => {
                     respondStreams(tempResults);
