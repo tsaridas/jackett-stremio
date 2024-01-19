@@ -99,9 +99,7 @@ Add `http://{{ YOUR IP }}:7000/{{my-jackett-key}}/manifest.json` (replace `{{my-
 ### ToDo
 
 - Add caching headers.
-- Remove duplicate hashes that come from different indexers.
 - Add your own trackers config.
 - Resolve trackers and add cache for trackers ip addresses instead of sending FQDNs.
 - Increase versions of npm modules.
 - Update README for better understanding how to install.
-- Catch errors from bad jackett requests.

@@ -20,15 +20,8 @@ const respond = (res, data) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
     res.setHeader('Content-Type', 'application/json');
-
-    const sortedData = data.streams.sort((a, b) => b.seeders - a.seeders);
-    const slicedData = sortedData.slice(0, config.maximumResults)
-    config.debug && console.log("Sliced & Sorted data ", slicedData);
-
-    res.send({ "streams": slicedData });
+    res.send(data);
 };
-
-
 
 const manifest = {
     "id": "org.stremio.jackett",
@@ -70,16 +63,14 @@ addon.get('/:jackettKey/manifest.json', (req, res) => {
     res.send(manifest);
 });
 
-async function partitionURLAsync(list) {
-    const results = await Promise.all(
-        list.map(async (item) => {
-            if ('magneturl' in item && item.magneturl && item.magneturl.startsWith("magnet:")) {
-                return { magnets: [item], links: [] };
-            } else {
-                return { magnets: [], links: [item] };
-            }
-        })
-    );
+function partitionURL(list) {
+    const results = list.map((item) => {
+        if ('magneturl' in item && item.magneturl && item.magneturl.startsWith("magnet:")) {
+            return { magnets: [item], links: [] };
+        } else {
+            return { magnets: [], links: [item] };
+        }
+    });
 
     return results.reduce(
         (acc, result) => ({
@@ -89,6 +80,46 @@ async function partitionURLAsync(list) {
         { magnets: [], links: [] }
     );
 }
+
+function processTorrentList(torrentList) {
+    const duplicatesMap = new Map();
+
+    torrentList.forEach(torrent => {
+        const infoHash = torrent.infoHash;
+
+        // Check if infoHash is already in the map
+        if (duplicatesMap.has(infoHash)) {
+            // If duplicate, update if the current torrent has higher seeders
+            const existingTorrent = duplicatesMap.get(infoHash);
+            if (torrent.seeders > existingTorrent.seeders) {
+                duplicatesMap.set(infoHash, {
+                    ...torrent,
+                    sources: helper.unique([...existingTorrent.sources, ...torrent.sources]),
+                });
+            }
+        } else {
+            duplicatesMap.set(infoHash, torrent);
+        }
+    });
+
+    // Filter out torrents with the same infoHash
+    const uniqueTorrents = [...duplicatesMap.values()];
+
+    // Sort the array by seeders in descending order
+    uniqueTorrents.sort((a, b) => b.seeders - a.seeders);
+    
+    // Move the sources starting with 'dht' to the end of the list
+    uniqueTorrents.forEach(torrent => {
+        const dhtSources = torrent.sources.filter(source => source.startsWith('dht'));
+        const nonDhtSources = torrent.sources.filter(source => !source.startsWith('dht'));
+        torrent.sources = [...nonDhtSources, ...dhtSources];
+    });
+    const slicedTorrents = uniqueTorrents.slice(0, config.maximumResults);
+
+    return slicedTorrents;
+}
+
+
 
 const streamFromParsed = (tor, parsedTorrent, params, cb) => {
 
@@ -107,7 +138,7 @@ const streamFromParsed = (tor, parsedTorrent, params, cb) => {
     let trackers = [];
     if (global.TRACKERS) {
         trackers = helper.unique([].concat(parsedTorrent.announce).concat(global.TRACKERS));
-        config.debug && console.log("Added :" + (trackers.length - parsedTorrent.announce.length) + " extra trackers.");
+        config.debug && console.log("Added " + (trackers.length - parsedTorrent.announce.length) + " extra trackers.");
     }
 
     if (global.BLACKLIST_TRACKERS) {
@@ -144,17 +175,19 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
     let searchFinished = false;
     let requestSent = false;
     const streams = [];
-
+    let inProgressCount = 0;
     const startTime = Date.now();
 
     const intervalId = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
-        if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && asyncQueue.idle))) {
-            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + " / Finished Searching: " + searchFinished + " / Queue Idle: " + asyncQueue.idle())
+        if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && inProgressCount === 0 && asyncQueue.idle))) {
+            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + " / Finished Searching: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount)
             requestSent = true;
             asyncQueue.kill();
             clearInterval(intervalId);
-            respond(res, { streams: streams });
+            finalData = processTorrentList(streams);
+            config.debug && console.log("Sliced & Sorted data ", finalData);
+            respond(res, { streams: finalData });
 
         }
     }, config.interval);
@@ -164,7 +197,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
             return;
         }
         const uri = task.magneturl || task.link;
-        config.debug && console.log("Parsing magnet : ", uri);
+        config.debug && console.log("Parsing magnet :", uri);
         const parsedTorrent = parseTorrent(uri);
         streamFromParsed(task, parsedTorrent, req.params, stream => {
             if (stream) {
@@ -177,6 +210,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
         if (requestSent) { // Check the flag before processing each task
             return;
         }
+        inProgressCount++;
         try {
 
             config.debug && console.log("Processing link: ", task.link);
@@ -192,11 +226,11 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                 if (response.headers.location.startsWith("magnet:")) {
                     task.magneturl = response.headers.location;
                     task.link = response.headers.location;
-                    config.debug && console.log("Sending magnet task for process : ", task.magneturl);
+                    config.debug && console.log("Sending magnet task for process :", task.magneturl);
                     processMagnets(task);
 
                 } else {
-                    config.debug && console.error("Not a magnet link : ", response.headers.location);
+                    config.debug && console.error("Not a magnet link :", response.headers.location);
                 }
             } else {
 
@@ -212,6 +246,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
         } catch (err) {
             console.log("Error processing link :", task.link, err);
         }
+        inProgressCount--;
     };
 
     const asyncQueue = async.queue(processLinks, config.downloadTorrentQueue);
@@ -224,7 +259,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
             let tempResults = results;
             tempResults = tempResults.sort((a, b) => b.seeders - a.seeders);
 
-            const { magnets, links } = await partitionURLAsync(tempResults);
+            const { magnets, links } = await partitionURL(tempResults);
 
             Promise.all([...magnets.map(processMagnets)]);
             links.forEach(item => asyncQueue.push(item));
@@ -257,7 +292,6 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
             jackettApi.search(req.params.jackettKey, searchQuery,
 
                 (tempResults) => {
-                    config.debug && console.log("Received " + tempResults.length + " partial results.");
                     respondStreams(tempResults);
                 },
 
@@ -267,8 +301,8 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                 });
 
 
-            if (config.responseTimeout)
-                setTimeout(respondStreams, config.responseTimeout);
+            //if (config.responseTimeout)
+            //    setTimeout(respondStreams, config.responseTimeout);
 
         } else {
             console.error('Could not get info from Cinemata.', url, err);

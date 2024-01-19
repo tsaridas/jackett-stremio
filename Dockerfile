@@ -22,6 +22,9 @@ ENV ADD_EXTRA_TRACKERS=
 ENV PARSE_TORRENT_FILES=
 ENV REMOVE_BLACKLIST_TRACKERS=
 
+
+ENV NODE_ENV=production
+
 ARG VERSION=testing
 LABEL org.opencontainers.image.source=https://github.com/tsaridas/jackett-stremio
 LABEL org.opencontainers.image.description="Jackett Local Addon for Stremio"
@@ -29,9 +32,9 @@ LABEL org.opencontainers.image.licenses=MIT
 LABEL version=${VERSION}
 
 
-
 COPY . .
 RUN apk update && apk upgrade && rm -rf /var/cache/apk/*
-RUN npm install --no-audit --no-optional --production
+RUN npm install --no-fund --omit=dev
+
 
 CMD ["node", "index.js"]
