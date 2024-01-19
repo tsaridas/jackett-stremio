@@ -53,7 +53,7 @@ const getBlacklistTrackers = async () => {
     });
 
     if (response && response.statusCode >= 200 && response.statusCode < 300 && response.headers && response.body) {
-        const trackers = response.body.split('\n').filter(line => line.trim() !== '');
+        const trackers = response.body.split('\n').map(line => line.split('#')[0].trim()).filter(line => line.trim() !== '');
         config.debug && console.log(`Downloaded : ${trackers.length} blacklisted trackers.`);
         return trackers;
     }
