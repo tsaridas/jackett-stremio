@@ -55,7 +55,7 @@ const manifest = {
     "catalogs": []
 };
 
-addon.get('/:jackettKey/manifest.json', (req, res) => {
+addon.get('/manifest.json', (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
     res.setHeader('Content-Type', 'application/json');
@@ -107,7 +107,6 @@ function processTorrentList(torrentList) {
 
     // Sort the array by seeders in descending order
     uniqueTorrents.sort((a, b) => b.seeders - a.seeders);
-    
     // Move the sources starting with 'dht' to the end of the list
     uniqueTorrents.forEach(torrent => {
         const dhtSources = torrent.sources.filter(source => source.startsWith('dht'));
@@ -118,8 +117,6 @@ function processTorrentList(torrentList) {
 
     return slicedTorrents;
 }
-
-
 
 const streamFromParsed = (tor, parsedTorrent, params, cb) => {
 
@@ -165,9 +162,9 @@ const streamFromParsed = (tor, parsedTorrent, params, cb) => {
 };
 
 // stream response
-addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
+addon.get('/stream/:type/:id.json', (req, res) => {
 
-    if (!req.params.id || !req.params.jackettKey)
+    if (!req.params.id)
         return respond(res, { streams: [] });
 
     config.debug && console.log("Received request for :", req.params.type, req.params.id);
@@ -244,7 +241,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                 config.debug && console.log("Parsed torrent : ", task.link);
             }
         } catch (err) {
-            console.log("Error processing link :", task.link, err);
+            config.debug && console.log("Error processing link :", task.link, err);
         }
         inProgressCount--;
     };
@@ -289,7 +286,7 @@ addon.get('/:jackettKey/stream/:type/:id.json', (req, res) => {
                 console.log(`Looking for title: ${body.meta.name} - type: ${req.params.type} - year: ${year}.`);
             }
 
-            jackettApi.search(req.params.jackettKey, searchQuery,
+            jackettApi.search(searchQuery,
 
                 (tempResults) => {
                     respondStreams(tempResults);
@@ -325,10 +322,7 @@ const runAddon = async () => {
 
     addon.listen(config.addonPort, () => {
 
-        console.log('Add-on URL: http://127.0.0.1:' + config.addonPort + '/[my-jackett-key]/manifest.json');
-
-        console.log('Replace "[my-jackett-key]" with your Jackett API Key');
-
+        console.log('Add-on Manifest URL: http://{{ YOUR IP ADDRESS }}:' + config.addonPort + '/manifest.json');
     });
 };
 

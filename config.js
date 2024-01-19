@@ -34,6 +34,8 @@ const defaultConfig = {
 
     "host": process.env.JACKETT_HOST || "http://127.0.0.1:9117/",
 
+    "apiKey": process.env.JACKETT_APIKEY || "",
+
     "readTimeout": parseInt(process.env.JACKETT_RTIMEOUT) || 10000,
 
     "openTimeout": parseInt(process.env.JACKETT_OTIMEOUT) || 5000

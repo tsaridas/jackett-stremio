@@ -11,6 +11,7 @@ ENV MIN_SEED=
 ENV MAX_RESULTS=
 ENV MAX_SIZE=
 ENV JACKETT_HOST=
+ENV JACKETT_APIKEY=
 ENV JACKETT_RTIMEOUT=
 ENV JACKETT_OTIMEOUT=
 ENV SEARCH_BY_TYPE=
@@ -35,6 +36,8 @@ LABEL version=${VERSION}
 COPY . .
 RUN apk update && apk upgrade && rm -rf /var/cache/apk/*
 RUN npm install --no-fund --omit=dev
+
+ENTRYPOINT []
 
 
 CMD ["node", "index.js"]

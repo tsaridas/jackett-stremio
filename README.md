@@ -14,6 +14,7 @@ Images are pushed to [Docker Hub](https://hub.docker.com/r/tsaridas/jackett-stre
 $ docker run -d \
   --name=jackett-stremio \
   -e JACKETT_HOST=http://{{ YOURIP }}:9117/ \ # Replace `{{ YOUR IP }}` with your LAN IP.
+  -e JACKETT_APIKEY={{ THE API KEY }} # Replace {{ THE API KEY }} with the key you got from the jacket server.
   -p 7000:7000/tcp \
   --restart unless-stopped \
   tsaridas/jackett-stremio:latest
@@ -23,6 +24,7 @@ One could also run it outside docker. You need nodejs installed.
 
 ```bash
 $ export JACKETT_HOST={{ YOUR JACKETT IP:PORT }} # Replace `{{ YOUR JACKETT IP:PORT }}` with your ip and Jackett port.
+$ export JACKETT_APIKEY={{ YOUR JACKETT API KEY }} # Replace `{{ YOUR JACKETT API KEY }}` with your Jackett API key.
 $ npm install
 $ npm start
 ```
@@ -32,14 +34,15 @@ The below options can be set as an evironment variable.
 
 | Env | Default | Example | Description |
 | - | - | - | - |
+| `JACKETT_HOST` | http://127.0.0.1:9117/ | `http://10.10.10.1:9117/` | Your Jackett host. Make sure there is a / in the end and its a valid url. |
+| `JACKETT_APIKEY` | '' | `sdfsadfsadfsadfsaf` | API key from jackett server. |
+| `JACKETT_RTIMEOUT` | 10000 | `20000` | Jackett http read timeout in millisecond. |
+| `JACKETT_OTIMEOUT` | 10000 | `20000` | Jackett http open timeout in millisecond. |
 | `RESPONSE_TIMEOUT` | 12000 | `8000` | This will timeout any queries to jackett after this given value in millisecond. The higher the most result you will get |
 | `PORT` | 7000 | `8888` | The port which the Addon service will run on. |
 | `MIN_SEED` | 3 | `10` | The minimum amount of seeds we should return results for. |
 | `MAX_SIZE` | 10GB | `5GB` | Maximum size of the results we want to receive. Value is in Bytes. Default is 10GB. Supported formats: B/KB/MB/GB/TB . |
 | `MAX_QUEUE_SIZE` | 100 | `200` | Maximum amount queries we want to have parallel. |
-| `JACKETT_HOST` | http://127.0.0.1:9117/ | `http://10.10.10.1:9117/` | Your Jackett host. Make sure there is a / in the end and its a valid url. |
-| `JACKETT_RTIMEOUT` | 10000 | `20000` | Jackett http read timeout in millisecond. |
-| `JACKETT_OTIMEOUT` | 10000 | `20000` | Jackett http open timeout in millisecond. |
 | `DEBUG` | false | `true` | Spam your terminal with info about requests being made. |
 | `SEARCH_BY_TYPE` | false | `true` | We search by movie or tvshow instead of default free search. |
 | `INTERVAL` | 500 | `100` | How often to check in miliseconds if we should return results based on user's timeout. |
@@ -90,11 +93,13 @@ You need jackett installed for this addon to work. Going into detail on how to d
 
 Open your browser, go on `http://{{ YOUR IP }}:9117/`. Replace `{{ YOUR IP }}` with your LAN IP. Press "+ Add Indexer", add as many indexers as you want.
 
-Copy the text from the input where it writes "API Key" from top right of the menu in Jackett.
+Copy the text from the input where it writes "API Key" from top right of the menu in Jackett and setup the indexers you want.
+
+Once that is done change the ENV variables JACKETT_HOST and JACKETT_APIKEY to match your host on the container that you used.
 
 ### Add Jackett Add-on to Stremio
 
-Add `http://{{ YOUR IP }}:7000/{{my-jackett-key}}/manifest.json` (replace `{{my-jackett-key}}` with your Jackett API Key) as an Add-on URL in Stremio. Replace `{{ YOUR IP }}` with your LAN IP.
+Add `http://{{ YOUR IP }}:7000/manifest.json`. Replace `{{ YOUR IP }}` with your LAN IP.
 
 ### ToDo
 
