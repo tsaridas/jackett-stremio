@@ -168,7 +168,6 @@ const search = (apiKey, query, cb, end) => {
 					config.debug && console.log(`Maximum seeders found is ${maxSeeder.number} from ${maxSeeder.indexer}`);
 					cb(tempResults);
 				}
-
 			}
 			tick();
 		}));
