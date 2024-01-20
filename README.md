@@ -38,6 +38,7 @@ The below options can be set as an evironment variable.
 | `JACKETT_APIKEY` | '' | `sdfsadfsadfsadfsaf` | API key from jackett server. |
 | `JACKETT_RTIMEOUT` | 10000 | `20000` | Jackett http read timeout in millisecond. |
 | `JACKETT_OTIMEOUT` | 10000 | `20000` | Jackett http open timeout in millisecond. |
+| `PARSE_TORRENT_FILES` | false | `true` | Parsing torrent files ( not magnets) takes time and is slow. This is disabled by default. **If enabled you will see more seeders**. |
 | `RESPONSE_TIMEOUT` | 12000 | `8000` | This will timeout any queries to jackett after this given value in millisecond. The higher the most result you will get |
 | `PORT` | 7000 | `8888` | The port which the Addon service will run on. |
 | `MIN_SEED` | 3 | `10` | The minimum amount of seeds we should return results for. |
@@ -50,7 +51,6 @@ The below options can be set as an evironment variable.
 | `ADD_BEST_TRACKERS` | false | `true` | We download a list of best trackers from [Best Trackers](https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt) and add them to all torrents found |
 | `ADD_RUSSIAN_TRACKERS` | false | `true` | We add some Russian trackers. Check trackers.js for more info.|
 | `ADD_EXTRA_TRACKERS` | false | `true` | We add some extra trackers. Check trackers.js for more info. |
-| `PARSE_TORRENT_FILES` | false | `true` | Parsing torrent files ( not magnets) takes time and is slow. This is disabled by default. |
 | `REMOVE_BLACKLIST_TRACKERS` | false | `true` | Remove trackers that are blacklisted. Download list from : [Blacklisted trackers](https://raw.githubusercontent.com/ngosang/trackerslist/master/blacklist.txt") |
 
 
