@@ -118,10 +118,16 @@ function processTorrentList(torrentList) {
     return slicedTorrents;
 }
 
-const streamFromParsed = (tor, parsedTorrent, params, cb) => {
+const streamFromParsed = (tor, parsedTorrent, streamInfo, cb) => {
+    const stream = {};
 
     const infoHash = parsedTorrent.infoHash.toLowerCase();
-
+    if (parsedTorrent && parsedTorrent.files) {
+        config.debug && console.log("Found torrent files", parsedTorrent.files, parsedTorrent.files.length);
+        if (parsedTorrent.files.length == 1) {
+            stream.fileIdx = 0;
+        }
+    }
     let title = tor.title || parsedTorrent.name;
     const subtitle = `👤 ${tor.seeders}/${tor.peers}  💾 ${helper.toHomanReadable(tor.size)}  ⚙️  ${tor.from}`;
 
@@ -146,19 +152,17 @@ const streamFromParsed = (tor, parsedTorrent, params, cb) => {
         }
     }
 
-    cb({
-        name: "Jackett " + quality,
-        // fileIdx: idx,
-        type: params.type,
-        infoHash: infoHash,
-        seeders: tor.seeders,
-        sources: trackers.map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]),
-        title: title,
-        behaviorHints: {
-            bingieGroup: "Jackett|" + quality,
-        }
-    });
 
+    stream.name = "Jackett " + quality;
+    stream.type = streamInfo.type;
+    stream.infoHash = infoHash;
+    stream.seeders = tor.seeders;
+    stream.sources = trackers.map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]);
+    stream.title = title;
+    stream.behaviorHints = {
+        bingieGroup: "Jackett|" + quality,
+    }
+    cb(stream);
 };
 
 // stream response
@@ -171,6 +175,8 @@ addon.get('/stream/:type/:id.json', (req, res) => {
 
     let searchFinished = false;
     let requestSent = false;
+    let streamInfo = {};
+    
     const streams = [];
     let inProgressCount = 0;
     const startTime = Date.now();
@@ -195,7 +201,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
         const uri = task.magneturl || task.link;
         config.debug && console.log("Parsing magnet :", uri);
         const parsedTorrent = parseTorrent(uri);
-        streamFromParsed(task, parsedTorrent, req.params, stream => {
+        streamFromParsed(task, parsedTorrent, streamInfo, stream => {
             if (stream) {
                 streams.push(stream);
             }
@@ -232,7 +238,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
 
                 config.debug && console.log(`Processing torrent : ${task.link}.`);
                 const parsedTorrent = parseTorrent(response.body);
-                streamFromParsed(task, parsedTorrent, req.params, stream => {
+                streamFromParsed(task, parsedTorrent, streamInfo, stream => {
                     if (stream) {
                         streams.push(stream);
                     }
@@ -271,21 +277,21 @@ addon.get('/stream/:type/:id.json', (req, res) => {
         if (!err && body && body.meta && body.meta.name) {
             const year = (body.meta.year) ? body.meta.year.match(/\b\d{4}\b/) : (body.meta.releaseInfo) ? body.meta.releaseInfo.match(/\b\d{4}\b/) : ''
 
-            const searchQuery = {
+            streamInfo = {
                 name: body.meta.name,
                 type: req.params.type,
                 year: year,
             };
 
             if (idParts.length == 3) {
-                searchQuery.season = idParts[1];
-                searchQuery.episode = idParts[2];
-                console.log(`Looking for title: ${body.meta.name} - type: ${req.params.type} - year: ${year} - season: ${searchQuery.season} - episode: ${searchQuery.episode}.`);
+                streamInfo.season = idParts[1];
+                streamInfo.episode = idParts[2];
+                console.log(`Looking for title: ${body.meta.name} - type: ${streamInfo.type} - year: ${year} - season: ${streamInfo.season} - episode: ${streamInfo.episode}.`);
             } else {
-                console.log(`Looking for title: ${body.meta.name} - type: ${req.params.type} - year: ${year}.`);
+                console.log(`Looking for title: ${body.meta.name} - type: ${streamInfo.type} - year: ${year}.`);
             }
 
-            jackettApi.search(searchQuery,
+            jackettApi.search(streamInfo,
 
                 (tempResults) => {
                     respondStreams(tempResults);

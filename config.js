@@ -1,3 +1,5 @@
+const { forEach } = require('async');
+const { element } = require('prop-types');
 const { URL } = require('url');
 
 const defaultConfig = {
@@ -44,26 +46,33 @@ const defaultConfig = {
 }
 
 function correctAndValidateURL(input) {
-  try {
-    const parsedURL = new URL(input);
+  const urls = input.split(',');
+  const finalUrls = [];
+  urls.forEach((element) => {
+    try {
+      const parsedURL = new URL(element);
 
-    if (parsedURL.protocol === 'http:' && /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(parsedURL.hostname)) {
-      return parsedURL.href; // Return the original URL if it's valid
+      if (parsedURL.protocol === 'http:' && /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(parsedURL.hostname)) {
+
+        finalUrls.push(parsedURL.href); // Return the original URL if it's valid
+        return;
+      }
+
+      parsedURL.protocol = 'http:';
+
+      if (!parsedURL.pathname) {
+        parsedURL.pathname = '/';
+      }
+
+      const correctedURL = parsedURL.href;
+
+      finalUrls.push(correctedURL);
+    } catch (error) {
+      console.error(`URL ${input} doesn't seem like a valid URL. Using it anyway.`)
+      return input;
     }
-
-    parsedURL.protocol = 'http:';
-
-    if (!parsedURL.pathname) {
-      parsedURL.pathname = '/';
-    }
-
-    const correctedURL = parsedURL.href;
-
-    return correctedURL;
-  } catch (error) {
-    console.error(`URL ${input} doesn't seem like a valid URL. Using it anyway.`)
-    return input;
-  }
+  });
+  return finalUrls.join(',')
 }
 
 
