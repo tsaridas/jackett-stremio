@@ -69,7 +69,8 @@ function correctAndValidateURL(input) {
       finalUrls.push(correctedURL);
     } catch (error) {
       console.error(`URL ${input} doesn't seem like a valid URL. Using it anyway.`)
-      return input;
+      finalUrls.push(element);
+      return;
     }
   });
   return finalUrls.join(',')
