@@ -108,3 +108,4 @@ Add `http://{{ YOUR IP }}:7000/manifest.json`. Replace `{{ YOUR IP }}` with your
 - Resolve trackers and add cache for trackers ip addresses instead of sending FQDNs.
 - Increase versions of npm modules.
 - Update README for better understanding how to install.
+- HTTP connection pooling.

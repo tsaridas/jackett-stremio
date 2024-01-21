@@ -175,6 +175,10 @@ addon.get('/stream/:type/:id.json', (req, res) => {
     let inProgressCount = 0;
     const startTime = Date.now();
 
+    const timeoutId = setTimeout(() => {
+        // Timeout exceeded, stop the function
+        console.error('0000000000 Function timed out.');
+    }, config.responseTimeout);
     const intervalId = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
         if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && inProgressCount === 0 && asyncQueue.idle))) {
@@ -185,7 +189,6 @@ addon.get('/stream/:type/:id.json', (req, res) => {
             finalData = processTorrentList(streams);
             config.debug && console.log("Sliced & Sorted data ", finalData);
             respond(res, { streams: finalData });
-
         }
     }, config.interval);
 
@@ -296,10 +299,6 @@ addon.get('/stream/:type/:id.json', (req, res) => {
                     config.debug && console.log("Searching finished.");
                     searchFinished = true;
                 });
-
-
-            //if (config.responseTimeout)
-            //    setTimeout(respondStreams, config.responseTimeout);
 
         } else {
             console.error('Could not get info from Cinemata.', url, err);
