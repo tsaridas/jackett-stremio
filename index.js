@@ -182,7 +182,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
             requestSent = true;
             asyncQueue.kill();
             clearInterval(intervalId);
-            finalData = processTorrentList(streams);
+            const finalData = processTorrentList(streams);
             config.debug && console.log("Sliced & Sorted data ", finalData);
             respond(res, { streams: finalData });
         }
@@ -294,8 +294,8 @@ addon.get('/stream/:type/:id.json', (req, res) => {
                 () => {
                     config.debug && console.log("Searching finished.");
                     searchFinished = true;
-                },
-                requestSent);
+                }
+            );
 
         } else {
             console.error('Could not get info from Cinemata.', url, err);
