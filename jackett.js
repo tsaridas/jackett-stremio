@@ -39,7 +39,7 @@ const search = async (query, cb, end) => {
 	const tick = helper.setTicker(hostsAndApiKeys.length, () => {
 		end([]);
 	});
-	config.debug && console.log("Found "+ hostsAndApiKeys.length + " Jacket servers.");
+	config.debug && console.log("Found " + hostsAndApiKeys.length + " Jacket servers.");
 	let searchQuery = "";
 	let countResults = 0;
 	let countFinished = 0;
@@ -72,17 +72,17 @@ const search = async (query, cb, end) => {
 		totalIndexers += apiIndexersArray.length;
 		try {
 			config.debug && console.log("Found " + apiIndexersArray.length + " indexers for " + host);
-			// We need to check that we don't search the same indexer from different jackett servers.
-			if ( searchedIndexers.includes(indexer.attributes.id)) {
-				config.debug && console.log("Skipping indexer " + indexer.attributes.id + " as we have already searched it from " + host);
-			} else {
-				searchedIndexers.push(indexer.attributes.id);
-			}
-			
+
 			await Promise.all(apiIndexersArray.map(async (indexer) => {
 				if (!(indexer && indexer.attributes && indexer.attributes.id)) {
 					console.error("Could not find indexer id for " + host);
 					return;
+				}
+
+				if (searchedIndexers.includes(indexer.attributes.id)) {
+					config.debug && console.log("Skipping indexer " + indexer.attributes.id + " as we have already searched it from " + host);
+				} else {
+					searchedIndexers.push(indexer.attributes.id);
 				}
 
 				const url = host + 'api/v2.0/indexers/' + indexer.attributes.id + '/results/torznab/api?apikey=' + apiKey + searchQuery;
