@@ -175,10 +175,6 @@ addon.get('/stream/:type/:id.json', (req, res) => {
     let inProgressCount = 0;
     const startTime = Date.now();
 
-    const timeoutId = setTimeout(() => {
-        // Timeout exceeded, stop the function
-        console.error('0000000000 Function timed out.');
-    }, config.responseTimeout);
     const intervalId = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
         if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && inProgressCount === 0 && asyncQueue.idle))) {
