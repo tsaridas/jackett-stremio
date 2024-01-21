@@ -4,8 +4,7 @@ const helper = require('./helpers');
 const config = require('./config');
 
 const getIndexers = (host, apiKey) => {
-	return new Promise((resolve, reject) => {
-		console.log("host-key", host, apiKey);
+	return new Promise((resolve) => {
 		needle.get(host + 'api/v2.0/indexers/all/results/torznab/api?apikey=' + apiKey + '&t=indexers&configured=true', {
 			open_timeout: config.jackett.openTimeout,
 			read_timeout: config.jackett.readTimeout,
@@ -13,7 +12,7 @@ const getIndexers = (host, apiKey) => {
 		}, (err, resp) => {
 			if (err || !resp || !resp.body) {
 				console.log("No indexers for ", host);
-				return [];
+				resolve([]);
 			}
 			let indexers = null;
 
@@ -21,7 +20,7 @@ const getIndexers = (host, apiKey) => {
 				indexers = xmlJs.xml2js(resp.body);
 			} catch (err) {
 				console.log("Could not parse indexers for ", host);
-				return [];
+				resolve([]);
 			}
 
 			if (indexers && indexers.elements && indexers.elements[0] && indexers.elements[0].elements) {
@@ -29,7 +28,7 @@ const getIndexers = (host, apiKey) => {
 				resolve(indexers);
 			} else {
 				console.log("Could not parse indexers for ", host);
-				return [];
+				resolve([]);
 			}
 		});
 	});
@@ -40,7 +39,7 @@ const search = async (query, cb, end) => {
 	const tick = helper.setTicker(hostsAndApiKeys.length, () => {
 		end([]);
 	});
-	console.log("Jacket server and key are ", hostsAndApiKeys.length);
+	config.debug && console.log("Jacket "+ hostsAndApiKeys.length + " servers");
 	let searchQuery = "";
 	let countResults = 0;
 	let countFinished = 0;

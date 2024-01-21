@@ -294,7 +294,8 @@ addon.get('/stream/:type/:id.json', (req, res) => {
                 () => {
                     config.debug && console.log("Searching finished.");
                     searchFinished = true;
-                });
+                },
+                requestSent);
 
         } else {
             console.error('Could not get info from Cinemata.', url, err);
