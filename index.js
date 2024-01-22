@@ -303,9 +303,9 @@ addon.get('/stream/:type/:id.json', (req, res) => {
             if (idParts.length == 3) {
                 streamInfo.season = idParts[1];
                 streamInfo.episode = idParts[2];
-                console.log(`Looking for title: ${body.meta.name} - type: ${streamInfo.type} - year: ${year} - season: ${streamInfo.season} - episode: ${streamInfo.episode}.`);
+                console.log(`Searching for title: ${streamInfo.name} - type: ${streamInfo.type} - year: ${year} - season: ${streamInfo.season} - episode: ${streamInfo.episode}.`);
             } else {
-                console.log(`Looking for title: ${body.meta.name} - type: ${streamInfo.type} - year: ${year}.`);
+                console.log(`Searching for title: ${streamInfo.name} - type: ${streamInfo.type} - year: ${year}.`);
             }
 
             jackettApi.search(streamInfo,

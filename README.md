@@ -34,8 +34,8 @@ The below options can be set as an evironment variable.
 
 | Env | Default | Example | Description |
 | - | - | - | - |
-| `JACKETT_HOST` | http://127.0.0.1:9117/ | `http://10.10.10.1:9117/` | Your Jackett host. Make sure there is a / in the end and its a valid url. |
-| `JACKETT_APIKEY` | '' | `sdfsadfsadfsadfsaf` | API key from jackett server. |
+| `JACKETT_HOSTS` | http://127.0.0.1:9117/ | `http://10.10.10.1:9117/,http://10.10.10.2:9117/` | Your Jackett hosts comma delimited.|
+| `JACKETT_APIKEYS` | '' | `sdfsadfsadfsadfsaf,sdfsadfsadfsadfsa` | API keys from jackett servers comma delimited. |
 | `JACKETT_RTIMEOUT` | 10000 | `20000` | Jackett http read timeout in millisecond. |
 | `JACKETT_OTIMEOUT` | 10000 | `20000` | Jackett http open timeout in millisecond. |
 | `PARSE_TORRENT_FILES` | false | `true` | Parsing torrent files ( not magnets) takes time and is slow. This is disabled by default. **If enabled you will see more seeders**. |

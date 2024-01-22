@@ -32,9 +32,9 @@ const defaultConfig = {
 
   "jackett": {
 
-    "host": process.env.JACKETT_HOST || "http://127.0.0.1:9117/",
+    "hosts": process.env.JACKETT_HOSTS || process.env.JACKETT_HOST || "http://127.0.0.1:9117/", // JACKETT_HOST is for backwards compatibility
 
-    "apiKey": process.env.JACKETT_APIKEY || "",
+    "apiKeys": process.env.JACKETT_APIKEYS || process.env.JACKETT_APIKEY || "",  // JACKETT_APIKEY is for backwards compatibility
 
     "readTimeout": parseInt(process.env.JACKETT_RTIMEOUT) || 10000,
 
@@ -117,6 +117,6 @@ function toBytes(humanSize) {
 
 
 defaultConfig.maximumSize = toBytes(defaultConfig.maximumSize);
-defaultConfig.jackett.host = correctAndValidateURL(defaultConfig.jackett.host);
+defaultConfig.jackett.hosts = correctAndValidateURL(defaultConfig.jackett.hosts);
 
 module.exports = defaultConfig;
