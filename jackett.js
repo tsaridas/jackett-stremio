@@ -60,6 +60,8 @@ const search = async (query, cb, end) => {
 		const cat = query.type && query.type == 'movie' ? 2000 : 5000;
 		searchQuery = '&t=search&cat=' + cat + '&q=' + simpleName;
 		if (query.season && query.episode) {
+			// Maybe we should remove the episode from here and only have season since we might get multiepisode torrents.
+			// Issue is that when they return a magnet we don't know which file to choose.
 			searchQuery += '%20' + helper.episodeTag(query.season, query.episode);
 		} else {
 			searchQuery += '%20' + query.year;
@@ -139,11 +141,12 @@ const search = async (query, cb, end) => {
 							if (newObj.seeders < config.minimumSeeds || newObj.size > config.maximumSize) {
 								return;
 							}
-
+							
 							if (!config.parseTorrentFiles && (!newObj.magneturl || (newObj.link && !newObj.link.startsWith("magnet:")))) {
 								return;
 							}
-
+							
+							// We prefer magnet links as they don't require extra processing but we should probbaly have an option for this.
 							if (newObj.magneturl && newObj.magneturl.startsWith("magnet:") && (newObj.link && newObj.link.startsWith("http://"))) {
 								config.debug && console.log("Found magneturl " + newObj.magneturl + " and link " + newObj.link);
 								newObj.link = newObj.magneturl;
