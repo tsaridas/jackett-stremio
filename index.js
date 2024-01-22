@@ -238,7 +238,9 @@ addon.get('/stream/:type/:id.json', (req, res) => {
                 read_timeout: config.jackett.readTimeout,
                 parse_response: false
             });
-            if (requestSent) { // It usually takes some time to dowload the torrent file and we don't want to continue.
+            if (requestSent || response.statusCode === 404) { // It usually takes some time to dowload the torrent file and we don't want to continue.
+                config.debug && console.log("Abort process because for" + task.link + " because " + (requestSent || response.statusCode))
+                inProgressCount--;
                 return;
             }
             if (response && response.headers && response.headers.location) {
@@ -252,7 +254,6 @@ addon.get('/stream/:type/:id.json', (req, res) => {
                     config.debug && console.error("Not a magnet link :", response.headers.location);
                 }
             } else {
-
                 config.debug && console.log(`Processing torrent : ${task.link}.`);
                 const parsedTorrent = parseTorrent(response.body);
                 streamFromParsed(task, parsedTorrent, streamInfo, stream => {
