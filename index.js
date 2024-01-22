@@ -158,7 +158,7 @@ const streamFromParsed = (tor, parsedTorrent, streamInfo, cb) => {
     let trackers = [];
     if (global.TRACKERS) {
         trackers = helper.unique([].concat(parsedTorrent.announce).concat(global.TRACKERS));
-        config.debug && console.log("Added " + (trackers.length - parsedTorrent.announce.length) + " extra trackers.");
+        config.debug && ((trackers.length - parsedTorrent.announce.length) > 0) &&console.log("Added " + (trackers.length - parsedTorrent.announce.length) + " extra trackers.");
     }
 
     if (global.BLACKLIST_TRACKERS) {
@@ -238,7 +238,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
                 read_timeout: config.jackett.readTimeout,
                 parse_response: false
             });
-            if (requestSent || response.statusCode === 404) { // It usually takes some time to dowload the torrent file and we don't want to continue.
+            if (requestSent || response.statusCode >= 400) { // It usually takes some time to dowload the torrent file and we don't want to continue.
                 config.debug && console.log("Abort process because for" + task.link + " because " + (requestSent || response.statusCode))
                 inProgressCount--;
                 return;
