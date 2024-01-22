@@ -19,7 +19,7 @@ const getIndexers = (host, apiKey) => {
 			try {
 				indexers = xmlJs.xml2js(resp.body);
 			} catch (err) {
-				console.log("Could not parse indexers for ", host);
+				console.error("Could not parse indexers for ", host);
 				resolve([]);
 			}
 
@@ -27,7 +27,7 @@ const getIndexers = (host, apiKey) => {
 				indexers = indexers.elements[0].elements;
 				resolve(indexers);
 			} else {
-				console.log("Could not parse indexers for ", host);
+				console.error("Could not find indexers for ", host);
 				resolve([]);
 			}
 		});
@@ -35,7 +35,7 @@ const getIndexers = (host, apiKey) => {
 };
 
 const search = async (query, cb, end) => {
-	const hostsAndApiKeys = config.jackett.host.split(',').map((host, i) => ({ host, apiKey: config.jackett.apiKey.split(',')[i] }));
+	const hostsAndApiKeys = config.jackett.hosts.split(',').map((host, i) => ({ host, apiKey: config.jackett.apiKeys.split(',')[i] }));
 	const tick = helper.setTicker(hostsAndApiKeys.length, () => {
 		end([]);
 	});
@@ -77,7 +77,6 @@ const search = async (query, cb, end) => {
 
 			await Promise.all(apiIndexersArray.map(async (indexer) => {
 				if (!(indexer && indexer.attributes && indexer.attributes.id)) {
-					console.error("Could not find indexer id for " + host);
 					return;
 				}
 
@@ -146,12 +145,13 @@ const search = async (query, cb, end) => {
 								return;
 							}
 
-							// We prefer magnet links as they don't require extra processing but we should probbaly have an option for this.
+							// We prefer magnet links as they don't require downloading (faster) but we should probaly have an option for this.
 							if (newObj.magneturl && newObj.magneturl.startsWith("magnet:") && (newObj.link && newObj.link.startsWith("http://"))) {
 								config.debug && console.log("Found magneturl " + newObj.magneturl + " and link " + newObj.link);
 								newObj.link = newObj.magneturl;
 							}
-
+							
+							// Not sure if this is required and if I ever saw it happen.
 							if (newObj.link && newObj.link.startsWith("magnet:") && !newObj.magneturl) {
 								config.debug && console.log("Found missing magneturl: " + newObj.link);
 								newObj.magneturl = newObj.link;
