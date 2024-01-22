@@ -137,7 +137,7 @@ const streamFromParsed = (tor, parsedTorrent, streamInfo, cb) => {
                 const indexInFiles = parsedTorrent.files.indexOf(matchingItems.reduce((maxItem, currentItem) => {
                     return currentItem.length > maxItem.length ? currentItem : maxItem;
                 }, matchingItems[0]));
-                
+
                 stream.fileIdx = indexInFiles;
                 console.log("Found matching fileIdx for " + streamInfo.name + " is " + stream.fileIdx, parsedTorrent.files);
             } else {

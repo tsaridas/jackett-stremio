@@ -141,11 +141,11 @@ const search = async (query, cb, end) => {
 							if (newObj.seeders < config.minimumSeeds || newObj.size > config.maximumSize) {
 								return;
 							}
-							
+
 							if (!config.parseTorrentFiles && (!newObj.magneturl || (newObj.link && !newObj.link.startsWith("magnet:")))) {
 								return;
 							}
-							
+
 							// We prefer magnet links as they don't require extra processing but we should probbaly have an option for this.
 							if (newObj.magneturl && newObj.magneturl.startsWith("magnet:") && (newObj.link && newObj.link.startsWith("http://"))) {
 								config.debug && console.log("Found magneturl " + newObj.magneturl + " and link " + newObj.link);
