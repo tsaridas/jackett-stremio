@@ -43,27 +43,46 @@ const defaultConfig = {
   }
 }
 
+function isIPv4(value) {
+  // Regular expression to validate IPv4 addresses
+  const ipv4Regex = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
+  return ipv4Regex.test(value);
+}
+
+function isFQDN(value) {
+  // Regular expression to validate FQDNs
+  const fqdnRegex = /^([a-zA-Z0-9.-]+\.)+[a-zA-Z]{2,}$/;
+  return fqdnRegex.test(value);
+}
+
 function correctAndValidateURL(input) {
-  try {
-    const parsedURL = new URL(input);
+  const urls = input.split(',');
+  const finalUrls = [];
+  urls.forEach((element) => {
+    try {
+      const parsedURL = new URL(element);
 
-    if (parsedURL.protocol === 'http:' && /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(parsedURL.hostname)) {
-      return parsedURL.href; // Return the original URL if it's valid
+      if (parsedURL.protocol === 'http:' && (isIPv4(parsedURL.hostname) || isFQDN(parsedURL.hostname))) {
+        finalUrls.push(parsedURL.href); // Return the original URL if it's valid
+        return;
+      }
+
+      parsedURL.protocol = 'http:';
+
+      if (!parsedURL.pathname) {
+        parsedURL.pathname = '/';
+      }
+
+      const correctedURL = parsedURL.href;
+
+      finalUrls.push(correctedURL);
+    } catch (error) {
+      console.error(`URL ${element} doesn't seem like a valid URL. Using it anyway.`)
+      finalUrls.push(element);
+      return;
     }
-
-    parsedURL.protocol = 'http:';
-
-    if (!parsedURL.pathname) {
-      parsedURL.pathname = '/';
-    }
-
-    const correctedURL = parsedURL.href;
-
-    return correctedURL;
-  } catch (error) {
-    console.error(`URL ${input} doesn't seem like a valid URL. Using it anyway.`)
-    return input;
-  }
+  });
+  return finalUrls.join(',')
 }
 
 
