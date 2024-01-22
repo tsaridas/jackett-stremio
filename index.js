@@ -123,9 +123,26 @@ const streamFromParsed = (tor, parsedTorrent, streamInfo, cb) => {
 
     const infoHash = parsedTorrent.infoHash.toLowerCase();
     if (parsedTorrent && parsedTorrent.files) {
-        config.debug && console.log("Found torrent files", parsedTorrent.files, parsedTorrent.files.length);
         if (parsedTorrent.files.length == 1) {
             stream.fileIdx = 0;
+        } else {
+            let regEx = null;
+            if (streamInfo.type === 'movie') {
+                regEx = new RegExp(`${streamInfo.name.split(' ').join('.*')}.*${streamInfo.year}.*`, 'i');
+            } else {
+                regEx = new RegExp(`${streamInfo.name.split(' ').join('.*')}.*${helper.episodeTag(streamInfo.season, streamInfo.episode)}.*`, 'i');
+            }
+            const matchingItems = parsedTorrent.files.filter(item => regEx.test(item.name));
+            if (matchingItems.length > 0) {
+                const indexInFiles = parsedTorrent.files.indexOf(matchingItems.reduce((maxItem, currentItem) => {
+                    return currentItem.length > maxItem.length ? currentItem : maxItem;
+                }, matchingItems[0]));
+                
+                stream.fileIdx = indexInFiles;
+                console.log("Found matching fileIdx for " + streamInfo.name + " is " + stream.fileIdx, parsedTorrent.files);
+            } else {
+                console.log("No matching items found for torrent ", streamInfo.name, matchingItems, parsedTorrent.files);
+            }
         }
     }
     let title = tor.title || parsedTorrent.name;
@@ -176,7 +193,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
     let searchFinished = false;
     let requestSent = false;
     let streamInfo = {};
-    
+
     const streams = [];
     let inProgressCount = 0;
     const startTime = Date.now();
