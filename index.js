@@ -139,9 +139,9 @@ const streamFromParsed = (tor, parsedTorrent, streamInfo, cb) => {
                 }, matchingItems[0]));
 
                 stream.fileIdx = indexInFiles;
-                console.log("Found matching fileIdx for " + streamInfo.name + " is " + stream.fileIdx, parsedTorrent.files);
+                config.debug && console.log("Found matching fileIdx for " + streamInfo.name + " is " + stream.fileIdx, parsedTorrent.files);
             } else {
-                console.log("No matching items found for torrent ", streamInfo.name, matchingItems, parsedTorrent.files);
+                config.debug && console.log("No matching items found for torrent ", streamInfo.name, matchingItems, parsedTorrent.files);
             }
         }
     }
