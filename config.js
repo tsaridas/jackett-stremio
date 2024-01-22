@@ -22,13 +22,13 @@ const defaultConfig = {
 
   "addonPort": parseInt(process.env.PORT) || 7000,
 
-  "minimumSeeds": parseInt(process.env.MIN_SEED) || 3,
+  "minimumSeeds": parseInt(process.env.MIN_SEED) || 5,
 
   "maximumResults": parseInt(process.env.MAX_RESULTS) || 10,
 
   "maximumSize": process.env.MAX_SIZE || "10GB",
 
-  "downloadTorrentQueue": parseInt(process.env.DOWNLOAD_TORRENT_QUEUE) || 5,
+  "downloadTorrentQueue": parseInt(process.env.DOWNLOAD_TORRENT_QUEUE) || 20,
 
   "jackett": {
 
