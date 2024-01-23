@@ -158,7 +158,7 @@ const streamFromParsed = (tor, parsedTorrent, streamInfo, cb) => {
     let trackers = [];
     if (global.TRACKERS) {
         trackers = helper.unique([].concat(parsedTorrent.announce).concat(global.TRACKERS));
-        config.debug && ((trackers.length - parsedTorrent.announce.length) > 0) &&console.log("Added " + (trackers.length - parsedTorrent.announce.length) + " extra trackers.");
+        config.debug && ((trackers.length - parsedTorrent.announce.length) > 0) && console.log("Added " + (trackers.length - parsedTorrent.announce.length) + " extra trackers.");
     }
 
     if (global.BLACKLIST_TRACKERS) {
@@ -201,12 +201,12 @@ addon.get('/stream/:type/:id.json', (req, res) => {
     const intervalId = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
         if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && inProgressCount === 0 && asyncQueue.idle))) {
-            console.log("Returning " + streams.length + " results. Timeout: " + (elapsedTime >= config.responseTimeout) + " / Finished Searching: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount)
             requestSent = true;
             asyncQueue.kill();
             clearInterval(intervalId);
             const finalData = processTorrentList(streams);
             config.debug && console.log("Sliced & Sorted data ", finalData);
+            console.log("Results : " + finalData.length + " / Timeout: " + (elapsedTime >= config.responseTimeout) + " / Finished Searching: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Discarded : " + (streams.length - finalData.length));
             respond(res, { streams: finalData });
         }
     }, config.interval);
@@ -231,7 +231,6 @@ addon.get('/stream/:type/:id.json', (req, res) => {
         }
         inProgressCount++;
         try {
-
             config.debug && console.log("Processing link: ", task.link);
             const response = await needle('get', task.link, {
                 open_timeout: config.jackett.openTimeout,
@@ -239,7 +238,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
                 parse_response: false
             });
             if (requestSent || response.statusCode >= 400) { // It usually takes some time to dowload the torrent file and we don't want to continue.
-                config.debug && console.log("Abort process because for" + task.link + " because " + (requestSent || response.statusCode))
+                config.debug && console.log("Abort processing of : " + task.link + " - " + (requestSent || response.statusCode))
                 inProgressCount--;
                 return;
             }
@@ -276,10 +275,9 @@ addon.get('/stream/:type/:id.json', (req, res) => {
             return;
         }
         if (results && results.length) {
-            let tempResults = results;
-            tempResults = tempResults.sort((a, b) => b.seeders - a.seeders);
+            // tempResults = tempResults.sort((a, b) => b.seeders - a.seeders); // to remove. we need to sort before in jackett 
 
-            const { magnets, links } = await partitionURL(tempResults);
+            const { magnets, links } = await partitionURL(results);
 
             Promise.all([...magnets.map(processMagnets)]);
             links.forEach(item => asyncQueue.push(item));

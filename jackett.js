@@ -11,7 +11,7 @@ const getIndexers = (host, apiKey) => {
 			parse_response: false
 		}, (err, resp) => {
 			if (err || !resp || !resp.body) {
-				console.log("No indexers for ", host);
+				console.error("No indexers for ", host, err);
 				resolve([]);
 			}
 			let indexers = null;
@@ -19,7 +19,7 @@ const getIndexers = (host, apiKey) => {
 			try {
 				indexers = xmlJs.xml2js(resp.body);
 			} catch (err) {
-				console.error("Could not parse indexers for ", host);
+				console.error("Could not parse indexers for ", host, err);
 				resolve([]);
 			}
 
@@ -36,15 +36,12 @@ const getIndexers = (host, apiKey) => {
 
 const search = async (query, cb, end) => {
 	const hostsAndApiKeys = config.jackett.hosts.split(',').map((host, i) => ({ host, apiKey: config.jackett.apiKeys.split(',')[i] }));
-	const tick = helper.setTicker(hostsAndApiKeys.length, () => {
-		end([]);
-	});
 	config.debug && console.log("Found " + hostsAndApiKeys.length + " Jacket servers.");
 	let searchQuery = "";
 	let countResults = 0;
 	let countFinished = 0;
-	let totalIndexers = 0;
-	let searchedIndexers = [];
+	let searchedIndexers = {};
+	let sortedReults = [];
 
 	const simpleName = encodeURIComponent(helper.simpleName(query.name));
 
@@ -68,10 +65,9 @@ const search = async (query, cb, end) => {
 		}
 	}
 
-
 	await Promise.all(hostsAndApiKeys.map(async ({ host, apiKey }) => {
 		const apiIndexersArray = await getIndexers(host, apiKey);
-		totalIndexers += apiIndexersArray.length;
+
 		try {
 			config.debug && console.log("Found " + apiIndexersArray.length + " indexers for " + host);
 
@@ -80,10 +76,11 @@ const search = async (query, cb, end) => {
 					return;
 				}
 
-				if (searchedIndexers.includes(indexer.attributes.id)) {
+				if (searchedIndexers[indexer.attributes.id]) {
 					config.debug && console.log("Skipping indexer " + indexer.attributes.id + " as we have already searched it from " + host);
+					return;
 				} else {
-					searchedIndexers.push(indexer.attributes.id);
+					searchedIndexers[indexer.attributes.id] = { "host": host, "status": "Started" };
 				}
 
 				const url = host + 'api/v2.0/indexers/' + indexer.attributes.id + '/results/torznab/api?apikey=' + apiKey + searchQuery;
@@ -102,6 +99,7 @@ const search = async (query, cb, end) => {
 
 				if (response.err || !response.resp || !response.resp.body) {
 					console.error(`Error ${response.err} when calling ${indexer.attributes.id}.`);
+					searchedIndexers[indexer.attributes.id].status = response.err;
 					return;
 				}
 
@@ -150,7 +148,7 @@ const search = async (query, cb, end) => {
 								config.debug && console.log("Found magneturl " + newObj.magneturl + " and link " + newObj.link);
 								newObj.link = newObj.magneturl;
 							}
-							
+
 							// Not sure if this is required and if I ever saw it happen.
 							if (newObj.link && newObj.link.startsWith("magnet:") && !newObj.magneturl) {
 								config.debug && console.log("Found missing magneturl: " + newObj.link);
@@ -163,26 +161,29 @@ const search = async (query, cb, end) => {
 							newObj.from = indexer.attributes.id;
 
 							newObj.extraTag = helper.extraTag(newObj.title, query.name);
-							tempResults.push(newObj);
+
+							if (helper.insertIntoSortedArray(sortedReults, newObj, 'seeders', config.maximumResults)) {
+								tempResults.push(newObj);
+							}
 						}
 					});
+					searchedIndexers[indexer.attributes.id].status = "Finished"
 
 					countResults += tempResults.length;
 					countFinished++;
 
-					config.debug && console.log(`Found ${countResults} results from ${indexer.attributes.id}. ${countFinished}/${totalIndexers} indexers on host ${host}`);
+					config.debug && console.log(`Found ${countResults} results from ${indexer.attributes.id} on host ${host}. ${countFinished}/${Object.keys(searchedIndexers).length} indexers finished.`);
+					config.debug && console.log(searchedIndexers);
 					if (tempResults.length > 0) {
 						cb(tempResults);
 					}
 				}
 			}));
 		} catch (error) {
-			tick();
-			console.error(error);
+			console.error("Could not process host :",host, error);
 		}
 	}));
-
-	tick();
+	end([]);
 };
 
 module.exports = { search };

@@ -7,6 +7,29 @@ const helper = {
         return Array.from(new Set(array));
     },
 
+    // Function to insert an object into a sorted list based on a property (descending order) with maxSize. 
+    // sortingProperty must be an int to compare.
+    // Object must have the properties.
+    insertIntoSortedArray: (sortedArray, newObject, sortingProperty, maxSize) => {
+        const indexToInsert = sortedArray.findIndex(item => item[sortingProperty] < newObject[sortingProperty]);
+
+        if (indexToInsert === -1) {
+            if (sortedArray.length < maxSize) {
+                sortedArray.push(newObject);
+                return true;
+            }
+            return false;
+        } else {
+            // Insert the new object at the correct position to maintain the sorted order (descending)
+            sortedArray.splice(indexToInsert, 0, newObject);
+            // Trim the array if it exceeds maxSize
+            if (sortedArray.length > maxSize) {
+                sortedArray.pop();
+            }
+            return true;
+        }
+    },
+
     toHomanReadable: (bytes) => {
         if (Math.abs(bytes) < 1024) { return bytes + ' B'; }
 
@@ -48,7 +71,7 @@ const helper = {
         name = name.replace(/\s+/g, ' ');
         name = name.replace(/'/g, '');
         name = name.replace(/\\\\/g, '\\').replace(/\\\\'|\\'|\\\\"|\\"/g, '');
-        
+
         return name;
     },
 

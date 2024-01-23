@@ -24,11 +24,11 @@ const defaultConfig = {
 
   "minimumSeeds": parseInt(process.env.MIN_SEED) || 5,
 
-  "maximumResults": parseInt(process.env.MAX_RESULTS) || 10,
+  "maximumResults": parseInt(process.env.MAX_RESULTS) || 5,
 
-  "maximumSize": process.env.MAX_SIZE || "10GB",
+  "maximumSize": process.env.MAX_SIZE || "5GB",
 
-  "downloadTorrentQueue": parseInt(process.env.DOWNLOAD_TORRENT_QUEUE) || 20,
+  "downloadTorrentQueue": parseInt(process.env.DOWNLOAD_TORRENT_QUEUE) || 10,
 
   "jackett": {
 
@@ -36,9 +36,9 @@ const defaultConfig = {
 
     "apiKeys": process.env.JACKETT_APIKEYS || process.env.JACKETT_APIKEY || "",  // JACKETT_APIKEY is for backwards compatibility
 
-    "readTimeout": parseInt(process.env.JACKETT_RTIMEOUT) || 10000,
+    "readTimeout": parseInt(process.env.JACKETT_RTIMEOUT) || 8000,  // don't set this lower than response timeout
 
-    "openTimeout": parseInt(process.env.JACKETT_OTIMEOUT) || 5000
+    "openTimeout": parseInt(process.env.JACKETT_OTIMEOUT) || 3000   // this is how long it takes to open a tcp connection to jackett. increase if your jackett server is far away from the addon.
 
   }
 }
