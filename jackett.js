@@ -19,13 +19,8 @@ const getIndexers = (host, apiKey) => {
 			try {
 				indexers = xmlJs.xml2js(resp.body);
 			} catch (err) {
-<<<<<<< HEAD
 				console.error("Could not parse indexers for ", host, err);
 				return([]);
-=======
-				console.error("Could not parse indexers for ", host);
-				resolve([]);
->>>>>>> 91a96065b2a6bbf9ea0ecb1ec589604c6a55e7dc
 			}
 
 			if (indexers && indexers.elements && indexers.elements[0] && indexers.elements[0].elements) {
@@ -33,11 +28,7 @@ const getIndexers = (host, apiKey) => {
 				resolve(indexers);
 			} else {
 				console.error("Could not find indexers for ", host);
-<<<<<<< HEAD
 				return([]);
-=======
-				resolve([]);
->>>>>>> 91a96065b2a6bbf9ea0ecb1ec589604c6a55e7dc
 			}
 		});
 	});
