@@ -36,9 +36,9 @@ const defaultConfig = {
 
     "apiKeys": process.env.JACKETT_APIKEYS || process.env.JACKETT_APIKEY || "",  // JACKETT_APIKEY is for backwards compatibility
 
-    "readTimeout": parseInt(process.env.JACKETT_RTIMEOUT) || 8000,
+    "readTimeout": parseInt(process.env.JACKETT_RTIMEOUT) || 8000,  // don't set this lower than response timeout
 
-    "openTimeout": parseInt(process.env.JACKETT_OTIMEOUT) || 2000
+    "openTimeout": parseInt(process.env.JACKETT_OTIMEOUT) || 3000   // this is how long it takes to open a tcp connection to jackett. increase if your jackett server is far away from the addon.
 
   }
 }
