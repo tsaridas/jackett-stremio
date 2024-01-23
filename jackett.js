@@ -5,7 +5,7 @@ const config = require('./config');
 
 const getIndexers = (host, apiKey) => {
 	return new Promise((resolve) => {
-		needle.get(host + 'api/v2.0/indexers/' + config.indexerFilters + '/results/torznab/api?apikey=' + apiKey + '&t=indexers&configured=true', {
+		needle.get(host + 'api/v2.0/indexers/' + config.jackett.indexerFilters + '/results/torznab/api?apikey=' + apiKey + '&t=indexers&configured=true', {
 			open_timeout: config.jackett.openTimeout,
 			read_timeout: config.jackett.readTimeout,
 			parse_response: false
