@@ -11,16 +11,16 @@ const getIndexers = (host, apiKey) => {
 			parse_response: false
 		}, (err, resp) => {
 			if (err || !resp || !resp.body) {
-				console.log("No indexers for ", host);
-				resolve([]);
+				console.log("No indexers for ", host, err);
+				return([]);
 			}
 			let indexers = null;
 
 			try {
 				indexers = xmlJs.xml2js(resp.body);
 			} catch (err) {
-				console.error("Could not parse indexers for ", host);
-				resolve([]);
+				console.error("Could not parse indexers for ", host, err);
+				return([]);
 			}
 
 			if (indexers && indexers.elements && indexers.elements[0] && indexers.elements[0].elements) {
@@ -28,7 +28,7 @@ const getIndexers = (host, apiKey) => {
 				resolve(indexers);
 			} else {
 				console.error("Could not find indexers for ", host);
-				resolve([]);
+				return([]);
 			}
 		});
 	});
@@ -45,6 +45,7 @@ const search = async (query, cb, end) => {
 	let countFinished = 0;
 	let totalIndexers = 0;
 	let searchedIndexers = [];
+	let sortedReults = [];
 
 	const simpleName = encodeURIComponent(helper.simpleName(query.name));
 
@@ -163,7 +164,10 @@ const search = async (query, cb, end) => {
 							newObj.from = indexer.attributes.id;
 
 							newObj.extraTag = helper.extraTag(newObj.title, query.name);
-							tempResults.push(newObj);
+							
+							if (helper.insertIntoSortedArray(sortedReults, newObj, 'seeders', 5)) {
+								tempResults.push(newObj);
+							}
 						}
 					});
 

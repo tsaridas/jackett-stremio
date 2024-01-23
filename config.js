@@ -24,11 +24,11 @@ const defaultConfig = {
 
   "minimumSeeds": parseInt(process.env.MIN_SEED) || 5,
 
-  "maximumResults": parseInt(process.env.MAX_RESULTS) || 10,
+  "maximumResults": parseInt(process.env.MAX_RESULTS) || 5,
 
-  "maximumSize": process.env.MAX_SIZE || "10GB",
+  "maximumSize": process.env.MAX_SIZE || "5GB",
 
-  "downloadTorrentQueue": parseInt(process.env.DOWNLOAD_TORRENT_QUEUE) || 20,
+  "downloadTorrentQueue": parseInt(process.env.DOWNLOAD_TORRENT_QUEUE) || 10,
 
   "jackett": {
 
