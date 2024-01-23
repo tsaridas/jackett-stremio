@@ -2,7 +2,6 @@ const xmlJs = require('xml-js');
 const needle = require('needle');
 const helper = require('./helpers');
 const config = require('./config');
-const { reject } = require('async');
 
 const getIndexers = (host, apiKey) => {
 	return new Promise((resolve) => {
@@ -13,7 +12,7 @@ const getIndexers = (host, apiKey) => {
 		}, (err, resp) => {
 			if (err || !resp || !resp.body) {
 				console.error("No indexers for ", host, err);
-				reject([]);
+				resolve([]);
 			}
 			let indexers = null;
 
@@ -21,7 +20,7 @@ const getIndexers = (host, apiKey) => {
 				indexers = xmlJs.xml2js(resp.body);
 			} catch (err) {
 				console.error("Could not parse indexers for ", host, err);
-				reject([]);
+				resolve([]);
 			}
 
 			if (indexers && indexers.elements && indexers.elements[0] && indexers.elements[0].elements) {
@@ -29,7 +28,7 @@ const getIndexers = (host, apiKey) => {
 				resolve(indexers);
 			} else {
 				console.error("Could not find indexers for ", host);
-				reject([]);
+				resolve([]);
 			}
 		});
 	});
@@ -166,7 +165,7 @@ const search = async (query, cb, end) => {
 
 							newObj.extraTag = helper.extraTag(newObj.title, query.name);
 							
-							if (helper.insertIntoSortedArray(sortedReults, newObj, 'seeders', 5)) {
+							if (helper.insertIntoSortedArray(sortedReults, newObj, 'seeders', config.maximumResults)) {
 								tempResults.push(newObj);
 							}
 						}
