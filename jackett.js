@@ -11,8 +11,8 @@ const getIndexers = (host, apiKey) => {
 			parse_response: false
 		}, (err, resp) => {
 			if (err || !resp || !resp.body) {
-				console.log("No indexers for ", host, err);
-				return([]);
+				console.error("No indexers for ", host, err);
+				return [];
 			}
 			let indexers = null;
 
@@ -20,15 +20,15 @@ const getIndexers = (host, apiKey) => {
 				indexers = xmlJs.xml2js(resp.body);
 			} catch (err) {
 				console.error("Could not parse indexers for ", host, err);
-				return([]);
+				return [];
 			}
 
 			if (indexers && indexers.elements && indexers.elements[0] && indexers.elements[0].elements) {
 				indexers = indexers.elements[0].elements;
-				resolve(indexers);
+				return [indexers];
 			} else {
 				console.error("Could not find indexers for ", host);
-				return([]);
+				return [];
 			}
 		});
 	});
