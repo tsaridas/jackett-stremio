@@ -22,46 +22,67 @@ const defaultConfig = {
 
   "addonPort": parseInt(process.env.PORT) || 7000,
 
-  "minimumSeeds": parseInt(process.env.MIN_SEED) || 3,
+  "minimumSeeds": parseInt(process.env.MIN_SEED) || 5,
 
-  "maximumResults": parseInt(process.env.MAX_RESULTS) || 10,
+  "maximumResults": parseInt(process.env.MAX_RESULTS) || 5,
 
-  "maximumSize": process.env.MAX_SIZE || "10GB",
+  "maximumSize": process.env.MAX_SIZE || "5GB",
 
-  "downloadTorrentQueue": parseInt(process.env.DOWNLOAD_TORRENT_QUEUE) || 5,
+  "downloadTorrentQueue": parseInt(process.env.DOWNLOAD_TORRENT_QUEUE) || 10,
 
   "jackett": {
 
-    "host": process.env.JACKETT_HOST || "http://127.0.0.1:9117/",
+    "hosts": process.env.JACKETT_HOSTS || process.env.JACKETT_HOST || "http://127.0.0.1:9117/", // JACKETT_HOST is for backwards compatibility
 
-    "readTimeout": parseInt(process.env.JACKETT_RTIMEOUT) || 10000,
+    "apiKeys": process.env.JACKETT_APIKEYS || process.env.JACKETT_APIKEY || "",  // JACKETT_APIKEY is for backwards compatibility
 
-    "openTimeout": parseInt(process.env.JACKETT_OTIMEOUT) || 5000
+    "readTimeout": parseInt(process.env.JACKETT_RTIMEOUT) || 8000,  // don't set this lower than response timeout
+
+    "openTimeout": parseInt(process.env.JACKETT_OTIMEOUT) || 3000   // this is how long it takes to open a tcp connection to jackett. increase if your jackett server is far away from the addon.
 
   }
 }
 
+function isIPv4(value) {
+  // Regular expression to validate IPv4 addresses
+  const ipv4Regex = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
+  return ipv4Regex.test(value);
+}
+
+function isFQDN(value) {
+  // Regular expression to validate FQDNs
+  const fqdnRegex = /^([a-zA-Z0-9.-]+\.)+[a-zA-Z]{2,}$/;
+  return fqdnRegex.test(value);
+}
+
 function correctAndValidateURL(input) {
-  try {
-    const parsedURL = new URL(input);
+  const urls = input.split(',');
+  const finalUrls = [];
+  urls.forEach((element) => {
+    try {
+      const parsedURL = new URL(element);
 
-    if (parsedURL.protocol === 'http:' && /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(parsedURL.hostname)) {
-      return parsedURL.href; // Return the original URL if it's valid
+      if (parsedURL.protocol === 'http:' && (isIPv4(parsedURL.hostname) || isFQDN(parsedURL.hostname))) {
+        finalUrls.push(parsedURL.href); // Return the original URL if it's valid
+        return;
+      }
+
+      parsedURL.protocol = 'http:';
+
+      if (!parsedURL.pathname) {
+        parsedURL.pathname = '/';
+      }
+
+      const correctedURL = parsedURL.href;
+
+      finalUrls.push(correctedURL);
+    } catch (error) {
+      console.error(`URL ${element} doesn't seem like a valid URL. Using it anyway.`)
+      finalUrls.push(element);
+      return;
     }
-
-    parsedURL.protocol = 'http:';
-
-    if (!parsedURL.pathname) {
-      parsedURL.pathname = '/';
-    }
-
-    const correctedURL = parsedURL.href;
-
-    return correctedURL;
-  } catch (error) {
-    console.error(`URL ${input} doesn't seem like a valid URL. Using it anyway.`)
-    return input;
-  }
+  });
+  return finalUrls.join(',')
 }
 
 
@@ -96,6 +117,6 @@ function toBytes(humanSize) {
 
 
 defaultConfig.maximumSize = toBytes(defaultConfig.maximumSize);
-defaultConfig.jackett.host = correctAndValidateURL(defaultConfig.jackett.host);
+defaultConfig.jackett.hosts = correctAndValidateURL(defaultConfig.jackett.hosts);
 
 module.exports = defaultConfig;

@@ -53,7 +53,7 @@ const getBlacklistTrackers = async () => {
     });
 
     if (response && response.statusCode >= 200 && response.statusCode < 300 && response.headers && response.body) {
-        const trackers = response.body.split('\n').filter(line => line.trim() !== '');
+        const trackers = response.body.split('\n').map(line => line.split('#')[0].trim()).filter(line => line.trim() !== '');
         config.debug && console.log(`Downloaded : ${trackers.length} blacklisted trackers.`);
         return trackers;
     }
@@ -94,7 +94,7 @@ const getTrackers = async () => {
         console.log(`Loading : ${EXTRA_TRACKERS.length} extra trackers.`);
     }
     if (config.removeBlacklistTrackers) {
-        const blacklist_trackers = await getBlacklistTrackers();
+        blacklist_trackers = await getBlacklistTrackers();
         console.log(`Loading : ${blacklist_trackers.length} blacklisted trackers.`);
     }
     
@@ -102,7 +102,7 @@ const getTrackers = async () => {
         console.log(`Loaded : ${trackers.length} trackers.`);
     }
 
-    config.debug && console.log(trackers);
+    config.debug && console.log(trackers, blacklist_trackers);
     return {
         trackers: trackers,
         blacklist_trackers: blacklist_trackers
