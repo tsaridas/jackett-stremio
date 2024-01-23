@@ -2,6 +2,7 @@ const xmlJs = require('xml-js');
 const needle = require('needle');
 const helper = require('./helpers');
 const config = require('./config');
+const { reject } = require('async');
 
 const getIndexers = (host, apiKey) => {
 	return new Promise((resolve) => {
@@ -12,7 +13,7 @@ const getIndexers = (host, apiKey) => {
 		}, (err, resp) => {
 			if (err || !resp || !resp.body) {
 				console.error("No indexers for ", host, err);
-				return [];
+				reject([]);
 			}
 			let indexers = null;
 
@@ -20,15 +21,15 @@ const getIndexers = (host, apiKey) => {
 				indexers = xmlJs.xml2js(resp.body);
 			} catch (err) {
 				console.error("Could not parse indexers for ", host, err);
-				return [];
+				reject([]);
 			}
 
 			if (indexers && indexers.elements && indexers.elements[0] && indexers.elements[0].elements) {
 				indexers = indexers.elements[0].elements;
-				return [indexers];
+				resolve(indexers);
 			} else {
 				console.error("Could not find indexers for ", host);
-				return [];
+				reject([]);
 			}
 		});
 	});
