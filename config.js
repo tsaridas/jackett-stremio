@@ -40,7 +40,7 @@ const defaultConfig = {
 
     "openTimeout": parseInt(process.env.JACKETT_OTIMEOUT) || 3000,  // this is how long it takes to open a tcp connection to jackett. increase if your jackett server is far away from the addon.
 
-    "indexerFilters": process.env.INDEXER_FILTERS || "!status:failing,test:passed" // instead of `all`.
+    "indexerFilters": process.env.INDEXER_FILTERS || "status:healthy,test:passed" // instead of `all`.
   }
 }
 
@@ -116,7 +116,7 @@ function toBytes(humanSize) {
   return parseInt(numericPart * units[unit]);
 }
 
-defaultConfig.jackett.indexerFilters = encodeURIComponent(defaultConfig.indexerFilters);
+defaultConfig.jackett.indexerFilters = encodeURIComponent(defaultConfig.jackett.indexerFilters);
 defaultConfig.maximumSize = toBytes(defaultConfig.maximumSize);
 defaultConfig.jackett.hosts = correctAndValidateURL(defaultConfig.jackett.hosts);
 
