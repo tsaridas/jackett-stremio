@@ -67,7 +67,6 @@ const search = async (query, cb, end) => {
 
 	await Promise.all(hostsAndApiKeys.map(async ({ host, apiKey }) => {
 		const apiIndexersArray = await getIndexers(host, apiKey);
-		console.log(apiIndexersArray)
 
 		try {
 			config.debug && console.log("Found " + apiIndexersArray.length + " indexers for " + host);
@@ -79,7 +78,7 @@ const search = async (query, cb, end) => {
 
 				if (searchedIndexers[indexer.attributes.id]) {
 					config.debug && console.log("Skipping indexer " + indexer.attributes.id + " as we have already searched it from " + host);
-
+					return;
 				} else {
 					searchedIndexers[indexer.attributes.id] = { "host": host, "status": "Started" };
 				}
@@ -184,7 +183,6 @@ const search = async (query, cb, end) => {
 			console.error("Could not process host :",host, error);
 		}
 	}));
-	console.log(searchedIndexers);
 	end([]);
 };
 
