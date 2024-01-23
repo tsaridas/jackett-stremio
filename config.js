@@ -28,7 +28,11 @@ const defaultConfig = {
 
   "maximumSize": process.env.MAX_SIZE || "5GB",
 
+<<<<<<< HEAD
   "downloadTorrentQueue": parseInt(process.env.DOWNLOAD_TORRENT_QUEUE) || 10,
+=======
+  "downloadTorrentQueue": parseInt(process.env.DOWNLOAD_TORRENT_QUEUE) || 20,
+>>>>>>> 91a96065b2a6bbf9ea0ecb1ec589604c6a55e7dc
 
   "jackett": {
 
