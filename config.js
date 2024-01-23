@@ -38,7 +38,7 @@ const defaultConfig = {
 
     "readTimeout": parseInt(process.env.JACKETT_RTIMEOUT) || 8000,
 
-    "openTimeout": parseInt(process.env.JACKETT_OTIMEOUT) || 5000
+    "openTimeout": parseInt(process.env.JACKETT_OTIMEOUT) || 2000
 
   }
 }

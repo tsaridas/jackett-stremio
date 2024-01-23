@@ -37,7 +37,7 @@ The below options can be set as an evironment variable.
 | `JACKETT_HOSTS` | http://127.0.0.1:9117/ | `http://10.10.10.1:9117/,http://10.10.10.2:9117/` | Your Jackett hosts comma delimited.|
 | `JACKETT_APIKEYS` | '' | `sdfsadfsadfsadfsaf,sdfsadfsadfsadfsa` | API keys from jackett servers comma delimited. |
 | `JACKETT_RTIMEOUT` | 8000 | `20000` | Jackett http read timeout in millisecond. Don't set these higher than the RESPONSE_TIMEOUT |
-| `JACKETT_OTIMEOUT` | 5000 | `20000` | Jackett http open timeout in millisecond. |
+| `JACKETT_OTIMEOUT` | 3000 | `20000` | Jackett http open timeout in millisecond. |
 | `PARSE_TORRENT_FILES` | false | `true` | Parsing torrent files ( not magnets) takes time and is slow. This is disabled by default. **If enabled you will see more seeders**. |
 | `DOWNLOAD_TORRENT_QUEUE` | 10 | `100` | Because external http downloads go through Jackett doing many downloads at the same time might cause some DDOS so I setup a queue for this. |
 | `RESPONSE_TIMEOUT` | 8000 | `12000` | This will timeout any queries to jackett after this given value in millisecond. The higher the most result you will get from slow indexers. |
