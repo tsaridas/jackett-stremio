@@ -36,7 +36,7 @@ const defaultConfig = {
 
     "apiKeys": process.env.JACKETT_APIKEYS || process.env.JACKETT_APIKEY || "",  // JACKETT_APIKEY is for backwards compatibility
 
-    "readTimeout": parseInt(process.env.JACKETT_RTIMEOUT) || 10000,
+    "readTimeout": parseInt(process.env.JACKETT_RTIMEOUT) || 8000,
 
     "openTimeout": parseInt(process.env.JACKETT_OTIMEOUT) || 5000
 
