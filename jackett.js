@@ -166,12 +166,14 @@ const search = async (query, cb, end) => {
 							}
 						}
 					});
+
 					searchedIndexers[indexer.attributes.id].status = "finished"
 
 					countResults += tempResults.length;
 					countFinished++;
 
 					config.debug && console.log(`Found ${tempResults.length} results from ${indexer.attributes.id} on host ${host} and ${countResults} overall. ${countFinished}/${Object.keys(searchedIndexers).length} indexers finished.`);
+
 					config.debug && console.log(searchedIndexers);
 					if (tempResults.length > 0) {
 						cb(tempResults);
@@ -180,6 +182,7 @@ const search = async (query, cb, end) => {
 			}));
 		} catch (error) {
 			console.error("Could not process host :", host, error);
+
 		}
 	}));
 	end([]);
