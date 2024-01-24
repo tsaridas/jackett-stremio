@@ -235,7 +235,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
                 parse_response: false
             });
             if (requestSent || response.statusCode >= 400) { // It usually takes some time to dowload the torrent file and we don't want to continue.
-                config.debug && console.log("Abort processing of : " + task.link + " - " + (requestSent || response.statusCode))
+                config.debug && console.log("Abort processing of : " + task.link + " - " + (requestSent ? "Request was sent" : "Response code : " + response.statusCode));
                 inProgressCount--;
                 return;
             }
