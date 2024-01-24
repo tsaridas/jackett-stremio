@@ -20,6 +20,7 @@ const respond = (res, data) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
     res.setHeader('Content-Type', 'application/json');
+    res.setHeader('cache-control', 'max-age=7200, stale-while-revalidate=14400, stale-if-error=604800, public');
     res.send(data);
 };
 
@@ -206,7 +207,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
             clearInterval(intervalId);
             const finalData = processTorrentList(streams);
             config.debug && console.log("Sliced & Sorted data ", finalData);
-            console.log(streamInfo.imdbId+ " results " + finalData.length + " / Timeout: " + (elapsedTime >= config.responseTimeout) + " / Finished Searching: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Discarded : " + (streams.length - finalData.length));
+            console.log(streamInfo.imdbId + " / Results " + finalData.length + " / Timeout: " + (elapsedTime >= config.responseTimeout) + " / Finished Searching: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Discarded : " + (streams.length - finalData.length));
             respond(res, { streams: finalData });
         }
     }, config.interval);
@@ -275,10 +276,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
             return;
         }
         if (results && results.length) {
-            // tempResults = tempResults.sort((a, b) => b.seeders - a.seeders); // to remove. we need to sort before in jackett 
-
             const { magnets, links } = await partitionURL(results);
-
             Promise.all([...magnets.map(processMagnets)]);
             links.forEach(item => asyncQueue.push(item));
         }
@@ -303,9 +301,9 @@ addon.get('/stream/:type/:id.json', (req, res) => {
             if (idParts.length == 3) {
                 streamInfo.season = idParts[1];
                 streamInfo.episode = idParts[2];
-                console.log(`Searching for title: ${streamInfo.name} - type: ${streamInfo.type} - year: ${year} - season: ${streamInfo.season} - episode: ${streamInfo.episode}.`);
+                console.log(`Searching for - imdbiID: ${imdbId} - title: ${streamInfo.name} - type: ${streamInfo.type} - year: ${year} - season: ${streamInfo.season} - episode: ${streamInfo.episode}.`);
             } else {
-                console.log(`Searching for title: ${streamInfo.name} - type: ${streamInfo.type} - year: ${year}.`);
+                console.log(`Searching for - imdbiID: ${imdbId} - title: ${streamInfo.name} - type: ${streamInfo.type} - year: ${year}.`);
             }
 
             jackettApi.search(streamInfo,
