@@ -19,8 +19,8 @@ Images are pushed to [Docker Hub](https://hub.docker.com/r/tsaridas/jackett-stre
 <pre>
 $ docker run -d \
   --name=jackett-stremio \
-  -e JACKETT_HOST=http://{{ YOURIP }}:9117/ \ # Replace `{{ YOUR IP }}` with your LAN IP.
-  -e JACKETT_APIKEY={{ THE API KEY }} # Replace {{ THE API KEY }} with the key you got from the jacket server.
+  -e JACKETT_HOSTS=http://{{ YOURIP }}:9117/ \ # Replace `{{ YOUR IP }}` with your LAN IP.
+  -e JACKETT_APIKEYS={{ THE API KEY }} # Replace {{ THE API KEY }} with the key you got from the jacket server.
   -p 7000:7000/tcp \
   --restart unless-stopped \
   tsaridas/jackett-stremio:latest
@@ -29,8 +29,8 @@ $ docker run -d \
 One could also run it outside docker. You need nodejs installed.
 
 ```bash
-$ export JACKETT_HOST={{ YOUR JACKETT IP:PORT }} # Replace `{{ YOUR JACKETT IP:PORT }}` with your ip and Jackett port.
-$ export JACKETT_APIKEY={{ YOUR JACKETT API KEY }} # Replace `{{ YOUR JACKETT API KEY }}` with your Jackett API key.
+$ export JACKETT_HOSTS={{ YOUR JACKETT IP:PORT }} # Replace `{{ YOUR JACKETT IP:PORT }}` with your ip and Jackett port.
+$ export JACKETT_APIKEYS={{ YOUR JACKETT API KEY }} # Replace `{{ YOUR JACKETT API KEY }}` with your Jackett API key.
 $ npm install
 $ npm start
 ```
@@ -102,7 +102,7 @@ Open your browser, go on `http://{{ YOUR IP }}:9117/`. Replace `{{ YOUR IP }}` w
 
 Copy the text from the input where it writes "API Key" from top right of the menu in Jackett and setup the indexers you want.
 
-Once that is done change the ENV variables JACKETT_HOST and JACKETT_APIKEY to match your host on the container that you used.
+Once that is done change the ENV variables JACKETT_HOSTS and JACKETT_APIKEYS to match your host on the container that you used.
 
 ### Add Jackett Add-on to Stremio
 
