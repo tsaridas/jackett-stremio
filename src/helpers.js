@@ -1,7 +1,5 @@
 const videoNameParser = require('video-name-parser');
 
-const ticker = {};
-
 const helper = {
     unique: (array) => {
         return Array.from(new Set(array));
@@ -46,19 +44,6 @@ const helper = {
 
     isObject: (s) => {
         return (s !== null && typeof s === 'object');
-    },
-
-    setTicker: (ticks, cb) => {
-        const tag = Date.now();
-        ticker[tag] = ticks;
-
-        return () => {
-            ticker[tag]--;
-            if (!ticker[tag]) {
-                delete ticker[tag];
-                cb();
-            }
-        };
     },
 
     episodeTag: (season, episode) => {
