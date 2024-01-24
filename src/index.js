@@ -178,7 +178,7 @@ const streamFromParsed = (tor, parsedTorrent, streamInfo, cb) => {
 };
 
 // stream response
-addon.get('/stream/:type/:id.json', (req, res) => {
+addon.get('/stream/:type/:id.json', async (req, res) => {
 
     if (!req.params.id)
         return respond(res, { streams: [] });
@@ -203,6 +203,8 @@ addon.get('/stream/:type/:id.json', (req, res) => {
             config.debug && console.log("Sliced & Sorted data ", finalData);
             console.log("A / imdbiID: " + streamInfo.imdbId + " / Results " + finalData.length + " / Timeout: " + (elapsedTime >= config.responseTimeout) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Discarded : " + (streams.length - finalData.length));
             respond(res, { streams: finalData });
+        } else {
+            config.debug && console.log("S / imdbiID: " + streamInfo.imdbId + " / Time pending: " + (config.responseTimeout - elapsedTime) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Processed streamed : " + streams.length);
         }
     }, config.interval);
 
@@ -277,49 +279,51 @@ addon.get('/stream/:type/:id.json', (req, res) => {
     };
 
     const idParts = req.params.id.split(':');
-    const imdbId = idParts[0];
-    const url = 'https://v3-cinemeta.strem.io/meta/' + req.params.type + '/' + imdbId + '.json';
+    streamInfo.imdbId = idParts[0];
+    streamInfo.type = req.params.type;
+    const url = 'https://v3-cinemeta.strem.io/meta/' + streamInfo.type + '/' + streamInfo.imdbId + '.json';
     config.debug && console.log("Cinemata url", url);
+    try {
+        const { body: responseBody } = await needle('get', url, {
+            follow: 1,
+            open_timeout: 3000,
+            read_timeout: config.responseTimeout,
+        });
 
-    needle.get(url, { follow: 1, open_timeout: 3000, read_timeout: config.responseTimeout }, (err, resp, body) => {
-        if (!err && body && body.meta && body.meta.name) {
-            const year = (body.meta.year) ? body.meta.year.match(/\b\d{4}\b/)[0] : (body.meta.releaseInfo) ? body.meta.releaseInfo.match(/\b\d{4}\b/)[0] : ''
-
-            streamInfo = {
-                name: body.meta.name,
-                type: req.params.type,
-                year: year,
-                imdbId: imdbId,
-            };
-
-            if (idParts.length == 3) {
-                streamInfo.season = idParts[1];
-                streamInfo.episode = idParts[2];
-                console.log(`Q / imdbiID: ${imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${year} / season: ${streamInfo.season} / episode: ${streamInfo.episode}.`);
-            } else {
-                console.log(`Q / imdbiID: ${imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${year}.`);
-            }
-
-            jackettApi.search(streamInfo,
-
-                (tempResults) => {
-                    processJackettResults(tempResults);
-                },
-
-                () => {
-                    config.debug && console.log("Searching finished.");
-                    searchFinished = true;
-                }
-            );
-
-        } else {
-            console.error('Could not get info from Cinemata.', url, err);
-            clearInterval(intervalId);
-            requestSent = true;
-            respond(res, { streams: [] });
+        if (!responseBody || !responseBody.meta || !responseBody.meta.name) {
+            throw new Error(`Could not get info from Cinemata: ${url}`);
         }
-    });
 
+        streamInfo.name = responseBody.meta.name;
+
+        streamInfo.year = (responseBody.meta.year) ? responseBody.meta.year.match(/\b\d{4}\b/)[0] : (responseBody.meta.releaseInfo) ? responseBody.meta.releaseInfo.match(/\b\d{4}\b/)[0] : ''
+
+
+        if (idParts.length == 3) {
+            streamInfo.season = idParts[1];
+            streamInfo.episode = idParts[2];
+            console.log(`Q / imdbiID: ${streamInfo.imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${streamInfo.year} / season: ${streamInfo.season} / episode: ${streamInfo.episode}.`);
+        } else {
+            console.log(`Q / imdbiID: ${streamInfo.imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${streamInfo.year}.`);
+        }
+
+        jackettApi.search(streamInfo,
+
+            (tempResults) => {
+                processJackettResults(tempResults);
+            },
+
+            () => {
+                config.debug && console.log("Searching finished.");
+                searchFinished = true;
+            }
+        );
+    } catch (err) {
+        console.error(err.message);
+        clearInterval(intervalId);
+        requestSent = true;
+        respond(res, { streams: [] });
+    }
 });
 
 const runAddon = async () => {
