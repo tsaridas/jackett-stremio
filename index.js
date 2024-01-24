@@ -287,7 +287,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
     const url = 'https://v3-cinemeta.strem.io/meta/' + req.params.type + '/' + imdbId + '.json';
     config.debug && console.log("Cinemata url", url);
 
-    needle.get(url, { follow: 1, open_timeout: 5000, read_timeout: config.responseTimeout }, (err, resp, body) => {
+    needle.get(url, { follow: 1, open_timeout: 3000, read_timeout: config.responseTimeout }, (err, resp, body) => {
         if (!err && body && body.meta && body.meta.name) {
             const year = (body.meta.year) ? body.meta.year.match(/\b\d{4}\b/) : (body.meta.releaseInfo) ? body.meta.releaseInfo.match(/\b\d{4}\b/) : ''
 
