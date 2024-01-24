@@ -7,14 +7,20 @@ It's out of the scope of this guide, to teach you how to achieve that.
 
 You can take a look at my other repo if you want to have stremio run in HTTP in docker [stremio-docker](https://github.com/tsaridas/stremio-docker) .
 
+## Showcase
+
+You can find the Addon's manifest at [Beamup-Club](https://a0964931e94e-jackett-stremio.baby-beamup.club/manifest.json). Copy the link and paste it to your streamio addons.
+This is connected to some jackett servers that only have 2 indexers and shouldn't produce many results in most cases.
+You can install the plugin locally and setup your own Indexers for better results.
+
 ## Run
 Images are pushed to [Docker Hub](https://hub.docker.com/r/tsaridas/jackett-stremio) for each release automatically.
 
 <pre>
 $ docker run -d \
   --name=jackett-stremio \
-  -e JACKETT_HOST=http://{{ YOURIP }}:9117/ \ # Replace `{{ YOUR IP }}` with your LAN IP.
-  -e JACKETT_APIKEY={{ THE API KEY }} # Replace {{ THE API KEY }} with the key you got from the jacket server.
+  -e JACKETT_HOSTS=http://{{ YOURIP }}:9117/ \ # Replace `{{ YOUR IP }}` with your LAN IP.
+  -e JACKETT_APIKEYS={{ THE API KEY }} # Replace {{ THE API KEY }} with the key you got from the jacket server.
   -p 7000:7000/tcp \
   --restart unless-stopped \
   tsaridas/jackett-stremio:latest
@@ -23,8 +29,8 @@ $ docker run -d \
 One could also run it outside docker. You need nodejs installed.
 
 ```bash
-$ export JACKETT_HOST={{ YOUR JACKETT IP:PORT }} # Replace `{{ YOUR JACKETT IP:PORT }}` with your ip and Jackett port.
-$ export JACKETT_APIKEY={{ YOUR JACKETT API KEY }} # Replace `{{ YOUR JACKETT API KEY }}` with your Jackett API key.
+$ export JACKETT_HOSTS={{ YOUR JACKETT IP:PORT }} # Replace `{{ YOUR JACKETT IP:PORT }}` with your ip and Jackett port.
+$ export JACKETT_APIKEYS={{ YOUR JACKETT API KEY }} # Replace `{{ YOUR JACKETT API KEY }}` with your Jackett API key.
 $ npm install
 $ npm start
 ```
@@ -34,8 +40,9 @@ The below options can be set as an evironment variable.
 
 | Env | Default | Example | Description |
 | - | - | - | - |
-| `JACKETT_HOSTS` | http://127.0.0.1:9117/ | `http://10.10.10.1:9117/,http://10.10.10.2:9117/` | Your Jackett hosts comma delimited.|
-| `JACKETT_APIKEYS` | '' | `sdfsadfsadfsadfsaf,sdfsadfsadfsadfsa` | API keys from jackett servers comma delimited. |
+| `JACKETT_HOSTS` | http://127.0.0.1:9117/ | `http://IP1:9117/, http://IP2:9117/` | Your Jackett hosts comma delimited.|
+| `JACKETT_APIKEYS` | '' | `sdfsadfs,sdfsadfsa` | API keys from jackett servers comma delimited. |
+| `ADDON_NAME` | 'Jackett' | `MyJacketAddon` | The name of the addon that will show in stremio. |
 | `JACKETT_RTIMEOUT` | 8000 | `20000` | Jackett http read timeout in millisecond. Don't set these higher than the RESPONSE_TIMEOUT. |
 | `JACKETT_OTIMEOUT` | 3000 | `20000` | Jackett http open timeout in millisecond. This is how long it takes to open a tcp connection to jackett. Increase if your jackett server is far away from the addon.|
 | `PARSE_TORRENT_FILES` | false | `true` | Parsing torrent files ( not magnets) takes time and is slow. This is disabled by default. **If enabled you will see more results depending on your indexer**. |
@@ -43,16 +50,16 @@ The below options can be set as an evironment variable.
 | `RESPONSE_TIMEOUT` | 8000 | `12000` | This will timeout any queries to jackett after this given value in millisecond. The higher the most result you will get from slow indexers. |
 | `PORT` | 7000 | `8888` | The port which the Addon service will run on. |
 | `MIN_SEED` | 5 | `10` | The minimum amount of seeds we should return results for. |
-| `MAX_RESULTS` | 5 | `10` | Maxisum results to return. |
+| `MAX_RESULTS` | 5 | `10` | Maximum results to return. |
 | `MAX_SIZE` | 5GB | `5GB` | Maximum size of the results we want to receive. Value is in Bytes. Default is 10GB. Supported formats: B/KB/MB/GB/TB . |
-| `DEBUG` | false | `true` | Spam your terminal with info about requests being made. |
-| `SEARCH_BY_TYPE` | false | `true` | We search by movie or tvshow instead of default free search. |
+| `DEBUG` | false | `true` | Spams your terminal with info. |
+| `SEARCH_BY_TYPE` | false | `true` | By enabled this, it will search by movie or tvshow instead of default free search. |
 | `INTERVAL` | 500 | `100` | How often to check in miliseconds if we should return results based on user's timeout. |
 | `ADD_BEST_TRACKERS` | false | `true` | We download a list of best trackers from [Best Trackers](https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt) and add them to all torrents found |
 | `ADD_RUSSIAN_TRACKERS` | false | `true` | We add some Russian trackers. Check trackers.js for more info.|
 | `ADD_EXTRA_TRACKERS` | false | `true` | We add some extra trackers. Check trackers.js for more info. |
 | `REMOVE_BLACKLIST_TRACKERS` | false | `true` | Remove trackers that are blacklisted. Download list from : [Blacklisted trackers](https://raw.githubusercontent.com/ngosang/trackerslist/master/blacklist.txt") |
-
+| `INDEXER_FILTERS` | status:healthy,test:passed | `all` | This is the filter when we fetch indexers. This config is clear text, we encode it before using. [Jackett Documentation](https://github.com/Jackett/Jackett/tree/v0.21.1594?tab=readme-ov-file#filter-indexers) |
 
 
 ## Builds
@@ -95,7 +102,7 @@ Open your browser, go on `http://{{ YOUR IP }}:9117/`. Replace `{{ YOUR IP }}` w
 
 Copy the text from the input where it writes "API Key" from top right of the menu in Jackett and setup the indexers you want.
 
-Once that is done change the ENV variables JACKETT_HOST and JACKETT_APIKEY to match your host on the container that you used.
+Once that is done change the ENV variables JACKETT_HOSTS and JACKETT_APIKEYS to match your host on the container that you used.
 
 ### Add Jackett Add-on to Stremio
 
@@ -103,7 +110,6 @@ Add `http://{{ YOUR IP }}:7000/manifest.json`. Replace `{{ YOUR IP }}` with your
 
 ### ToDo
 
-- Add caching headers.
 - Reorg code to avoid iterating through the same data multiple times.
 - Add your own trackers config.
 - Resolve trackers and add cache for trackers ip addresses instead of sending FQDNs.

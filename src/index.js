@@ -11,7 +11,7 @@ const helper = require('./helpers');
 const config = require('./config');
 const { getTrackers } = require('./trackers');
 
-const version = require('./package.json').version;
+const version = require('../package.json').version;
 
 global.TRACKERS = [];
 global.BLACKLIST_TRACKERS = [];
@@ -20,6 +20,7 @@ const respond = (res, data) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
     res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'max-age=7200, stale-while-revalidate=14400, stale-if-error=604800, public');
     res.send(data);
 };
 
@@ -27,7 +28,7 @@ const manifest = {
     "id": "org.stremio.jackett",
     "version": version,
 
-    "name": "Jackett",
+    "name": config.addonName,
     "description": "Stremio Add-on to get torrent results from Jackett",
 
     "icon": "https://static1.squarespace.com/static/55c17e7ae4b08ccd27be814e/t/599b81c32994ca8ff6c1cd37/1508813048508/Jackett-logo-2.jpg",
@@ -206,7 +207,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
             clearInterval(intervalId);
             const finalData = processTorrentList(streams);
             config.debug && console.log("Sliced & Sorted data ", finalData);
-            console.log("Results : " + finalData.length + " / Timeout: " + (elapsedTime >= config.responseTimeout) + " / Finished Searching: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Discarded : " + (streams.length - finalData.length));
+            console.log("A / imdbiID: " + streamInfo.imdbId + " / Results " + finalData.length + " / Timeout: " + (elapsedTime >= config.responseTimeout) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Discarded : " + (streams.length - finalData.length));
             respond(res, { streams: finalData });
         }
     }, config.interval);
@@ -275,10 +276,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
             return;
         }
         if (results && results.length) {
-            // tempResults = tempResults.sort((a, b) => b.seeders - a.seeders); // to remove. we need to sort before in jackett 
-
             const { magnets, links } = await partitionURL(results);
-
             Promise.all([...magnets.map(processMagnets)]);
             links.forEach(item => asyncQueue.push(item));
         }
@@ -289,7 +287,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
     const url = 'https://v3-cinemeta.strem.io/meta/' + req.params.type + '/' + imdbId + '.json';
     config.debug && console.log("Cinemata url", url);
 
-    needle.get(url, { follow: 1 }, (err, resp, body) => {
+    needle.get(url, { follow: 1, open_timeout: 3000, read_timeout: config.responseTimeout }, (err, resp, body) => {
         if (!err && body && body.meta && body.meta.name) {
             const year = (body.meta.year) ? body.meta.year.match(/\b\d{4}\b/) : (body.meta.releaseInfo) ? body.meta.releaseInfo.match(/\b\d{4}\b/) : ''
 
@@ -297,14 +295,15 @@ addon.get('/stream/:type/:id.json', (req, res) => {
                 name: body.meta.name,
                 type: req.params.type,
                 year: year,
+                imdbId: imdbId,
             };
 
             if (idParts.length == 3) {
                 streamInfo.season = idParts[1];
                 streamInfo.episode = idParts[2];
-                console.log(`Searching for title: ${streamInfo.name} - type: ${streamInfo.type} - year: ${year} - season: ${streamInfo.season} - episode: ${streamInfo.episode}.`);
+                console.log(`Q / imdbiID: ${imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${year} / season: ${streamInfo.season} / episode: ${streamInfo.episode}.`);
             } else {
-                console.log(`Searching for title: ${streamInfo.name} - type: ${streamInfo.type} - year: ${year}.`);
+                console.log(`Q / imdbiID: ${imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${year}.`);
             }
 
             jackettApi.search(streamInfo,
@@ -321,6 +320,8 @@ addon.get('/stream/:type/:id.json', (req, res) => {
 
         } else {
             console.error('Could not get info from Cinemata.', url, err);
+            clearInterval(intervalId);
+            requestSent = true;
             respond(res, { streams: [] });
         }
     });

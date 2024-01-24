@@ -2,6 +2,8 @@ const { URL } = require('url');
 
 const defaultConfig = {
 
+  "addonName": process.env.ADDON_NAME || "Jackett",
+
   "parseTorrentFiles": process.env.PARSE_TORRENT_FILES || false,
 
   "interval": parseInt(process.env.INTERVAL) || 500,
@@ -38,8 +40,9 @@ const defaultConfig = {
 
     "readTimeout": parseInt(process.env.JACKETT_RTIMEOUT) || 8000,  // don't set this lower than response timeout
 
-    "openTimeout": parseInt(process.env.JACKETT_OTIMEOUT) || 3000   // this is how long it takes to open a tcp connection to jackett. increase if your jackett server is far away from the addon.
+    "openTimeout": parseInt(process.env.JACKETT_OTIMEOUT) || 3000,  // this is how long it takes to open a tcp connection to jackett. increase if your jackett server is far away from the addon.
 
+    "indexerFilters": process.env.INDEXER_FILTERS || "status:healthy,test:passed" // instead of `all`.
   }
 }
 
@@ -115,7 +118,7 @@ function toBytes(humanSize) {
   return parseInt(numericPart * units[unit]);
 }
 
-
+defaultConfig.jackett.indexerFilters = encodeURIComponent(defaultConfig.jackett.indexerFilters);
 defaultConfig.maximumSize = toBytes(defaultConfig.maximumSize);
 defaultConfig.jackett.hosts = correctAndValidateURL(defaultConfig.jackett.hosts);
 

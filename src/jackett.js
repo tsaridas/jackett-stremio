@@ -5,7 +5,7 @@ const config = require('./config');
 
 const getIndexers = (host, apiKey) => {
 	return new Promise((resolve) => {
-		needle.get(host + 'api/v2.0/indexers/all/results/torznab/api?apikey=' + apiKey + '&t=indexers&configured=true', {
+		needle.get(host + 'api/v2.0/indexers/' + config.jackett.indexerFilters + '/results/torznab/api?apikey=' + apiKey + '&t=indexers&configured=true', {
 			open_timeout: config.jackett.openTimeout,
 			read_timeout: config.jackett.readTimeout,
 			parse_response: false
@@ -80,12 +80,10 @@ const search = async (query, cb, end) => {
 					config.debug && console.log("Skipping indexer " + indexer.attributes.id + " as we have already searched it from " + host);
 					return;
 				} else {
-					searchedIndexers[indexer.attributes.id] = { "host": host, "status": "Started" };
+					searchedIndexers[indexer.attributes.id] = { "host": host, "status": "started" };
 				}
 
 				const url = host + 'api/v2.0/indexers/' + indexer.attributes.id + '/results/torznab/api?apikey=' + apiKey + searchQuery;
-
-
 				const response = await new Promise((resolve) => {
 					needle.get(url, {
 						open_timeout: config.jackett.openTimeout,
@@ -144,6 +142,7 @@ const search = async (query, cb, end) => {
 							}
 
 							// We prefer magnet links as they don't require downloading (faster) but we should probaly have an option for this.
+							// Problem with magnet links is that they don't have a file list. On the other hand, torrents need to be downloaded as a file which requires extra processing.
 							if (newObj.magneturl && newObj.magneturl.startsWith("magnet:") && (newObj.link && newObj.link.startsWith("http://"))) {
 								config.debug && console.log("Found magneturl " + newObj.magneturl + " and link " + newObj.link);
 								newObj.link = newObj.magneturl;
@@ -167,20 +166,25 @@ const search = async (query, cb, end) => {
 							}
 						}
 					});
-					searchedIndexers[indexer.attributes.id].status = "Finished"
 
+					searchedIndexers[indexer.attributes.id].status = "finished"
 					countResults += tempResults.length;
 					countFinished++;
 
-					config.debug && console.log(`Found ${countResults} results from ${indexer.attributes.id} on host ${host}. ${countFinished}/${Object.keys(searchedIndexers).length} indexers finished.`);
+					config.debug && console.log(`Found ${tempResults.length} results from ${indexer.attributes.id} on host ${host} and ${countResults} overall. ${countFinished}/${Object.keys(searchedIndexers).length} indexers finished.`);
+
 					config.debug && console.log(searchedIndexers);
 					if (tempResults.length > 0) {
 						cb(tempResults);
 					}
+				} else {
+					searchedIndexers[indexer.attributes.id].status = "finished"
+					config.debug && console.log("Could not find any torrents for ", host, url);
 				}
 			}));
 		} catch (error) {
-			console.error("Could not process host :",host, error);
+			console.error("Could not process host :", host, error);
+
 		}
 	}));
 	end([]);

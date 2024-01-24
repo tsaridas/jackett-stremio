@@ -33,8 +33,6 @@ const EXTRA_TRACKERS = [
     "udp://retracker01-msk-virt.corbina.net:80/announce",
     "udp://private.anonseed.com:6969/announce",
     "udp://p4p.arenabg.com:1337/announce"
-
-
 ]
 
 const RUSSIAN_TRACKERS = [
