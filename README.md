@@ -49,17 +49,16 @@ The below options can be set as an evironment variable.
 | `RESPONSE_TIMEOUT` | 8000 | `12000` | This will timeout any queries to jackett after this given value in millisecond. The higher the most result you will get from slow indexers. |
 | `PORT` | 7000 | `8888` | The port which the Addon service will run on. |
 | `MIN_SEED` | 5 | `10` | The minimum amount of seeds we should return results for. |
-| `MAX_RESULTS` | 5 | `10` | Maxisum results to return. |
+| `MAX_RESULTS` | 5 | `10` | Maximum results to return. |
 | `MAX_SIZE` | 5GB | `5GB` | Maximum size of the results we want to receive. Value is in Bytes. Default is 10GB. Supported formats: B/KB/MB/GB/TB . |
-| `DEBUG` | false | `true` | Spam your terminal with info about requests being made. |
-| `SEARCH_BY_TYPE` | false | `true` | We search by movie or tvshow instead of default free search. |
+| `DEBUG` | false | `true` | Spams your terminal with info. |
+| `SEARCH_BY_TYPE` | false | `true` | By enabled this, it will search by movie or tvshow instead of default free search. |
 | `INTERVAL` | 500 | `100` | How often to check in miliseconds if we should return results based on user's timeout. |
 | `ADD_BEST_TRACKERS` | false | `true` | We download a list of best trackers from [Best Trackers](https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt) and add them to all torrents found |
 | `ADD_RUSSIAN_TRACKERS` | false | `true` | We add some Russian trackers. Check trackers.js for more info.|
 | `ADD_EXTRA_TRACKERS` | false | `true` | We add some extra trackers. Check trackers.js for more info. |
 | `REMOVE_BLACKLIST_TRACKERS` | false | `true` | Remove trackers that are blacklisted. Download list from : [Blacklisted trackers](https://raw.githubusercontent.com/ngosang/trackerslist/master/blacklist.txt") |
 | `INDEXER_FILTERS` | status:healthy,test:passed | `all` | This is the filter when we fetch indexers. This config is clear text, we encode it before using. [Jackett Documentation](https://github.com/Jackett/Jackett/tree/v0.21.1594?tab=readme-ov-file#filter-indexers) |
-
 
 
 ## Builds
