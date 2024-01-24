@@ -165,7 +165,7 @@ const streamFromParsed = (tor, parsedTorrent, streamInfo, cb) => {
     }
 
 
-    stream.name = "Jackett " + quality;
+    stream.name = config.addonName + quality;
     stream.type = streamInfo.type;
     stream.infoHash = infoHash;
     stream.seeders = tor.seeders;
