@@ -2,15 +2,12 @@ const parseTorrent = require('parse-torrent')
 const needle = require('needle');
 const async = require('async');
 const getPort = require('get-port');
-
 const express = require('express');
 const addon = express();
-
 const jackettApi = require('./jackett');
 const helper = require('./helpers');
 const config = require('./config');
 const { getTrackers } = require('./trackers');
-
 const version = require('../package.json').version;
 
 global.TRACKERS = [];
@@ -56,12 +53,9 @@ const manifest = {
     "catalogs": []
 };
 
-addon.get('/manifest.json', (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', '*');
-    res.setHeader('Content-Type', 'application/json');
+addon.get('/manifest.json', (_, res) => {
     config.debug && console.log("Sending manifest.");
-    res.send(manifest);
+    respond(res, manifest);
 });
 
 function partitionURL(list) {
@@ -184,7 +178,7 @@ const streamFromParsed = (tor, parsedTorrent, streamInfo, cb) => {
 };
 
 // stream response
-addon.get('/stream/:type/:id.json', (req, res) => {
+addon.get('/stream/:type/:id.json', async (req, res) => {
 
     if (!req.params.id)
         return respond(res, { streams: [] });
@@ -209,6 +203,8 @@ addon.get('/stream/:type/:id.json', (req, res) => {
             config.debug && console.log("Sliced & Sorted data ", finalData);
             console.log("A / imdbiID: " + streamInfo.imdbId + " / Results " + finalData.length + " / Timeout: " + (elapsedTime >= config.responseTimeout) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Discarded : " + (streams.length - finalData.length));
             respond(res, { streams: finalData });
+        } else {
+            config.debug && console.log("S / imdbiID: " + streamInfo.imdbId + " / Time pending: " + (config.responseTimeout - elapsedTime) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Processed streamed : " + streams.length);
         }
     }, config.interval);
 
@@ -271,7 +267,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
 
     const asyncQueue = async.queue(processLinks, config.downloadTorrentQueue);
 
-    const respondStreams = async (results) => {
+    const processJackettResults = async (results) => {
         if (requestSent) { // Check the flag before processing each task
             return;
         }
@@ -283,64 +279,61 @@ addon.get('/stream/:type/:id.json', (req, res) => {
     };
 
     const idParts = req.params.id.split(':');
-    const imdbId = idParts[0];
-    const url = 'https://v3-cinemeta.strem.io/meta/' + req.params.type + '/' + imdbId + '.json';
+    streamInfo.imdbId = idParts[0];
+    streamInfo.type = req.params.type;
+    const url = 'https://v3-cinemeta.strem.io/meta/' + streamInfo.type + '/' + streamInfo.imdbId + '.json';
     config.debug && console.log("Cinemata url", url);
+    try {
+        const { body: responseBody } = await needle('get', url, {
+            follow: 1,
+            open_timeout: 3000,
+            read_timeout: config.responseTimeout,
+        });
 
-    needle.get(url, { follow: 1, open_timeout: 3000, read_timeout: config.responseTimeout }, (err, resp, body) => {
-        if (!err && body && body.meta && body.meta.name) {
-            const year = (body.meta.year) ? body.meta.year.match(/\b\d{4}\b/) : (body.meta.releaseInfo) ? body.meta.releaseInfo.match(/\b\d{4}\b/) : ''
-
-            streamInfo = {
-                name: body.meta.name,
-                type: req.params.type,
-                year: year,
-                imdbId: imdbId,
-            };
-
-            if (idParts.length == 3) {
-                streamInfo.season = idParts[1];
-                streamInfo.episode = idParts[2];
-                console.log(`Q / imdbiID: ${imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${year} / season: ${streamInfo.season} / episode: ${streamInfo.episode}.`);
-            } else {
-                console.log(`Q / imdbiID: ${imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${year}.`);
-            }
-
-            jackettApi.search(streamInfo,
-
-                (tempResults) => {
-                    respondStreams(tempResults);
-                },
-
-                () => {
-                    config.debug && console.log("Searching finished.");
-                    searchFinished = true;
-                }
-            );
-
-        } else {
-            console.error('Could not get info from Cinemata.', url, err);
-            clearInterval(intervalId);
-            requestSent = true;
-            respond(res, { streams: [] });
+        if (!responseBody || !responseBody.meta || !responseBody.meta.name) {
+            throw new Error(`Could not get info from Cinemata: ${url}`);
         }
-    });
 
+        streamInfo.name = responseBody.meta.name;
+
+        streamInfo.year = (responseBody.meta.year) ? responseBody.meta.year.match(/\b\d{4}\b/)[0] : (responseBody.meta.releaseInfo) ? responseBody.meta.releaseInfo.match(/\b\d{4}\b/)[0] : ''
+
+
+        if (idParts.length == 3) {
+            streamInfo.season = idParts[1];
+            streamInfo.episode = idParts[2];
+            console.log(`Q / imdbiID: ${streamInfo.imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${streamInfo.year} / season: ${streamInfo.season} / episode: ${streamInfo.episode}.`);
+        } else {
+            console.log(`Q / imdbiID: ${streamInfo.imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${streamInfo.year}.`);
+        }
+
+        jackettApi.search(streamInfo,
+
+            (tempResults) => {
+                processJackettResults(tempResults);
+            },
+
+            () => {
+                config.debug && console.log("Searching finished.");
+                searchFinished = true;
+            }
+        );
+    } catch (err) {
+        console.error(err.message);
+        clearInterval(intervalId);
+        requestSent = true;
+        respond(res, { streams: [] });
+    }
 });
 
 const runAddon = async () => {
-
     config.addonPort = await getPort({ port: config.addonPort });
-
     console.log(config);
-
     const { trackers, blacklist_trackers } = await getTrackers();
-
     global.TRACKERS = trackers;
     global.BLACKLIST_TRACKERS = blacklist_trackers;
 
     addon.listen(config.addonPort, () => {
-
         console.log('Add-on Manifest URL: http://{{ YOUR IP ADDRESS }}:' + config.addonPort + '/manifest.json');
     });
 };
