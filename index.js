@@ -20,7 +20,7 @@ const respond = (res, data) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
     res.setHeader('Content-Type', 'application/json');
-    res.setHeader('cache-control', 'max-age=7200, stale-while-revalidate=14400, stale-if-error=604800, public');
+    res.setHeader('Cache-Control', 'max-age=7200, stale-while-revalidate=14400, stale-if-error=604800, public');
     res.send(data);
 };
 
@@ -207,7 +207,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
             clearInterval(intervalId);
             const finalData = processTorrentList(streams);
             config.debug && console.log("Sliced & Sorted data ", finalData);
-            console.log(streamInfo.imdbId + " / Results " + finalData.length + " / Timeout: " + (elapsedTime >= config.responseTimeout) + " / Finished Searching: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Discarded : " + (streams.length - finalData.length));
+            console.log("A / imdbiID: " + streamInfo.imdbId + " / Results " + finalData.length + " / Timeout: " + (elapsedTime >= config.responseTimeout) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Discarded : " + (streams.length - finalData.length));
             respond(res, { streams: finalData });
         }
     }, config.interval);
@@ -287,7 +287,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
     const url = 'https://v3-cinemeta.strem.io/meta/' + req.params.type + '/' + imdbId + '.json';
     config.debug && console.log("Cinemata url", url);
 
-    needle.get(url, { follow: 1 }, (err, resp, body) => {
+    needle.get(url, { follow: 1, open_timeout: 3000, read_timeout: config.responseTimeout }, (err, resp, body) => {
         if (!err && body && body.meta && body.meta.name) {
             const year = (body.meta.year) ? body.meta.year.match(/\b\d{4}\b/) : (body.meta.releaseInfo) ? body.meta.releaseInfo.match(/\b\d{4}\b/) : ''
 
@@ -301,9 +301,9 @@ addon.get('/stream/:type/:id.json', (req, res) => {
             if (idParts.length == 3) {
                 streamInfo.season = idParts[1];
                 streamInfo.episode = idParts[2];
-                console.log(`Searching for - imdbiID: ${imdbId} - title: ${streamInfo.name} - type: ${streamInfo.type} - year: ${year} - season: ${streamInfo.season} - episode: ${streamInfo.episode}.`);
+                console.log(`Q / imdbiID: ${imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${year} / season: ${streamInfo.season} / episode: ${streamInfo.episode}.`);
             } else {
-                console.log(`Searching for - imdbiID: ${imdbId} - title: ${streamInfo.name} - type: ${streamInfo.type} - year: ${year}.`);
+                console.log(`Q / imdbiID: ${imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${year}.`);
             }
 
             jackettApi.search(streamInfo,
@@ -319,7 +319,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
             );
 
         } else {
-            console.error('Could not get info from Cinemata.', url, err);
+            console.error('Could not get info from Cinemata.', url);
             respond(res, { streams: [] });
         }
     });
