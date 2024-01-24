@@ -320,6 +320,8 @@ addon.get('/stream/:type/:id.json', (req, res) => {
 
         } else {
             console.error('Could not get info from Cinemata.', url);
+            clearInterval(intervalId);
+            requestSent = true;
             respond(res, { streams: [] });
         }
     });
