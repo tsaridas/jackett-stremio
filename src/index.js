@@ -204,7 +204,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
             console.log("A / imdbiID: " + streamInfo.imdbId + " / Results " + finalData.length + " / Timeout: " + (elapsedTime >= config.responseTimeout) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Discarded : " + (streams.length - finalData.length));
             respond(res, { streams: finalData });
         } else {
-            config.debug && console.log("S / imdbiID: " + streamInfo.imdbId + " / Time pending: " + (config.responseTimeout - elapsedTime) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Processed streamed : " + streams.length);
+            config.debug && console.log("S / imdbiID: " + streamInfo.imdbId + " / Time Pending: " + (config.responseTimeout - elapsedTime) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Processed Streams : " + streams.length);
         }
     }, config.interval);
 
