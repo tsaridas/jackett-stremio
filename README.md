@@ -9,7 +9,7 @@ You can take a look at my other repo if you want to have stremio run in HTTP in 
 
 ## Showcase
 
-You can find the Addon's manifest at [Beamup-Club](https://a0964931e94e-jackett-stremio.baby-beamup.club/manifest.json).
+You can find the Addon's manifest at [Beamup-Club](https://a0964931e94e-jackett-stremio.baby-beamup.club/manifest.json). Copy the link and paste it to your streamio addons.
 This is connected to some jackett servers that only have 2 indexers and shouldn't produce many results in most cases.
 You can install the plugin locally and setup your own Indexers for better results.
 
