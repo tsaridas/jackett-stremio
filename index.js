@@ -28,7 +28,7 @@ const manifest = {
     "id": "org.stremio.jackett",
     "version": version,
 
-    "name": "Jackett",
+    "name": config.addonName,
     "description": "Stremio Add-on to get torrent results from Jackett",
 
     "icon": "https://static1.squarespace.com/static/55c17e7ae4b08ccd27be814e/t/599b81c32994ca8ff6c1cd37/1508813048508/Jackett-logo-2.jpg",

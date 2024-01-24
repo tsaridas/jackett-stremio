@@ -42,6 +42,7 @@ The below options can be set as an evironment variable.
 | - | - | - | - |
 | `JACKETT_HOSTS` | http://127.0.0.1:9117/ | `http://IP1:9117/, http://IP2:9117/` | Your Jackett hosts comma delimited.|
 | `JACKETT_APIKEYS` | '' | `sdfsadfs,sdfsadfsa` | API keys from jackett servers comma delimited. |
+| `ADDON_NAME` | 'Jackett' | `MyJacketAddon` | The name of the addon that will show in stremio. |
 | `JACKETT_RTIMEOUT` | 8000 | `20000` | Jackett http read timeout in millisecond. Don't set these higher than the RESPONSE_TIMEOUT. |
 | `JACKETT_OTIMEOUT` | 3000 | `20000` | Jackett http open timeout in millisecond. This is how long it takes to open a tcp connection to jackett. Increase if your jackett server is far away from the addon.|
 | `PARSE_TORRENT_FILES` | false | `true` | Parsing torrent files ( not magnets) takes time and is slow. This is disabled by default. **If enabled you will see more results depending on your indexer**. |

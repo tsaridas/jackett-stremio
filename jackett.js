@@ -178,6 +178,9 @@ const search = async (query, cb, end) => {
 					if (tempResults.length > 0) {
 						cb(tempResults);
 					}
+				} else {
+					searchedIndexers[indexer.attributes.id].status = "finished"
+					config.debug && console.log("Could not find any torrents for ", host, url);
 				}
 			}));
 		} catch (error) {
