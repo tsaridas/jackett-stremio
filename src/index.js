@@ -53,12 +53,9 @@ const manifest = {
     "catalogs": []
 };
 
-addon.get('/manifest.json', (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', '*');
-    res.setHeader('Content-Type', 'application/json');
+addon.get('/manifest.json', (_, res) => {
     config.debug && console.log("Sending manifest.");
-    res.send(manifest);
+    respond(res, manifest);
 });
 
 function partitionURL(list) {
@@ -268,7 +265,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
 
     const asyncQueue = async.queue(processLinks, config.downloadTorrentQueue);
 
-    const respondStreams = async (results) => {
+    const processJackettResults = async (results) => {
         if (requestSent) { // Check the flag before processing each task
             return;
         }
@@ -306,7 +303,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
             jackettApi.search(streamInfo,
 
                 (tempResults) => {
-                    respondStreams(tempResults);
+                    processJackettResults(tempResults);
                 },
 
                 () => {
@@ -326,18 +323,13 @@ addon.get('/stream/:type/:id.json', (req, res) => {
 });
 
 const runAddon = async () => {
-
     config.addonPort = await getPort({ port: config.addonPort });
-
     console.log(config);
-
     const { trackers, blacklist_trackers } = await getTrackers();
-
     global.TRACKERS = trackers;
     global.BLACKLIST_TRACKERS = blacklist_trackers;
 
     addon.listen(config.addonPort, () => {
-
         console.log('Add-on Manifest URL: http://{{ YOUR IP ADDRESS }}:' + config.addonPort + '/manifest.json');
     });
 };
