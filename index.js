@@ -207,7 +207,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
             clearInterval(intervalId);
             const finalData = processTorrentList(streams);
             config.debug && console.log("Sliced & Sorted data ", finalData);
-            console.log("R : " + streamInfo.imdbId + " / Results " + finalData.length + " / Timeout: " + (elapsedTime >= config.responseTimeout) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Discarded : " + (streams.length - finalData.length));
+            console.log("A / imdbiID: " + streamInfo.imdbId + " / Results " + finalData.length + " / Timeout: " + (elapsedTime >= config.responseTimeout) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Discarded : " + (streams.length - finalData.length));
             respond(res, { streams: finalData });
         }
     }, config.interval);
@@ -301,9 +301,9 @@ addon.get('/stream/:type/:id.json', (req, res) => {
             if (idParts.length == 3) {
                 streamInfo.season = idParts[1];
                 streamInfo.episode = idParts[2];
-                console.log(`S - imdbiID: ${imdbId} - title: ${streamInfo.name} - type: ${streamInfo.type} - year: ${year} - season: ${streamInfo.season} - episode: ${streamInfo.episode}.`);
+                console.log(`Q / imdbiID: ${imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${year} / season: ${streamInfo.season} / episode: ${streamInfo.episode}.`);
             } else {
-                console.log(`S - imdbiID: ${imdbId} - title: ${streamInfo.name} - type: ${streamInfo.type} - year: ${year}.`);
+                console.log(`Q / imdbiID: ${imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${year}.`);
             }
 
             jackettApi.search(streamInfo,
@@ -319,7 +319,7 @@ addon.get('/stream/:type/:id.json', (req, res) => {
             );
 
         } else {
-            console.error('Could not get info from Cinemata.', url, err);
+            console.error('Could not get info from Cinemata.', url);
             respond(res, { streams: [] });
         }
     });
