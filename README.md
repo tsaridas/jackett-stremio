@@ -7,6 +7,12 @@ It's out of the scope of this guide, to teach you how to achieve that.
 
 You can take a look at my other repo if you want to have stremio run in HTTP in docker [stremio-docker](https://github.com/tsaridas/stremio-docker) .
 
+## Showcase
+
+You can find the Addon's manifest at [Beamup-Club](https://a0964931e94e-jackett-stremio.baby-beamup.club/manifest.json).
+This is connected to some jackett servers that only have 2 indexers and shouldn't produce many results in most cases.
+You can install the plugin locally and setup your own Indexers for better results.
+
 ## Run
 Images are pushed to [Docker Hub](https://hub.docker.com/r/tsaridas/jackett-stremio) for each release automatically.
 
