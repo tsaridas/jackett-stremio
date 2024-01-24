@@ -7,14 +7,20 @@ It's out of the scope of this guide, to teach you how to achieve that.
 
 You can take a look at my other repo if you want to have stremio run in HTTP in docker [stremio-docker](https://github.com/tsaridas/stremio-docker) .
 
+## Showcase
+
+You can find the Addon's manifest at [Beamup-Club](https://a0964931e94e-jackett-stremio.baby-beamup.club/manifest.json). Copy the link and paste it to your streamio addons.
+This is connected to some jackett servers that only have 2 indexers and shouldn't produce many results in most cases.
+You can install the plugin locally and setup your own Indexers for better results.
+
 ## Run
 Images are pushed to [Docker Hub](https://hub.docker.com/r/tsaridas/jackett-stremio) for each release automatically.
 
 <pre>
 $ docker run -d \
   --name=jackett-stremio \
-  -e JACKETT_HOST=http://{{ YOURIP }}:9117/ \ # Replace `{{ YOUR IP }}` with your LAN IP.
-  -e JACKETT_APIKEY={{ THE API KEY }} # Replace {{ THE API KEY }} with the key you got from the jacket server.
+  -e JACKETT_HOSTS=http://{{ YOURIP }}:9117/ \ # Replace `{{ YOUR IP }}` with your LAN IP.
+  -e JACKETT_APIKEYS={{ THE API KEY }} # Replace {{ THE API KEY }} with the key you got from the jacket server.
   -p 7000:7000/tcp \
   --restart unless-stopped \
   tsaridas/jackett-stremio:latest
@@ -23,8 +29,8 @@ $ docker run -d \
 One could also run it outside docker. You need nodejs installed.
 
 ```bash
-$ export JACKETT_HOST={{ YOUR JACKETT IP:PORT }} # Replace `{{ YOUR JACKETT IP:PORT }}` with your ip and Jackett port.
-$ export JACKETT_APIKEY={{ YOUR JACKETT API KEY }} # Replace `{{ YOUR JACKETT API KEY }}` with your Jackett API key.
+$ export JACKETT_HOSTS={{ YOUR JACKETT IP:PORT }} # Replace `{{ YOUR JACKETT IP:PORT }}` with your ip and Jackett port.
+$ export JACKETT_APIKEYS={{ YOUR JACKETT API KEY }} # Replace `{{ YOUR JACKETT API KEY }}` with your Jackett API key.
 $ npm install
 $ npm start
 ```
@@ -96,7 +102,7 @@ Open your browser, go on `http://{{ YOUR IP }}:9117/`. Replace `{{ YOUR IP }}` w
 
 Copy the text from the input where it writes "API Key" from top right of the menu in Jackett and setup the indexers you want.
 
-Once that is done change the ENV variables JACKETT_HOST and JACKETT_APIKEY to match your host on the container that you used.
+Once that is done change the ENV variables JACKETT_HOSTS and JACKETT_APIKEYS to match your host on the container that you used.
 
 ### Add Jackett Add-on to Stremio
 
