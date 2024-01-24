@@ -40,7 +40,7 @@ The below options can be set as an evironment variable.
 
 | Env | Default | Example | Description |
 | - | - | - | - |
-| `JACKETT_HOSTS` | http://127.0.0.1:9117/ | `http://IP1:9117/,http://IP2:9117/` | Your Jackett hosts comma delimited.|
+| `JACKETT_HOSTS` | http://127.0.0.1:9117/ | `http://IP1:9117/, http://IP2:9117/` | Your Jackett hosts comma delimited.|
 | `JACKETT_APIKEYS` | '' | `sdfsadfs,sdfsadfsa` | API keys from jackett servers comma delimited. |
 | `JACKETT_RTIMEOUT` | 8000 | `20000` | Jackett http read timeout in millisecond. Don't set these higher than the RESPONSE_TIMEOUT. |
 | `JACKETT_OTIMEOUT` | 3000 | `20000` | Jackett http open timeout in millisecond. This is how long it takes to open a tcp connection to jackett. Increase if your jackett server is far away from the addon.|
