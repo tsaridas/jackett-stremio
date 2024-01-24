@@ -42,4 +42,4 @@ RUN npm install --no-fund --omit=dev
 ENTRYPOINT []
 
 
-CMD ["node", "index.js"]
+CMD ["npm", "start"]

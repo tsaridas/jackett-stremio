@@ -2,15 +2,12 @@ const parseTorrent = require('parse-torrent')
 const needle = require('needle');
 const async = require('async');
 const getPort = require('get-port');
-
 const express = require('express');
 const addon = express();
-
 const jackettApi = require('./jackett');
 const helper = require('./helpers');
 const config = require('./config');
 const { getTrackers } = require('./trackers');
-
 const version = require('../package.json').version;
 
 global.TRACKERS = [];
