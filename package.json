@@ -4,9 +4,19 @@
   "description": "Stremio Add-on to get torrent results from Jackett",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "lint": "eslint ."
   },
   "license": "MIT",
+  "keywords": ["Stremio", "Jackett", "torrents", "Stremio-Addon"],
+  "author": "andreas.tsarida@gmail.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tsaridas/jackett-stremio.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tsaridas/jackett-stremio/issues"
+  },
   "dependencies": {
     "async": "^2.6.3",
     "express": "^4.18.2",
