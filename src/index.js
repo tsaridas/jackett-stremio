@@ -221,7 +221,7 @@ async function addResults(req, streams, source) {
             throw new Error(`Could not get info from: ${streamUrl}`)
         }
 
-        const regex = /👤 (\d+) 💾/
+        const regex = /👤 (\d+) /
         config.debug && console.log('Got results', responseBody)
         responseBody.streams.forEach(torrent => {
             torrent.name = torrent.name.replace(name, config.addonName)
@@ -230,7 +230,9 @@ async function addResults(req, streams, source) {
                 torrent.seeders = parseInt(seedersMatch[1])
             }
             torrent.title = helper.normalizeTitle(torrent.title);
-            torrent.behaviorHints.bingeGroup = torrent.behaviorHints.bingeGroup.replace(name.toLowerCase(), "Jackett");
+            if (torrent.behaviorHints && torrent.behaviorHints.bingeGroup) {
+                torrent.behaviorHints.bingeGroup = torrent.behaviorHints.bingeGroup.replace(name.toLowerCase(), "Jackett");
+            }
             torrent.sources = global.TRACKERS.map(x => { return "tracker:" + x; }).concat(["dht:" + torrent.infoHash]);
             streams.push(torrent);
             config.debug && console.log('Found torrent from addition source: ', torrent)
