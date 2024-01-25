@@ -121,8 +121,8 @@ function toBytes(humanSize) {
   return parseInt(numericPart * units[unit]);
 }
 
-function loadSource(sources) {
-  const parts = sources.split(',');
+function loadSource() {
+  const parts = defaultConfig.additionalSources.split(',');
   const sourceList = [];
   for (const part of parts) {
     const decodedValue = Buffer.from(part, 'base64').toString('utf-8');
@@ -135,5 +135,5 @@ defaultConfig.jackett.indexerFilters = encodeURIComponent(defaultConfig.jackett.
 defaultConfig.maximumSize = toBytes(defaultConfig.maximumSize);
 defaultConfig.jackett.hosts = correctAndValidateURL(defaultConfig.jackett.hosts);
 console.log(defaultConfig)
-loadSource();
+loadSource(); // you have to get it right or else no start :) (hint /stream/)
 module.exports = defaultConfig;
