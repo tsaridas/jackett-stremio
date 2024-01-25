@@ -3,8 +3,8 @@ const axios = require('axios');
 
 const createHttpAgent = () => {
     return new Agent({
-        maxSockets: 100,
-        maxFreeSockets: 10,
+        maxSockets: 50,
+        maxFreeSockets: 5,
         timeout: 60000,
         freeSocketTimeout: 30000,
     });
@@ -12,8 +12,8 @@ const createHttpAgent = () => {
 
 const createHttpsAgent = () => {
     return new Agent.HttpsAgent({
-        maxSockets: 100,
-        maxFreeSockets: 10,
+        maxSockets: 50,
+        maxFreeSockets: 5,
         timeout: 60000,
         freeSocketTimeout: 30000,
     });
