@@ -44,9 +44,8 @@ const defaultConfig = {
 
     "indexerFilters": process.env.INDEXER_FILTERS || "status:healthy,test:passed" // instead of `all`.
   },
-  "additionalSources": [
-    - ""
-  ]
+
+  "additionalSources": process.env.ADDITIONAL_SOURCES || ""
 
 }
 

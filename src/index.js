@@ -201,16 +201,13 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
 
 async function addResults(streamInfo, streams, source) {
     config.debug && console.log('Crawling for results.')
-    const info = source.split("||");
-    let url = "";
-    let name = "";
-    if (info.length === 2) {
-        url = info[0];
-        name = info[1];
-    } else {
+
+    const [url, name] = source.split("||").length === 2 ? source.split("||") : [null, null];
+    if (!url && !name) {
         console.error("Additional Sources not configured correctly.")
         return;
     }
+
     try {
         const streamUrl = url + streamInfo.type + '/' + streamInfo.imdbId + '.json'
         config.debug && console.log('Additional source url is :', url)
