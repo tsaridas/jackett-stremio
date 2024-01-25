@@ -60,6 +60,15 @@ const helper = {
         return name;
     },
 
+    normalizeTitle: (title) => {
+        const title_li = title.split("\n");
+        const first_row = title_li[0].split("-")[0].toLowerCase()
+        if (title_li.length === 3) {
+            return first_row + "\n" + title_li[2]
+        }
+        return first_row + title_li[1];
+    },
+
     extraTag: (name, searchQuery) => {
         const parsedName = videoNameParser(name + '.mp4');
         let extraTag = helper.simpleName(name);

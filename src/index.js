@@ -199,7 +199,7 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
     cb(stream);
 }
 
-async function addResults(streamInfo, streams, source) {
+async function addResults(req, streams, source) {
     config.debug && console.log('Crawling for results.')
 
     const [url, name] = source.split("||").length === 2 ? source.split("||") : [null, null];
@@ -209,8 +209,8 @@ async function addResults(streamInfo, streams, source) {
     }
 
     try {
-        const streamUrl = url + streamInfo.type + '/' + streamInfo.imdbId + '.json'
-        config.debug && console.log('Additional source url is :', url)
+        const streamUrl = url + req.params.type + '/' + req.params.id + '.json'
+        config.debug && console.log('Additional source url is :', streamUrl)
         const { body: responseBody } = await needle('get', streamUrl, {
             follow: 1,
             open_timeout: 3000,
@@ -229,6 +229,7 @@ async function addResults(streamInfo, streams, source) {
             if (seedersMatch && seedersMatch[1]) {
                 torrent.seeders = parseInt(seedersMatch[1])
             }
+            torrent.title = helper.normalizeTitle(torrent.title);
             torrent.behaviorHints.bingeGroup = torrent.behaviorHints.bingeGroup.replace(name.toLowerCase(), "Jackett");
             torrent.sources = global.TRACKERS.map(x => { return "tracker:" + x; }).concat(["dht:" + torrent.infoHash]);
             streams.push(torrent);
@@ -264,7 +265,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
     extractVideoInf(req, streamInfo);
 
     if (config.additionalSources) {
-        await addResults(streamInfo, streams, config.additionalSources);
+        addResults(req, streams, config.additionalSources);
     }
 
     try {
