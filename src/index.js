@@ -208,6 +208,7 @@ async function addResults(streamInfo, streams, source) {
         url = info[0];
         name = info[1];
     } else {
+        console.error("Additional Sources not configured correctly.")
         return;
     }
     try {
@@ -234,10 +235,10 @@ async function addResults(streamInfo, streams, source) {
             torrent.behaviorHints.bingeGroup = torrent.behaviorHints.bingeGroup.replace(name.toLowerCase(), "Jackett");
             torrent.sources = global.TRACKERS.map(x => { return "tracker:" + x; }).concat(["dht:" + torrent.infoHash]);
             streams.push(torrent);
-            console.log('Found torrent results', torrent)
+            config.debug && console.log('Found torrent from addition source: ', torrent)
         })
     } catch (error) {
-        console.log('Error finding other addons.', error.message)
+        console.log('Error finding other results.', error.message)
     }
 }
 
