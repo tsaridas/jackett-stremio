@@ -170,6 +170,8 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
                 config.debug && console.log("No matching items found for torrent ", streamInfo.name, matchingItems, parsedTorrent.files);
             }
         }
+    } else {
+        stream.fileIdx = null;
     }
     let title = tor.title || parsedTorrent.name;
     const subtitle = `👤 ${tor.seeders}/${tor.peers}  💾 ${helper.toHomanReadable(tor.size)}  ⚙️  ${tor.from}`;
@@ -195,8 +197,8 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
         }
     }
 
-
     stream.name = config.addonName + " " + quality;
+    stream.tag = quality
     stream.type = streamInfo.type;
     stream.infoHash = infoHash;
     stream.seeders = tor.seeders;
@@ -237,7 +239,7 @@ async function addResults(req, streams, source, signal) {
         }
 
         const regex = /👤 (\d+) /
-        config.debug && console.log('Got ' + responseBody.length + ' from additional source.')
+        config.debug && console.log('Got ' + responseBody.sreams.length + ' from additional source.')
         responseBody.streams.forEach(torrent => {
             torrent.name = torrent.name.replace(name, config.addonName)
             const seedersMatch = torrent.title.match(regex)

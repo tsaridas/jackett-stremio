@@ -63,10 +63,12 @@ const helper = {
     normalizeTitle: (title) => {
         const title_li = title.split("\n");
         const first_row = title_li[0].split("-")[0].toLowerCase()
-        if (title_li.length === 3) {
-            return first_row + "\n" + title_li[2]
+        if (!title_li[title_li.length - 1].includes("⚙️")) {
+            // If not, add it to the end
+            title_li[title_li.length - 1] += " ⚙️ rarbg";
         }
-        return first_row + title_li[1];
+
+        return first_row + "\n" + title_li[title_li.length - 1]
     },
 
     extraTag: (name, searchQuery) => {
