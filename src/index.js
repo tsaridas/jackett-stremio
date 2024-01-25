@@ -1,13 +1,15 @@
 const parseTorrent = require('parse-torrent')
-const needle = require('needle');
 const async = require('async');
+const axios = require('axios');
 const getPort = require('get-port');
 const express = require('express');
+const { AbortController } = require('abort-controller');
 const addon = express();
 const jackettApi = require('./jackett');
 const helper = require('./helpers');
 const config = require('./config');
 const { getTrackers } = require('./trackers');
+const { configureConnectionPooling } = require('./requests');
 const version = require('../package.json').version;
 
 global.TRACKERS = [];
@@ -58,26 +60,30 @@ addon.get('/manifest.json', (_, res) => {
     respond(res, manifest);
 });
 
-async function getConemataInfo(streamInfo) {
+async function getConemataInfo(streamInfo, signal) {
     const url = 'https://v3-cinemeta.strem.io/meta/' + streamInfo.type + '/' + streamInfo.imdbId + '.json';
     config.debug && console.log("Cinemata url", url);
-    const { body: responseBody } = await needle('get', url, {
-        follow: 1,
-        open_timeout: 3000,
-        read_timeout: config.responseTimeout,
-    });
+
+    const response = await axios({
+        method: 'get',
+        url: url,
+        maxRedirects: 3,  // Equivalent to 'redirect: 'follow'' in fetch
+        timeout: config.responseTimeout,
+        signal: signal,  // Assuming 'signal' is an AbortSignal instance
+        responseType: 'json',  // Automatically parses JSON response
+        validateStatus: function (status) {
+            return status >= 200 && status < 300;  // Only consider HTTP 2xx responses as successful
+        },
+    }
+    );
+    const responseBody = response.data;
 
     if (!responseBody || !responseBody.meta || !responseBody.meta.name) {
         throw new Error(`Could not get info from Cinemata: ${url}`);
     }
 
     streamInfo.name = responseBody.meta.name;
-    streamInfo.year = (responseBody.meta.year) ? responseBody.meta.year.match(/\b\d{4}\b/)[0] : (responseBody.meta.releaseInfo) ? responseBody.meta.releaseInfo.match(/\b\d{4}\b/)[0] : ''
-
-    console.log(`Q / imdbiID: ${streamInfo.imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${streamInfo.year}` +
-        (streamInfo.season && streamInfo.episode ? ` / season: ${streamInfo.season} / episode: ${streamInfo.episode}` : '') +
-        '.');
-
+    streamInfo.year = (responseBody.meta.year) ? responseBody.meta.year.match(/\b\d{4}\b/)[0] : (responseBody.meta.releaseInfo) ? responseBody.meta.releaseInfo.match(/\b\d{4}\b/)[0] : '';
 }
 
 function partitionURL(list) {
@@ -199,7 +205,7 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
     cb(stream);
 }
 
-async function addResults(req, streams, source) {
+async function addResults(req, streams, source, signal) {
     config.debug && console.log('Crawling for results.')
 
     const [url, name] = source.split("||").length === 2 ? source.split("||") : [null, null];
@@ -211,14 +217,20 @@ async function addResults(req, streams, source) {
     try {
         const streamUrl = url + req.params.type + '/' + req.params.id + '.json'
         config.debug && console.log('Additional source url is :', streamUrl)
-        const { statusCode, body: responseBody } = await needle('get', streamUrl, {
-            follow: 1,
-            open_timeout: 3000,
-            read_timeout: config.responseTimeout
-        })
+        const response = await axios.get(streamUrl, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "Accept-Encoding": "gzip, deflate",
+                "Accept-Language": "en-US,en;q=0.9,el;q=0.8"
+            },
+            timeout: 3000,
+            signal: signal
+        });
+        const responseBody = response.data;
 
         if (!responseBody || !responseBody.streams || responseBody.streams.length === 0) {
-            throw new Error(`Could not get addition source stream with status code: ${statusCode}`)
+            throw new Error(`Could not get addition source stream with status code: ${response.status}`)
         }
 
         const regex = /👤 (\d+) /
@@ -253,6 +265,8 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 
     let streamInfo = {};
     const streams = [];
+    const controller = new AbortController();
+    const signal = controller.signal;
 
     const startTime = Date.now();
 
@@ -267,16 +281,19 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
     extractVideoInf(req, streamInfo);
 
     if (config.additionalSources) {
-        addResults(req, streams, config.additionalSources);
+        addResults(req, streams, config.additionalSources, signal);
     }
 
     try {
-        await getConemataInfo(streamInfo);
+        await getConemataInfo(streamInfo, signal);
     } catch (err) {
         console.error(err.message);
         return respond(res, { streams: [] });
     }
 
+    console.log(`Q / imdbiID: ${streamInfo.imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${streamInfo.year}` +
+        (streamInfo.season && streamInfo.episode ? ` / season: ${streamInfo.season} / episode: ${streamInfo.episode}` : '') +
+        '.');
 
     let inProgressCount = 0;
     let searchFinished = false;
@@ -287,6 +304,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && inProgressCount === 0 && asyncQueue.idle))) {
             requestSent = true;
             asyncQueue.kill();
+            controller.abort();
             clearInterval(intervalId);
             const finalData = processTorrentList(streams);
             config.debug && console.log("Sliced & Sorted data ", finalData);
@@ -318,16 +336,21 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         inProgressCount++;
         try {
             config.debug && console.log("Processing link: ", task.link);
-            const response = await needle('get', task.link, {
-                open_timeout: config.jackett.openTimeout,
-                read_timeout: config.jackett.readTimeout,
-                parse_response: false
+            const response = await axios.get(task.link, {
+                timeout: 5000, // Set a timeout for the request in milliseconds
+                maxRedirects: 0, // Equivalent to 'redirect: 'manual'' in fetch
+                validateStatus: null,
+                cancelToken: signal.token, // Assuming 'signal' is an AbortController instance
+                responseType: 'arraybuffer', // Specify the response type as 'arraybuffer'
             });
-            if (requestSent || response.statusCode >= 400) { // It usually takes some time to dowload the torrent file and we don't want to continue.
+
+
+            if (requestSent || response.status >= 400) { // It usually takes some time to dowload the torrent file and we don't want to continue.
                 config.debug && console.log("Abort processing of : " + task.link + " - " + (requestSent ? "Request sent is " + requestSent : "Response code : " + response.statusCode));
                 inProgressCount--;
                 return;
             }
+
             if (response && response.headers && response.headers.location) {
                 if (response.headers.location.startsWith("magnet:")) {
                     task.magneturl = response.headers.location;
@@ -339,8 +362,9 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
                     config.debug && console.error("Not a magnet link :", response.headers.location);
                 }
             } else {
+                const responseBody = Buffer.from(response.data);
                 config.debug && console.log(`Processing torrent : ${task.link}.`);
-                const parsedTorrent = parseTorrent(response.body);
+                const parsedTorrent = parseTorrent(responseBody);
                 streamFromParsed(task, parsedTorrent, streamInfo, stream => {
                     if (stream) {
                         streams.push(stream);
@@ -349,7 +373,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
                 config.debug && console.log("Parsed torrent : ", task.link);
             }
         } catch (err) {
-            config.debug && console.log("Error processing link :", task.link, err);
+            config.debug && console.log("Error processing link :", task.link, err.message);
         }
         inProgressCount--;
     };
@@ -378,7 +402,7 @@ const runAddon = async () => {
     const { trackers, blacklist_trackers } = await getTrackers();
     global.TRACKERS = trackers;
     global.BLACKLIST_TRACKERS = blacklist_trackers;
-
+    configureConnectionPooling();
     addon.listen(config.addonPort, () => {
         console.log('Add-on Manifest URL: http://{{ YOUR IP ADDRESS }}:' + config.addonPort + '/manifest.json');
     });
