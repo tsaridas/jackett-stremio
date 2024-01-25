@@ -2,4 +2,7 @@ node_modules
 *.swp
 .git
 beamup.json
+package-lock.json
 deploy.sh
+.vscode
+src/dist

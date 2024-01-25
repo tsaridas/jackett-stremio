@@ -1,4 +1,4 @@
-const needle = require('needle');
+const axios = require('axios');
 const config = require('./config');
 const helper = require('./helpers');
 
@@ -43,32 +43,42 @@ const RUSSIAN_TRACKERS = [
     "http://bt4.t-ru.org/ann?magnet",
 ];
 
-const getBlacklistTrackers = async () => {
-    const response = await needle('get', blacklistURL, {
-        open_timeout: 5000,
-        read_timeout: 10000,
-        parse_response: false
-    });
 
-    if (response && response.statusCode >= 200 && response.statusCode < 300 && response.headers && response.body) {
-        const trackers = response.body.split('\n').map(line => line.split('#')[0].trim()).filter(line => line.trim() !== '');
-        config.debug && console.log(`Downloaded : ${trackers.length} blacklisted trackers.`);
-        return trackers;
+
+const getBlacklistTrackers = async () => {
+    try {
+        const response = await axios.get(blacklistURL, {
+            timeout: 5000, // Set open_timeout and read_timeout using timeout option
+            maxRedirects: 0, // Disable redirects
+            responseType: 'text', // Specify the response type as text
+        });
+
+        if (response.status >= 200 && response.status < 300 && response.data) {
+            const trackers = response.data.split('\n').map(line => line.split('#')[0].trim()).filter(line => line.trim() !== '');
+            config.debug && console.log(`Downloaded : ${trackers.length} blacklisted trackers.`);
+            return trackers;
+        }
+    } catch (error) {
+        console.error('Error fetching blacklistTrackers:', error);
     }
     return [];
 };
 
 const getBestTrackers = async () => {
-    const response = await needle('get', bestTrackersURL, {
-        open_timeout: 5000,
-        read_timeout: 10000,
-        parse_response: false
-    });
+    try {
+        const response = await axios.get(bestTrackersURL, {
+            timeout: 5000, // Set open_timeout and read_timeout using timeout option
+            maxRedirects: 0, // Disable redirects
+            responseType: 'text', // Specify the response type as text
+        });
 
-    if (response && response.statusCode >= 200 && response.statusCode < 300 && response.headers && response.body) {
-        const trackers = response.body.split('\n').map(line => line.split('#')[0].trim()).filter(line => line.trim() !== '');
-        config.debug && console.log(`Downloaded : ${trackers.length} trackers.`);
-        return trackers;
+        if (response.status >= 200 && response.status < 300 && response.data) {
+            const trackers = response.data.split('\n').map(line => line.split('#')[0].trim()).filter(line => line.trim() !== '');
+            config.debug && console.log(`Downloaded : ${trackers.length} trackers.`);
+            return trackers;
+        }
+    } catch (error) {
+        console.error('Error fetching bestTrackers:', error);
     }
     return [];
 };
@@ -95,7 +105,7 @@ const getTrackers = async () => {
         blacklist_trackers = await getBlacklistTrackers();
         console.log(`Loading : ${blacklist_trackers.length} blacklisted trackers.`);
     }
-    
+
     if (trackers.length > 0) {
         console.log(`Loaded : ${trackers.length} trackers.`);
     }

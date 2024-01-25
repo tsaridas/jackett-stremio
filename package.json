@@ -22,10 +22,12 @@
     "url": "https://github.com/tsaridas/jackett-stremio/issues"
   },
   "dependencies": {
+    "abort-controller": "^3.0.0",
+    "agentkeepalive": "^4.5.0",
     "async": "^2.6.3",
+    "axios": "^1.6.6",
     "express": "^4.18.2",
     "get-port": "^5.1.1",
-    "needle": "^3.3.1",
     "parse-torrent": "^9.1.5",
     "video-name-parser": "^1.4.6",
     "xml-js": "^1.6.11"

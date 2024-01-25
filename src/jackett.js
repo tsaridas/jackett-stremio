@@ -1,40 +1,43 @@
 const xmlJs = require('xml-js');
-const needle = require('needle');
+const axios = require('axios');
 const helper = require('./helpers');
 const config = require('./config');
 
-const getIndexers = (host, apiKey) => {
-	return new Promise((resolve) => {
-		needle.get(host + 'api/v2.0/indexers/' + config.jackett.indexerFilters + '/results/torznab/api?apikey=' + apiKey + '&t=indexers&configured=true', {
-			open_timeout: config.jackett.openTimeout,
-			read_timeout: config.jackett.readTimeout,
-			parse_response: false
-		}, (err, resp) => {
-			if (err || !resp || !resp.body) {
-				console.error("No indexers for ", host, err);
-				resolve([]);
-			}
-			let indexers = null;
-
-			try {
-				indexers = xmlJs.xml2js(resp.body);
-			} catch (err) {
-				console.error("Could not parse indexers for ", host, err);
-				resolve([]);
-			}
-
-			if (indexers && indexers.elements && indexers.elements[0] && indexers.elements[0].elements) {
-				indexers = indexers.elements[0].elements;
-				resolve(indexers);
-			} else {
-				console.error("Could not find indexers for ", host);
-				resolve([]);
-			}
+const getIndexers = async (host, apiKey) => {
+	try {
+		const response = await axios.get(host + 'api/v2.0/indexers/' + config.jackett.indexerFilters + '/results/torznab/api?apikey=' + apiKey + '&t=indexers&configured=true', {
+			timeout: config.jackett.readTimeout, // Equivalent to 'read_timeout' in needle
+			responseType: 'text',
 		});
-	});
+
+		if (!response || !response.data) {
+			console.error("No indexers for ", host);
+			return [];
+		}
+
+		let indexers = null;
+
+		try {
+			indexers = xmlJs.xml2js(response.data);
+		} catch (err) {
+			console.error("Could not parse indexers for ", host, err);
+			return [];
+		}
+
+		if (indexers && indexers.elements && indexers.elements[0] && indexers.elements[0].elements) {
+			indexers = indexers.elements[0].elements;
+			return indexers;
+		} else {
+			console.error("Could not find indexers for ", host);
+			return [];
+		}
+	} catch (error) {
+		console.error("Error fetching indexers: ", error);
+		return [];
+	}
 };
 
-const search = async (query, cb, end) => {
+const search = async (query, signal, cb, end) => {
 	const hostsAndApiKeys = config.jackett.hosts.split(',').map((host, i) => ({ host, apiKey: config.jackett.apiKeys.split(',')[i] }));
 	config.debug && console.log("Found " + hostsAndApiKeys.length + " Jacket servers.");
 	let searchQuery = "";
@@ -84,24 +87,21 @@ const search = async (query, cb, end) => {
 				}
 
 				const url = host + 'api/v2.0/indexers/' + indexer.attributes.id + '/results/torznab/api?apikey=' + apiKey + searchQuery;
-				const response = await new Promise((resolve) => {
-					needle.get(url, {
-						open_timeout: config.jackett.openTimeout,
-						read_timeout: config.jackett.readTimeout,
-						parse_response: false
-					}, (err, resp) => {
-						resolve({ err, resp });
-					});
+				const response = await axios.get(url, {
+					timeout: config.jackett.readTimeout,
+					responseType: 'text',
+					signal: signal
 				});
+
 				config.debug && console.log(`Finished searching indexer ${indexer.attributes.id} with url ${url}`);
 
-				if (response.err || !response.resp || !response.resp.body) {
+				if (!response.data) {
 					console.error(`Error ${response.err} when calling ${indexer.attributes.id}.`);
 					searchedIndexers[indexer.attributes.id].status = response.err;
 					return;
 				}
 
-				const tors = xmlJs.xml2js(response.resp.body);
+				const tors = xmlJs.xml2js(response.data);
 
 				if (tors.elements && tors.elements[0] && tors.elements[0].elements && tors.elements[0].elements[0] && tors.elements[0].elements[0].elements) {
 					const elements = tors.elements[0].elements[0].elements;
@@ -183,7 +183,7 @@ const search = async (query, cb, end) => {
 				}
 			}));
 		} catch (error) {
-			console.error("Could not process host :", host, error);
+			console.error("Could not process host :", host, error.message);
 
 		}
 	}));
