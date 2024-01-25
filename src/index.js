@@ -211,14 +211,14 @@ async function addResults(req, streams, source) {
     try {
         const streamUrl = url + req.params.type + '/' + req.params.id + '.json'
         config.debug && console.log('Additional source url is :', streamUrl)
-        const { body: responseBody } = await needle('get', streamUrl, {
+        const { statusCode, body: responseBody } = await needle('get', streamUrl, {
             follow: 1,
             open_timeout: 3000,
             read_timeout: config.responseTimeout
         })
 
         if (!responseBody || !responseBody.streams) {
-            throw new Error(`Could not get info from: ${streamUrl}`)
+            throw new Error(`Could not get info from: ${statusCode}`)
         }
 
         const regex = /👤 (\d+) /
@@ -238,7 +238,7 @@ async function addResults(req, streams, source) {
             config.debug && console.log('Adding addition source stream: ', torrent)
         })
     } catch (error) {
-        console.log('Error finding other results.', error.message)
+        console.error('Error finding addition source streams: ', error.message)
     }
 }
 
