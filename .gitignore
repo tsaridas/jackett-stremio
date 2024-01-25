@@ -3,3 +3,5 @@ node_modules
 .git
 beamup.json
 deploy.sh
+.vscode
+src/dist

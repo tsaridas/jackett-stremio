@@ -187,7 +187,7 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
     }
 
 
-    stream.name = config.addonName + quality;
+    stream.name = config.addonName + " " + quality;
     stream.type = streamInfo.type;
     stream.infoHash = infoHash;
     stream.seeders = tor.seeders;
@@ -197,6 +197,48 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
         bingieGroup: "Jackett|" + quality,
     }
     cb(stream);
+}
+
+async function addResults(streamInfo, streams, source) {
+    config.debug && console.log('Crawling for results.')
+    const info = source.split("||");
+    let url = "";
+    let name = "";
+    if (info.length === 2) {
+        url = info[0];
+        name = info[1];
+    } else {
+        return;
+    }
+    try {
+        const streamUrl = url + streamInfo.type + '/' + streamInfo.imdbId + '.json'
+        config.debug && console.log('Additional source url is :', url)
+        const { body: responseBody } = await needle('get', streamUrl, {
+            follow: 1,
+            open_timeout: 3000,
+            read_timeout: config.responseTimeout
+        })
+
+        if (!responseBody || !responseBody.streams) {
+            throw new Error(`Could not get info from: ${streamUrl}`)
+        }
+
+        const regex = /👤 (\d+) 💾/
+        config.debug && console.log('Got results', responseBody)
+        responseBody.streams.forEach(torrent => {
+            torrent.name = torrent.name.replace(name, config.addonName)
+            const seedersMatch = torrent.title.match(regex)
+            if (seedersMatch && seedersMatch[1]) {
+                torrent.seeders = parseInt(seedersMatch[1])
+            }
+            torrent.behaviorHints.bingeGroup = torrent.behaviorHints.bingeGroup.replace(name.toLowerCase(), "Jackett");
+            torrent.sources = global.TRACKERS.map(x => { return "tracker:" + x; }).concat(["dht:" + torrent.infoHash]);
+            streams.push(torrent);
+            console.log('Found torrent results', torrent)
+        })
+    } catch (error) {
+        console.log('Error finding other addons.', error.message)
+    }
 }
 
 // stream response
@@ -209,7 +251,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 
 
     let streamInfo = {};
-
+    const streams = [];
 
     const startTime = Date.now();
 
@@ -223,6 +265,10 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 
     extractVideoInf(req, streamInfo);
 
+    if (config.additionalSources) {
+        await addResults(streamInfo, streams, config.additionalSources);
+    }
+
     try {
         await getConemataInfo(streamInfo);
     } catch (err) {
@@ -230,7 +276,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         return respond(res, { streams: [] });
     }
 
-    const streams = [];
+
     let inProgressCount = 0;
     let searchFinished = false;
     let requestSent = false;
