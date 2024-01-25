@@ -245,9 +245,9 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
             config.debug && console.log("Sliced & Sorted data ", finalData);
             console.log("A / imdbiID: " + streamInfo.imdbId + " / Results " + finalData.length + " / Timeout: " + (elapsedTime >= config.responseTimeout) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Discarded : " + (streams.length - finalData.length));
             return respond(res, { streams: finalData });
-        } else {
-            config.debug && console.log("S / imdbiID: " + streamInfo.imdbId + " / Time Pending: " + (config.responseTimeout - elapsedTime) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Processed Streams : " + streams.length);
         }
+        config.debug && console.log("S / imdbiID: " + streamInfo.imdbId + " / Time Pending: " + (config.responseTimeout - elapsedTime) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Processed Streams : " + streams.length);
+
     }, config.interval);
 
     const processMagnets = async (task) => {
@@ -277,7 +277,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
                 parse_response: false
             });
             if (requestSent || response.statusCode >= 400) { // It usually takes some time to dowload the torrent file and we don't want to continue.
-                config.debug && console.log("Abort processing of : " + task.link + " - " + (requestSent ? "Request sent is "+requestSent : "Response code : " + response.statusCode));
+                config.debug && console.log("Abort processing of : " + task.link + " - " + (requestSent ? "Request sent is " + requestSent : "Response code : " + response.statusCode));
                 inProgressCount--;
                 return;
             }
@@ -309,26 +309,14 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 
     const asyncQueue = async.queue(processLinks, config.downloadTorrentQueue);
 
-    const processJackettResults = async (results) => {
-        if (requestSent) { // Check the flag before processing each task
-            return;
-        }
-        if (results && results.length) {
-            const { magnets, links } = await partitionURL(results);
-            Promise.all([...magnets.map(processMagnets)]);
-            links.forEach(item => asyncQueue.push(item));
-        }
-    };
-
-
-
-
-
 
     jackettApi.search(streamInfo,
-
         (tempResults) => {
-            processJackettResults(tempResults);
+            if (!requestSent && tempResults && tempResults.length > 0) {
+                const { magnets, links } = partitionURL(tempResults);
+                Promise.all([...magnets.map(processMagnets)]);
+                links.forEach(item => asyncQueue.push(item));
+            }
         },
 
         () => {
