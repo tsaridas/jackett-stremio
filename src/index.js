@@ -58,6 +58,28 @@ addon.get('/manifest.json', (_, res) => {
     respond(res, manifest);
 });
 
+async function getConemataInfo(streamInfo) {
+    const url = 'https://v3-cinemeta.strem.io/meta/' + streamInfo.type + '/' + streamInfo.imdbId + '.json';
+    config.debug && console.log("Cinemata url", url);
+    const { body: responseBody } = await needle('get', url, {
+        follow: 1,
+        open_timeout: 3000,
+        read_timeout: config.responseTimeout,
+    });
+
+    if (!responseBody || !responseBody.meta || !responseBody.meta.name) {
+        throw new Error(`Could not get info from Cinemata: ${url}`);
+    }
+
+    streamInfo.name = responseBody.meta.name;
+    streamInfo.year = (responseBody.meta.year) ? responseBody.meta.year.match(/\b\d{4}\b/)[0] : (responseBody.meta.releaseInfo) ? responseBody.meta.releaseInfo.match(/\b\d{4}\b/)[0] : ''
+
+    console.log(`Q / imdbiID: ${streamInfo.imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${streamInfo.year}` +
+        (streamInfo.season && streamInfo.episode ? ` / season: ${streamInfo.season} / episode: ${streamInfo.episode}` : '') +
+        '.');
+
+}
+
 function partitionURL(list) {
     const results = list.map((item) => {
         if ('magneturl' in item && item.magneturl && item.magneturl.startsWith("magnet:")) {
@@ -113,10 +135,10 @@ function processTorrentList(torrentList) {
     return slicedTorrents;
 }
 
-const streamFromParsed = (tor, parsedTorrent, streamInfo, cb) => {
+function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
     const stream = {};
-
     const infoHash = parsedTorrent.infoHash.toLowerCase();
+
     if (parsedTorrent && parsedTorrent.files) {
         if (parsedTorrent.files.length == 1) {
             stream.fileIdx = 0;
@@ -165,7 +187,7 @@ const streamFromParsed = (tor, parsedTorrent, streamInfo, cb) => {
     }
 
 
-    stream.name = "Jackett " + quality;
+    stream.name = config.addonName + quality;
     stream.type = streamInfo.type;
     stream.infoHash = infoHash;
     stream.seeders = tor.seeders;
@@ -175,7 +197,7 @@ const streamFromParsed = (tor, parsedTorrent, streamInfo, cb) => {
         bingieGroup: "Jackett|" + quality,
     }
     cb(stream);
-};
+}
 
 // stream response
 addon.get('/stream/:type/:id.json', async (req, res) => {
@@ -185,13 +207,33 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 
     config.debug && console.log("Received request for :", req.params.type, req.params.id);
 
-    let searchFinished = false;
-    let requestSent = false;
+
     let streamInfo = {};
+
+
+    const startTime = Date.now();
+
+    function extractVideoInf(req, streamInfo) {
+        const idParts = req.params.id.split(':');
+        streamInfo.imdbId = idParts[0];
+        streamInfo.type = req.params.type;
+        streamInfo.season = idParts[1] ? idParts[1] : null;
+        streamInfo.episode = idParts[2] ? idParts[2] : null;
+    }
+
+    extractVideoInf(req, streamInfo);
+
+    try {
+        await getConemataInfo(streamInfo);
+    } catch (err) {
+        console.error(err.message);
+        return respond(res, { streams: [] });
+    }
 
     const streams = [];
     let inProgressCount = 0;
-    const startTime = Date.now();
+    let searchFinished = false;
+    let requestSent = false;
 
     const intervalId = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
@@ -202,10 +244,10 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
             const finalData = processTorrentList(streams);
             config.debug && console.log("Sliced & Sorted data ", finalData);
             console.log("A / imdbiID: " + streamInfo.imdbId + " / Results " + finalData.length + " / Timeout: " + (elapsedTime >= config.responseTimeout) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Discarded : " + (streams.length - finalData.length));
-            respond(res, { streams: finalData });
-        } else {
-            config.debug && console.log("S / imdbiID: " + streamInfo.imdbId + " / Time pending: " + (config.responseTimeout - elapsedTime) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Processed streamed : " + streams.length);
+            return respond(res, { streams: finalData });
         }
+        config.debug && console.log("S / imdbiID: " + streamInfo.imdbId + " / Time Pending: " + (config.responseTimeout - elapsedTime) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Processed Streams : " + streams.length);
+
     }, config.interval);
 
     const processMagnets = async (task) => {
@@ -235,7 +277,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
                 parse_response: false
             });
             if (requestSent || response.statusCode >= 400) { // It usually takes some time to dowload the torrent file and we don't want to continue.
-                config.debug && console.log("Abort processing of : " + task.link + " - " + (requestSent || response.statusCode))
+                config.debug && console.log("Abort processing of : " + task.link + " - " + (requestSent ? "Request sent is " + requestSent : "Response code : " + response.statusCode));
                 inProgressCount--;
                 return;
             }
@@ -267,63 +309,21 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 
     const asyncQueue = async.queue(processLinks, config.downloadTorrentQueue);
 
-    const processJackettResults = async (results) => {
-        if (requestSent) { // Check the flag before processing each task
-            return;
-        }
-        if (results && results.length) {
-            const { magnets, links } = await partitionURL(results);
-            Promise.all([...magnets.map(processMagnets)]);
-            links.forEach(item => asyncQueue.push(item));
-        }
-    };
 
-    const idParts = req.params.id.split(':');
-    streamInfo.imdbId = idParts[0];
-    streamInfo.type = req.params.type;
-    const url = 'https://v3-cinemeta.strem.io/meta/' + streamInfo.type + '/' + streamInfo.imdbId + '.json';
-    config.debug && console.log("Cinemata url", url);
-    try {
-        const { body: responseBody } = await needle('get', url, {
-            follow: 1,
-            open_timeout: 3000,
-            read_timeout: config.responseTimeout,
-        });
-
-        if (!responseBody || !responseBody.meta || !responseBody.meta.name) {
-            throw new Error(`Could not get info from Cinemata: ${url}`);
-        }
-
-        streamInfo.name = responseBody.meta.name;
-
-        streamInfo.year = (responseBody.meta.year) ? responseBody.meta.year.match(/\b\d{4}\b/)[0] : (responseBody.meta.releaseInfo) ? responseBody.meta.releaseInfo.match(/\b\d{4}\b/)[0] : ''
-
-
-        if (idParts.length == 3) {
-            streamInfo.season = idParts[1];
-            streamInfo.episode = idParts[2];
-            console.log(`Q / imdbiID: ${streamInfo.imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${streamInfo.year} / season: ${streamInfo.season} / episode: ${streamInfo.episode}.`);
-        } else {
-            console.log(`Q / imdbiID: ${streamInfo.imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${streamInfo.year}.`);
-        }
-
-        jackettApi.search(streamInfo,
-
-            (tempResults) => {
-                processJackettResults(tempResults);
-            },
-
-            () => {
-                config.debug && console.log("Searching finished.");
-                searchFinished = true;
+    jackettApi.search(streamInfo,
+        (tempResults) => {
+            if (!requestSent && tempResults && tempResults.length > 0) {
+                const { magnets, links } = partitionURL(tempResults);
+                Promise.all([...magnets.map(processMagnets)]);
+                links.forEach(item => asyncQueue.push(item));
             }
-        );
-    } catch (err) {
-        console.error(err.message);
-        clearInterval(intervalId);
-        requestSent = true;
-        respond(res, { streams: [] });
-    }
+        },
+
+        () => {
+            config.debug && console.log("Searching finished.");
+            searchFinished = true;
+        }
+    );
 });
 
 const runAddon = async () => {
