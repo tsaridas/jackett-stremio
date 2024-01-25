@@ -121,10 +121,19 @@ function toBytes(humanSize) {
   return parseInt(numericPart * units[unit]);
 }
 
+function loadSource(sources) {
+  const parts = sources.split(',');
+  const sourceList = [];
+  for (const part of parts) {
+    const decodedValue = Buffer.from(part, 'base64').toString('utf-8');
+    sourceList.push(decodedValue);
+  }
+  defaultConfig.additionalSources = sourceList;
+}
 
 defaultConfig.jackett.indexerFilters = encodeURIComponent(defaultConfig.jackett.indexerFilters);
 defaultConfig.maximumSize = toBytes(defaultConfig.maximumSize);
 defaultConfig.jackett.hosts = correctAndValidateURL(defaultConfig.jackett.hosts);
 console.log(defaultConfig)
-defaultConfig.additionalSources = Buffer.from(defaultConfig.additionalSources, 'base64').toString('utf-8');
+loadSource();
 module.exports = defaultConfig;

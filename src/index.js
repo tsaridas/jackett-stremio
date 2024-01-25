@@ -105,6 +105,9 @@ function partitionURL(list) {
 }
 
 function processTorrentList(torrentList) {
+    if (torrentList.length === 0) {
+        return [];
+    }
     const duplicatesMap = new Map();
 
     torrentList.forEach(torrent => {
@@ -281,7 +284,9 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
     extractVideoInf(req, streamInfo);
 
     if (config.additionalSources) {
-        addResults(req, streams, config.additionalSources, signal);
+        config.additionalSources.forEach(source => {
+            addResults(req, streams, source, signal);
+        });
     }
 
     try {
@@ -309,7 +314,12 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
             const finalData = processTorrentList(streams);
             config.debug && console.log("Sliced & Sorted data ", finalData);
             console.log("A / imdbiID: " + streamInfo.imdbId + " / Results " + finalData.length + " / Timeout: " + (elapsedTime >= config.responseTimeout) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Discarded : " + (streams.length - finalData.length));
-            return respond(res, { streams: finalData });
+            return respond(res, {
+                streams: finalData,
+                "cacheMaxAge": 1440,
+                "staleRevalidate": 240,
+                "staleError": 10080
+            });
         }
         config.debug && console.log("S / imdbiID: " + streamInfo.imdbId + " / Time Pending: " + (config.responseTimeout - elapsedTime) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Processed Streams : " + streams.length);
 
