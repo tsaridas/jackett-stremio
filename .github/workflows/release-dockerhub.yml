@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - '*.js'
+      - 'src/*.js'
       - 'Dockerfile'
       - 'package.json'
 
