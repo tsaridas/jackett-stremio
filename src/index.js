@@ -239,7 +239,7 @@ async function addResults(req, streams, source, signal) {
         }
 
         const regex = /👤 (\d+) /
-        config.debug && console.log('Got ' + responseBody.sreams.length + ' from additional source.')
+        config.debug && console.log('Got ' + responseBody.streams.length + ' from additional source.')
         responseBody.streams.forEach(torrent => {
             torrent.name = torrent.name.replace(name, config.addonName)
             const seedersMatch = torrent.title.match(regex)
@@ -393,7 +393,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
     const asyncQueue = async.queue(processLinks, config.downloadTorrentQueue);
 
 
-    jackettApi.search(streamInfo,
+    jackettApi.search(streamInfo, signal,
         (tempResults) => {
             if (!requestSent && tempResults && tempResults.length > 0) {
                 const { magnets, links } = partitionURL(tempResults);

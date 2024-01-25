@@ -37,7 +37,7 @@ const getIndexers = async (host, apiKey) => {
 	}
 };
 
-const search = async (query, cb, end) => {
+const search = async (query, signal, cb, end) => {
 	const hostsAndApiKeys = config.jackett.hosts.split(',').map((host, i) => ({ host, apiKey: config.jackett.apiKeys.split(',')[i] }));
 	config.debug && console.log("Found " + hostsAndApiKeys.length + " Jacket servers.");
 	let searchQuery = "";
@@ -88,8 +88,9 @@ const search = async (query, cb, end) => {
 
 				const url = host + 'api/v2.0/indexers/' + indexer.attributes.id + '/results/torznab/api?apikey=' + apiKey + searchQuery;
 				const response = await axios.get(url, {
-					timeout: config.jackett.readTimeout, // Equivalent to 'read_timeout' in needle
-					responseType: 'text', // Assuming the response is XML
+					timeout: config.jackett.readTimeout,
+					responseType: 'text',
+					signal: signal
 				});
 
 				config.debug && console.log(`Finished searching indexer ${indexer.attributes.id} with url ${url}`);
