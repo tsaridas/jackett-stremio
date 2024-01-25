@@ -121,6 +121,7 @@ function toBytes(humanSize) {
   return parseInt(numericPart * units[unit]);
 }
 
+defaultConfig.additionalSources = Buffer.from(defaultConfig.additionalSources, 'base64').toString('utf-8');
 defaultConfig.jackett.indexerFilters = encodeURIComponent(defaultConfig.jackett.indexerFilters);
 defaultConfig.maximumSize = toBytes(defaultConfig.maximumSize);
 defaultConfig.jackett.hosts = correctAndValidateURL(defaultConfig.jackett.hosts);

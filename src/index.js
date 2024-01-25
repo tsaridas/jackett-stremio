@@ -222,7 +222,7 @@ async function addResults(req, streams, source) {
         }
 
         const regex = /👤 (\d+) /
-        config.debug && console.log('Got results', responseBody)
+        config.debug && console.log('Got ' + responseBody.length + ' from additional source.')
         responseBody.streams.forEach(torrent => {
             torrent.name = torrent.name.replace(name, config.addonName)
             const seedersMatch = torrent.title.match(regex)
@@ -235,7 +235,7 @@ async function addResults(req, streams, source) {
             }
             torrent.sources = global.TRACKERS.map(x => { return "tracker:" + x; }).concat(["dht:" + torrent.infoHash]);
             streams.push(torrent);
-            config.debug && console.log('Found torrent from addition source: ', torrent)
+            config.debug && console.log('Adding addition source stream: ', torrent)
         })
     } catch (error) {
         console.log('Error finding other results.', error.message)
