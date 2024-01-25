@@ -217,8 +217,8 @@ async function addResults(req, streams, source) {
             read_timeout: config.responseTimeout
         })
 
-        if (!responseBody || !responseBody.streams) {
-            throw new Error(`Could not get info from: ${statusCode}`)
+        if (!responseBody || !responseBody.streams || responseBody.streams.length === 0) {
+            throw new Error(`Could not get addition source stream with status code: ${statusCode}`)
         }
 
         const regex = /👤 (\d+) /
@@ -375,7 +375,6 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 
 const runAddon = async () => {
     config.addonPort = await getPort({ port: config.addonPort });
-    console.log(config);
     const { trackers, blacklist_trackers } = await getTrackers();
     global.TRACKERS = trackers;
     global.BLACKLIST_TRACKERS = blacklist_trackers;
