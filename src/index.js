@@ -215,7 +215,7 @@ async function addResults(info, streams, source, signal) {
     }
 
     try {
-        const streamUrl = url + info.type + '/' + info.imdbId + (info.season && info.episode ? info.season + ':' + info.episode + '.json' : '.json');
+        const streamUrl = url + info.type + '/' + info.imdbId + (info.season && info.episode ? ':' + info.season + ':' + info.episode + '.json' : '.json');
         config.debug && console.log('Additional source url is :', streamUrl)
         const response = await axios.get(streamUrl, {
             headers: {
@@ -232,10 +232,10 @@ async function addResults(info, streams, source, signal) {
             throw new Error(`Could not any additional streams: ${response.status}`)
         }
 
-        config.debug && console.log('Got ' + responseBody.streams.length + ' from additional source.')
+        config.debug && console.log('Received ' + responseBody.streams.length + ' streams from  an additional source.')
         const regex = /👤 (\d+) /
         responseBody.streams.forEach(torrent => {
-
+            const quality = helper.findQuality(torrent.behaviorHints.bingeGroup);
             torrent.name = torrent.name.replace(name, config.addonName);
             torrent.tag = quality;
             torrent.type = info.type;
@@ -251,7 +251,7 @@ async function addResults(info, streams, source, signal) {
             const stats = helper.normalizeTitle(torrent.title)
             torrent.title = info.name + ' ' + (info.season && info.episode ? ` ${helper.episodeTag(info.season, info.episode)}` : info.year) + '\n';
             torrent.title += '\r\n' + stats;
-            const quality = helper.findQuality(torrent.behaviorHints.bingeGroup);
+
             torrent.behaviorHints = {
                 bingieGroup: "Jackett|" + quality,
             }

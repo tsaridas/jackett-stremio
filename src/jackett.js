@@ -32,7 +32,7 @@ const getIndexers = async (host, apiKey) => {
 			return [];
 		}
 	} catch (error) {
-		console.error("Error fetching indexers: ", error);
+		console.error("Error fetching indexers: ", error.message);
 		return [];
 	}
 };
