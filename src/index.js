@@ -235,7 +235,7 @@ async function addResults(info, streams, source, signal) {
         config.debug && console.log('Received ' + responseBody.streams.length + ' streams from  an additional source.')
         const regex = /👤 (\d+) /
         responseBody.streams.forEach(torrent => {
-            const quality = helper.findQuality(torrent.behaviorHints.bingeGroup);
+            const quality = helper.findQuality(torrent.title);
             torrent.name = torrent.name.replace(name, config.addonName);
             torrent.tag = quality;
             torrent.type = info.type;
