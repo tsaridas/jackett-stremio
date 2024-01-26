@@ -177,12 +177,8 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
     const subtitle = `👤 ${tor.seeders}/${tor.peers}  💾 ${helper.toHomanReadable(tor.size)}  ⚙️  ${tor.from}`;
 
     title += (title.indexOf('\n') > -1 ? '\r\n' : '\r\n\r\n') + subtitle;
-    const regex = /DLRip|HDTV|\b(DivX|XviD)\b|\b(?:DL|WEB|BD|BR)MUX\b|\bWEB-?Rip\b|\bWEB-?DL\b|\bBluray\b|\bVHSSCR\b|\bR5\b|\bPPVRip\b|\bTC\b|\b(?:HD-?)?TVRip\b|\bDVDscr\b|\bDVD(?:R[0-9])?\b|\bDVDRip\b|\bBDRip\b|\bBRRip\b|\bHD-?Rip\b|\b(?:HD-?)?T(?:ELE)?S(?:YNC)?\b|\b(?:HD-?)?CAM\b|(4k)|([0-9]{3,4}[pi])/i;
-    const match = tor.extraTag.match(regex);
-    let quality = "";
-    if (match !== null) {
-        quality = match[0];
-    }
+    const quality = helper.findQuality(tor.extraTag)
+
     let trackers = [];
     if (global.TRACKERS) {
         trackers = helper.unique([].concat(parsedTorrent.announce).concat(global.TRACKERS));
@@ -211,8 +207,6 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
 }
 
 async function addResults(req, streams, source, signal) {
-    config.debug && console.log('Crawling for results.')
-
     const [url, name] = source.split("||").length === 2 ? source.split("||") : [null, null];
     if (!url && !name) {
         console.error("Additional Sources not configured correctly.")
@@ -233,13 +227,12 @@ async function addResults(req, streams, source, signal) {
             signal: signal
         });
         const responseBody = response.data;
-
         if (!responseBody || !responseBody.streams || responseBody.streams.length === 0) {
             throw new Error(`Could not get addition source stream with status code: ${response.status}`)
         }
 
-        const regex = /👤 (\d+) /
         config.debug && console.log('Got ' + responseBody.streams.length + ' from additional source.')
+        const regex = /👤 (\d+) /
         responseBody.streams.forEach(torrent => {
             torrent.name = torrent.name.replace(name, config.addonName)
             const seedersMatch = torrent.title.match(regex)
@@ -248,7 +241,7 @@ async function addResults(req, streams, source, signal) {
             }
             torrent.title = helper.normalizeTitle(torrent.title);
             if (torrent.behaviorHints && torrent.behaviorHints.bingeGroup) {
-                torrent.behaviorHints.bingeGroup = torrent.behaviorHints.bingeGroup.replace(name.toLowerCase(), "Jackett");
+                torrent.behaviorHints.bingeGroup = "Jackett|" + helper.findQuality(torrent.behaviorHints.bingeGroup)
             }
             torrent.sources = global.TRACKERS.map(x => { return "tracker:" + x; }).concat(["dht:" + torrent.infoHash]);
             streams.push(torrent);
