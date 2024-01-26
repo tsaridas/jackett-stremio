@@ -42,21 +42,15 @@ const helper = {
         return bytes.toFixed(1) + " " + units[i];
     },
 
-    isObject: (s) => {
-        return (s !== null && typeof s === 'object');
-    },
-
     episodeTag: (season, episode) => {
         return `S${('0' + season).slice(-2)}E${('0' + episode).slice(-2)}`;
     },
 
     simpleName: (name) => {
-
         name = name.replace(/\.|_|-|–|\(|\)|\[|\]|:|,/g, ' ');
         name = name.replace(/\s+/g, ' ');
         name = name.replace(/'/g, '');
         name = name.replace(/\\\\/g, '\\').replace(/\\\\'|\\'|\\\\"|\\"/g, '');
-
         return name;
     },
 
@@ -73,32 +67,23 @@ const helper = {
     normalizeTitle: (title) => {
         let name = null;
         const title_list = title.split("\n");
-        name = title_list[0].replace(/\[.*?\]/g, '');
-        name = name.replace(/\(.*?\)/g, '');
         title_list.forEach(element => {
-            let ending = null
             if (element.includes("👤")) {
-                ending = helper.sanitizeStats(element)
-                if (!ending.includes("⚙️")) {
-                    // If not, add it to the end
-                    ending += " ⚙️ rarbg";
+                name = helper.sanitizeStats(element)
+                if (!name.includes("⚙️")) {
+                    name += " ⚙️ rarbg";
                 }
-                name += "\n" + ending
+                const match = name.match(/👤 (\d+)/);
+                if (match) {
+                    const digit = match[1];
+                    if (!name.match(/👤 \d+\/\d+/)) {
+                        name = name.replace(/👤 (\d+)/, `👤 ${digit}/${Math.round(digit * 0.6)}`).toLowerCase();
+                    }
+                }
+                return name
             }
-
         });
         return name
-    },
-
-    sanitizeStats: (inputString) => {
-        const match = inputString.match(/👤 (\d+)/);
-        if (match) {
-            const digit = match[1];
-            if (!inputString.match(/👤 \d+\/\d+/)) {
-                inputString = inputString.replace(/👤 (\d+)/, `👤 ${digit}/${Math.round(digit * 0.6)}`).toLowerCase();
-            }
-        }
-        return inputString;
     },
 
     extraTag: (name, searchQuery) => {
