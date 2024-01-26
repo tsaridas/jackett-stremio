@@ -173,7 +173,7 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
     } else {
         stream.fileIdx = null;
     }
-    let title = tor.title || parsedTorrent.name;
+    let title = streamInfo.name + ' ' + (streamInfo.season && streamInfo.episode ? ` ${helper.episodeTag(streamInfo.season, streamInfo.episode)}` : streamInfo.year);
     const subtitle = `👤 ${tor.seeders}/${tor.peers}  💾 ${helper.toHomanReadable(tor.size)}  ⚙️  ${tor.from}`;
 
     title += (title.indexOf('\n') > -1 ? '\r\n' : '\r\n\r\n') + subtitle;
@@ -206,7 +206,7 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
     cb(stream);
 }
 
-async function addResults(req, streams, source, signal) {
+async function addResults(info, streams, source, signal) {
     const [url, name] = source.split("||").length === 2 ? source.split("||") : [null, null];
     if (!url && !name) {
         console.error("Additional Sources not configured correctly.")
@@ -214,7 +214,7 @@ async function addResults(req, streams, source, signal) {
     }
 
     try {
-        const streamUrl = url + req.params.type + '/' + req.params.id + '.json'
+        const streamUrl = url + info.type + '/' + info.imdbId + '.json'
         config.debug && console.log('Additional source url is :', streamUrl)
         const response = await axios.get(streamUrl, {
             headers: {
@@ -239,10 +239,14 @@ async function addResults(req, streams, source, signal) {
             if (seedersMatch && seedersMatch[1]) {
                 torrent.seeders = parseInt(seedersMatch[1])
             }
-            torrent.title = helper.normalizeTitle(torrent.title);
-            if (torrent.behaviorHints && torrent.behaviorHints.bingeGroup) {
-                torrent.behaviorHints.bingeGroup = "Jackett|" + helper.findQuality(torrent.behaviorHints.bingeGroup)
+            const stats = helper.normalizeTitle(torrent.title)
+            torrent.title = info.name + ' ' + (info.season && info.episode ? ` ${helper.episodeTag(info.season, info.episode)}` : info.year) + '\n';
+            torrent.title += '\r\n' + stats;
+            const quality = helper.findQuality(torrent.behaviorHints.bingeGroup);
+            torrent.behaviorHints = {
+                bingieGroup: "Jackett|" + quality,
             }
+            torrent.tag = quality;
             torrent.sources = global.TRACKERS.map(x => { return "tracker:" + x; }).concat(["dht:" + torrent.infoHash]);
             streams.push(torrent);
             config.debug && console.log('Adding addition source stream: ', torrent)
@@ -278,17 +282,19 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 
     extractVideoInf(req, streamInfo);
 
-    if (config.additionalSources) {
-        config.additionalSources.forEach(source => {
-            addResults(req, streams, source, signal);
-        });
-    }
+
 
     try {
         await getConemataInfo(streamInfo, signal);
     } catch (err) {
         console.error(err.message);
         return respond(res, { streams: [] });
+    }
+
+    if (config.additionalSources) {
+        config.additionalSources.forEach(source => {
+            addResults(streamInfo, streams, source, signal);
+        });
     }
 
     console.log(`Q / imdbiID: ${streamInfo.imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${streamInfo.year}` +
