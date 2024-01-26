@@ -31,7 +31,7 @@ const helper = {
     toHomanReadable: (bytes) => {
         if (Math.abs(bytes) < 1024) { return bytes + ' B'; }
 
-        const units = ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+        const units = ['kb', 'mb', 'gb', 'tb'];
 
         let i = -1;
         do {
@@ -65,7 +65,7 @@ const helper = {
     },
 
     normalizeTitle: (title) => {
-        let name = '👤 11/2 💾 2GB ⚙️ rarbg';
+        let name = '👤 11/2 💾 2 gb ⚙️ rarbg';
         const title_list = title.split("\n");
         title_list.forEach(element => {
             if (element.includes("👤")) {
