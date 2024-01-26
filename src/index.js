@@ -207,6 +207,7 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
 }
 
 async function addResults(info, streams, source, signal) {
+
     const [url, name] = source.split("||").length === 2 ? source.split("||") : [null, null];
     if (!url && !name) {
         console.error("Additional Sources not configured correctly.")
