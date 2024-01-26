@@ -60,15 +60,45 @@ const helper = {
         return name;
     },
 
-    normalizeTitle: (title) => {
-        const title_li = title.split("\n");
-        const first_row = title_li[0].split("-")[0].toLowerCase()
-        if (!title_li[title_li.length - 1].includes("⚙️")) {
-            // If not, add it to the end
-            title_li[title_li.length - 1] += " ⚙️ rarbg";
+    findQuality: (tag) => {
+        const regex = /DLRip|HDTV|\b(DivX|XviD)\b|\b(?:DL|WEB|BD|BR)MUX\b|\bWEB-?Rip\b|\bWEB-?DL\b|\bBluray\b|\bVHSSCR\b|\bR5\b|\bPPVRip\b|\bTC\b|\b(?:HD-?)?TVRip\b|\bDVDscr\b|\bDVD(?:R[0-9])?\b|\bDVDRip\b|\bBDRip\b|\bBRRip\b|\bHD-?Rip\b|\b(?:HD-?)?T(?:ELE)?S(?:YNC)?\b|\b(?:HD-?)?CAM\b|(4k)|([0-9]{3,4}[pi])/i;
+        const match = tag.match(regex);
+        let quality = "";
+        if (match !== null) {
+            quality = match[0];
         }
+        return quality
+    },
 
-        return first_row + "\n" + title_li[title_li.length - 1]
+    normalizeTitle: (title) => {
+        let name = null;
+        const title_list = title.split("\n");
+        name = title_list[0].replace(/\[.*?\]/g, '');
+        name = name.replace(/\(.*?\)/g, '');
+        title_list.forEach(element => {
+            let ending = null
+            if (element.includes("👤")) {
+                ending = helper.sanitizeStats(element)
+                if (!ending.includes("⚙️")) {
+                    // If not, add it to the end
+                    ending += " ⚙️ rarbg";
+                }
+                name += "\n" + ending
+            }
+
+        });
+        return name
+    },
+
+    sanitizeStats: (inputString) => {
+        const match = inputString.match(/👤 (\d+)/);
+        if (match) {
+            const digit = match[1];
+            if (!inputString.match(/👤 \d+\/\d+/)) {
+                inputString = inputString.replace(/👤 (\d+)/, `👤 ${digit}/${Math.round(digit * 0.6)}`).toLowerCase();
+            }
+        }
+        return inputString;
     },
 
     extraTag: (name, searchQuery) => {
