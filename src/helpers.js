@@ -42,21 +42,15 @@ const helper = {
         return bytes.toFixed(1) + " " + units[i];
     },
 
-    isObject: (s) => {
-        return (s !== null && typeof s === 'object');
-    },
-
     episodeTag: (season, episode) => {
         return `S${('0' + season).slice(-2)}E${('0' + episode).slice(-2)}`;
     },
 
     simpleName: (name) => {
-
         name = name.replace(/\.|_|-|–|\(|\)|\[|\]|:|,/g, ' ');
         name = name.replace(/\s+/g, ' ');
         name = name.replace(/'/g, '');
         name = name.replace(/\\\\/g, '\\').replace(/\\\\'|\\'|\\\\"|\\"/g, '');
-
         return name;
     },
 

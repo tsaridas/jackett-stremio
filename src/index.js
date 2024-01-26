@@ -228,17 +228,25 @@ async function addResults(info, streams, source, signal) {
         });
         const responseBody = response.data;
         if (!responseBody || !responseBody.streams || responseBody.streams.length === 0) {
-            throw new Error(`Could not get addition source stream with status code: ${response.status}`)
+            throw new Error(`Could not any additional streams: ${response.status}`)
         }
 
         config.debug && console.log('Got ' + responseBody.streams.length + ' from additional source.')
         const regex = /👤 (\d+) /
         responseBody.streams.forEach(torrent => {
-            torrent.name = torrent.name.replace(name, config.addonName)
+
+            torrent.name = torrent.name.replace(name, config.addonName);
+            torrent.tag = quality;
+            torrent.type = info.type;
+            torrent.infoHash = torrent.infoHash.toLowerCase();
+
             const seedersMatch = torrent.title.match(regex)
             if (seedersMatch && seedersMatch[1]) {
-                torrent.seeders = parseInt(seedersMatch[1])
+                torrent.seeders = parseInt(seedersMatch[1]);
+            } else {
+                torrent.seeders = 5;
             }
+            torrent.sources = global.TRACKERS.map(x => { return "tracker:" + x; }).concat(["dht:" + torrent.infoHash]);
             const stats = helper.normalizeTitle(torrent.title)
             torrent.title = info.name + ' ' + (info.season && info.episode ? ` ${helper.episodeTag(info.season, info.episode)}` : info.year) + '\n';
             torrent.title += '\r\n' + stats;
@@ -246,13 +254,13 @@ async function addResults(info, streams, source, signal) {
             torrent.behaviorHints = {
                 bingieGroup: "Jackett|" + quality,
             }
-            torrent.tag = quality;
-            torrent.sources = global.TRACKERS.map(x => { return "tracker:" + x; }).concat(["dht:" + torrent.infoHash]);
+
+
             streams.push(torrent);
             config.debug && console.log('Adding addition source stream: ', torrent)
         })
     } catch (error) {
-        console.error('Error finding addition source streams: ', error.message)
+        config.debug && console.error('Error finding addition source streams: ', error.message)
     }
 }
 
