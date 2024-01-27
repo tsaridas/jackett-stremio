@@ -113,10 +113,6 @@ function processTorrentList(torrentList) {
     torrentList.forEach(torrent => {
         const infoHash = torrent.infoHash;
 
-        if (torrent.seeders < config.minimumSeeds) {
-            return;
-        }
-
         // Check if infoHash is already in the map
         if (duplicatesMap.has(infoHash)) {
             // If duplicate, update if the current torrent has higher seeders
@@ -248,9 +244,13 @@ async function addResults(info, streams, source, signal) {
             const seedersMatch = torrent.title.match(regex)
             if (seedersMatch && seedersMatch[1]) {
                 torrent.seeders = parseInt(seedersMatch[1]);
+                if (torrent.seeders < config.minimumSeeds) {
+                    return;
+                }
             } else {
-                torrent.seeders = 5;
+                console.error("Couldn't find seeders for : ", torrent.name);
             }
+
             torrent.sources = global.TRACKERS.map(x => { return "tracker:" + x; }).concat(["dht:" + torrent.infoHash]);
             const stats = helper.normalizeTitle(torrent.title)
             torrent.title = info.name + ' ' + (info.season && info.episode ? ` ${helper.episodeTag(info.season, info.episode)}` : info.year) + '\n';

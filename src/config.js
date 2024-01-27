@@ -18,6 +18,8 @@ const defaultConfig = {
 
   "debug": process.env.DEBUG || false,
 
+  "searchByYear": process.env.SEARCH_BY_YEAR || false,
+
   "searchByType": process.env.SEARCH_BY_TYPE || false,
 
   "responseTimeout": parseInt(process.env.RESPONSE_TIMEOUT) || 8000,

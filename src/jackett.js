@@ -53,7 +53,7 @@ const search = async (query, signal, cb, end) => {
 		if (query.season && query.episode) {
 			searchQuery = '&t=' + searchType + '&q=' + simpleName + '&season=' + query.season + '&ep=' + query.episode;
 		} else {
-			const year = (query.year) ? '&year=' + query.year : '';
+			const year = (config.searchByYear && query.year) ? '&year=' + query.year : '';
 			searchQuery = '&t=' + searchType + '&q=' + simpleName + year;
 		}
 	} else {
@@ -64,7 +64,7 @@ const search = async (query, signal, cb, end) => {
 			// Issue is that when they return a magnet we don't know which file to choose.
 			searchQuery += '%20' + helper.episodeTag(query.season, query.episode);
 		} else {
-			searchQuery += '%20' + query.year;
+			searchQuery += '%20' + (config.searchByYear ? query.year : '');
 		}
 	}
 
