@@ -249,8 +249,7 @@ async function addResults(info, streams, source, signal) {
             newStream.sources = global.TRACKERS.map(x => { return "tracker:" + x; }).concat(["dht:" + torrent.infoHash]);
 
             helper.normalizeTitle(torrent, info)
-            newStream.title = torrent.title;
-            newStream.seeders = torrent.seeders;
+
             newStream.behaviorHints = {
                 bingieGroup: "Jackett|" + quality + "|" + newStream.infoHash,
             }

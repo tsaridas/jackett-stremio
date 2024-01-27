@@ -66,6 +66,7 @@ const helper = {
 
     normalizeTitle: (torrent, info) => {
         let name = '👤 11/2 💾 2 gb ⚙️ therarbg';
+        let found = false;
         const title_list = torrent.title.split("\n");
         title_list.forEach(element => {
             if (element.includes("👤")) {
@@ -83,11 +84,18 @@ const helper = {
                         torrent.title = info.name + ' ' + (info.season && info.episode ? ` ${helper.episodeTag(info.season, info.episode)}` : info.year) + '\n';
                         torrent.title += '\r\n' + name;
                         torrent.seeders = seeds;
+                        found = true;
+                        return;
                     }
                 }
-                return;
+
             }
         });
+        if (!found) {
+            torrent.title = info.name + ' ' + (info.season && info.episode ? ` ${helper.episodeTag(info.season, info.episode)}` : info.year) + '\n';
+            torrent.title += '\r\n' + name;
+            torrent.seeders = 11;
+        }
     },
 
     extraTag: (name, searchQuery) => {
