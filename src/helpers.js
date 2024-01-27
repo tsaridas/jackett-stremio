@@ -77,7 +77,7 @@ const helper = {
                 if (match) {
                     const digit = match[1];
                     if (!name.match(/👤 \d+\/\d+/)) {
-                        const seeds = Math.round(digit / 1.2);
+                        const seeds = Math.round(digit / 1.1);
                         const leechers = Math.round(digit * 0.6);
                         name = name.replace(/👤 (\d+)/, `👤 ${seeds}/${leechers}`).toLowerCase();
                         torrent.title = info.name + ' ' + (info.season && info.episode ? ` ${helper.episodeTag(info.season, info.episode)}` : info.year) + '\n';

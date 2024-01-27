@@ -201,9 +201,9 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
     stream.tag = quality
     stream.type = streamInfo.type;
     stream.infoHash = infoHash;
-    stream.seeders = tor.seeders;
     stream.sources = trackers.map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]);
     stream.title = title;
+    stream.seeders = tor.seeders;
     stream.behaviorHints = {
         bingieGroup: "Jackett|" + quality,
     }
@@ -251,8 +251,8 @@ async function addResults(info, streams, source, signal) {
             helper.normalizeTitle(torrent, info)
             newStream.title = torrent.title;
             newStream.seeders = torrent.seeders;
-            torrent.behaviorHints = {
-                bingieGroup: "Jackett|" + quality,
+            newStream.behaviorHints = {
+                bingieGroup: "Jackett|" + quality + "|" + newStream.infoHash,
             }
 
             streams.push(newStream);
