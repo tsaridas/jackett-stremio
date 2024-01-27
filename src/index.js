@@ -355,7 +355,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         try {
             config.debug && console.log("Processing link: ", task.link);
             const response = await axios.get(task.link, {
-                timeout: 5000, // Set a timeout for the request in milliseconds
+                timeout: 5000, // we don't want to overdo it here and neither set something in config. Request should timeout anyway.
                 maxRedirects: 0, // Equivalent to 'redirect: 'manual'' in fetch
                 validateStatus: null,
                 cancelToken: signal.token,
