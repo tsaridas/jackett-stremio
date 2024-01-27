@@ -64,7 +64,7 @@ const search = async (query, signal, cb, end) => {
 			// Issue is that when they return a magnet we don't know which file to choose.
 			searchQuery += '%20' + helper.episodeTag(query.season, query.episode);
 		} else {
-			searchQuery += '%20' + (config.searchByYear ? query.year : '');
+			searchQuery += (config.searchByYear ? '%20' + query.year : '');
 		}
 	}
 
@@ -137,7 +137,7 @@ const search = async (query, signal, cb, end) => {
 								return;
 							}
 
-							if (!config.parseTorrentFiles && (!newObj.magneturl || (newObj.link && !newObj.link.startsWith("magnet:")))) {
+							if (config.dontParseTorrentFiles && (!newObj.magneturl || (newObj.link && !newObj.link.startsWith("magnet:")))) {
 								return;
 							}
 
