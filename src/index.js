@@ -232,7 +232,7 @@ async function addResults(info, streams, source, signal) {
             throw new Error(`Could not any additional streams: ${response.status}`)
         }
 
-        config.debug && console.log('Received ' + responseBody.streams.length + ' streams from  an additional source.')
+        config.debug && console.log('Received ' + responseBody.streams.length + ' streams from ' + name)
         const regex = /👤 (\d+) /
         responseBody.streams.forEach(torrent => {
             const quality = helper.findQuality(torrent.title);

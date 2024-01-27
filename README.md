@@ -54,7 +54,7 @@ The below options can be set as an evironment variable.
 | `MAX_SIZE` | 5GB | `5GB` | Maximum size of the results we want to receive. Value is in Bytes. Default is 10GB. Supported formats: B/KB/MB/GB/TB . |
 | `DEBUG` | false | `true` | Spams your terminal with info. |
 | `SEARCH_BY_TYPE` | false | `true` | By enabled this, it will search by movie or tvshow instead of default free search. |
-| `SEARCH_BY_YEAR` | false | `true` | By enabled this, it will add year of the movie in the search. I added this because you get better results with some types but might get wrong movie for others|
+| `SEARCH_BY_YEAR` | false | `true` | By enabled this, it will add year of the movie in the search. I added this because you get better results with some types but might get wrong movie for others like sequels that have the same name but different year. |
 | `INTERVAL` | 500 | `100` | How often to check in miliseconds if we should return results based on user's timeout. |
 | `ADD_BEST_TRACKERS` | false | `true` | We download a list of best trackers from [Best Trackers](https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt) and add them to all torrents found |
 | `ADD_RUSSIAN_TRACKERS` | false | `true` | We add some Russian trackers. Check trackers.js for more info.|
