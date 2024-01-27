@@ -178,7 +178,7 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
         stream.fileIdx = null;
     }
     let title = streamInfo.name + ' ' + (streamInfo.season && streamInfo.episode ? ` ${helper.episodeTag(streamInfo.season, streamInfo.episode)}` : streamInfo.year);
-    const subtitle = `👤 ${tor.seeders}/${tor.peers}  💾 ${helper.toHomanReadable(tor.size)}  ⚙️  ${tor.from}`;
+    const subtitle = `👤 ${tor.seeders}/${tor.peers}  💾 ${helper.toHomanReadable(tor.size)} ⚙️ ${tor.from}`;
 
     title += (title.indexOf('\n') > -1 ? '\r\n' : '\r\n\r\n') + subtitle;
     const quality = helper.findQuality(tor.extraTag)
@@ -201,11 +201,11 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
     stream.tag = quality
     stream.type = streamInfo.type;
     stream.infoHash = infoHash;
-    stream.seeders = tor.seeders;
     stream.sources = trackers.map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]);
     stream.title = title;
+    stream.seeders = tor.seeders;
     stream.behaviorHints = {
-        bingieGroup: "Jackett|" + quality,
+        bingieGroup: "Jackett|" + quality + "|" + infoHash,
     }
     cb(stream);
 }
@@ -228,7 +228,7 @@ async function addResults(info, streams, source, signal) {
                 "Accept-Encoding": "gzip, deflate",
                 "Accept-Language": "en-US,en;q=0.9,el;q=0.8"
             },
-            timeout: 3000,
+            timeout: config.responseTimeout,
             signal: signal
         });
         const responseBody = response.data;
@@ -237,35 +237,24 @@ async function addResults(info, streams, source, signal) {
         }
 
         config.debug && console.log('Received ' + responseBody.streams.length + ' streams from ' + name)
-        const regex = /👤 (\d+) /
+
         responseBody.streams.forEach(torrent => {
+            const newStream = {}
             const quality = helper.findQuality(torrent.title);
-            torrent.name = torrent.name.replace(name, config.addonName);
-            torrent.tag = quality;
-            torrent.type = info.type;
-            torrent.infoHash = torrent.infoHash.toLowerCase();
+            newStream.fileIdx = torrent.fileIdx;
+            newStream.name = torrent.name.replace(name, config.addonName);
+            newStream.tag = quality;
+            newStream.type = info.type;
+            newStream.infoHash = torrent.infoHash.toLowerCase();
+            newStream.sources = global.TRACKERS.map(x => { return "tracker:" + x; }).concat(["dht:" + torrent.infoHash]);
 
-            const seedersMatch = torrent.title.match(regex)
-            if (seedersMatch && seedersMatch[1]) {
-                torrent.seeders = parseInt(seedersMatch[1]);
-                if (torrent.seeders < config.minimumSeeds) {
-                    return;
-                }
-            } else {
-                console.error("Couldn't find seeders for : ", torrent.name);
+            helper.normalizeTitle(torrent, info)
+
+            newStream.behaviorHints = {
+                bingieGroup: "Jackett|" + quality + "|" + newStream.infoHash,
             }
 
-            torrent.sources = global.TRACKERS.map(x => { return "tracker:" + x; }).concat(["dht:" + torrent.infoHash]);
-            const stats = helper.normalizeTitle(torrent.title)
-            torrent.title = info.name + ' ' + (info.season && info.episode ? ` ${helper.episodeTag(info.season, info.episode)}` : info.year) + '\n';
-            torrent.title += '\r\n' + stats;
-
-            torrent.behaviorHints = {
-                bingieGroup: "Jackett|" + quality,
-            }
-
-
-            streams.push(torrent);
+            streams.push(newStream);
             config.debug && console.log('Adding addition source stream: ', torrent)
         })
     } catch (error) {
@@ -358,17 +347,17 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
     };
 
     const processLinks = async (task) => {
-        if (requestSent) { // Check the flag before processing each task
+        if (requestSent) {
             return;
         }
         inProgressCount++;
         try {
             config.debug && console.log("Processing link: ", task.link);
             const response = await axios.get(task.link, {
-                timeout: 5000, // Set a timeout for the request in milliseconds
+                timeout: 5000, // we don't want to overdo it here and neither set something in config. Request should timeout anyway.
                 maxRedirects: 0, // Equivalent to 'redirect: 'manual'' in fetch
                 validateStatus: null,
-                cancelToken: signal.token, // Assuming 'signal' is an AbortController instance
+                cancelToken: signal.token,
                 responseType: 'arraybuffer', // Specify the response type as 'arraybuffer'
             });
 

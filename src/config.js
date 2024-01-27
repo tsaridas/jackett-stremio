@@ -4,7 +4,7 @@ const defaultConfig = {
 
   "addonName": process.env.ADDON_NAME || "Jackett",
 
-  "parseTorrentFiles": process.env.PARSE_TORRENT_FILES || false,
+  "dontParseTorrentFiles": process.env.DONT_PARSE_TORRENT_FILES || false,
 
   "interval": parseInt(process.env.INTERVAL) || 500,
 
