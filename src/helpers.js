@@ -71,7 +71,7 @@ const helper = {
             if (element.includes("👤")) {
                 name = element;
                 if (!name.includes("⚙️")) {
-                    name += " ⚙️ rarbg";
+                    name += " ⚙️ therarbg";
                 }
                 const match = name.match(/👤 (\d+)/);
                 if (match) {
