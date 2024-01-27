@@ -205,7 +205,7 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
     stream.title = title;
     stream.seeders = tor.seeders;
     stream.behaviorHints = {
-        bingieGroup: "Jackett|" + quality,
+        bingieGroup: "Jackett|" + quality + "|" + infoHash,
     }
     cb(stream);
 }
@@ -228,7 +228,7 @@ async function addResults(info, streams, source, signal) {
                 "Accept-Encoding": "gzip, deflate",
                 "Accept-Language": "en-US,en;q=0.9,el;q=0.8"
             },
-            timeout: 3000,
+            timeout: config.responseTimeout,
             signal: signal
         });
         const responseBody = response.data;
@@ -348,7 +348,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
     };
 
     const processLinks = async (task) => {
-        if (requestSent) { // Check the flag before processing each task
+        if (requestSent) {
             return;
         }
         inProgressCount++;
@@ -358,7 +358,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
                 timeout: 5000, // Set a timeout for the request in milliseconds
                 maxRedirects: 0, // Equivalent to 'redirect: 'manual'' in fetch
                 validateStatus: null,
-                cancelToken: signal.token, // Assuming 'signal' is an AbortController instance
+                cancelToken: signal.token,
                 responseType: 'arraybuffer', // Specify the response type as 'arraybuffer'
             });
 
