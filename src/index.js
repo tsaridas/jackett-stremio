@@ -113,6 +113,10 @@ function processTorrentList(torrentList) {
     torrentList.forEach(torrent => {
         const infoHash = torrent.infoHash;
 
+        if (torrent.seeders < config.minimumSeeds) {
+            return;
+        }
+
         // Check if infoHash is already in the map
         if (duplicatesMap.has(infoHash)) {
             // If duplicate, update if the current torrent has higher seeders
