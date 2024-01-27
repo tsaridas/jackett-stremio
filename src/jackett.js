@@ -162,6 +162,7 @@ const search = async (query, signal, cb, end) => {
 							newObj.extraTag = helper.extraTag(newObj.title, query.name);
 
 							if (helper.insertIntoSortedArray(sortedReults, newObj, 'seeders', config.maximumResults)) {
+								config.debug && console.log(newObj);
 								tempResults.push(newObj);
 							}
 						}
