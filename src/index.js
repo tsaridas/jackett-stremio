@@ -193,7 +193,7 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
         }
     }
 
-    stream.name = config.addonName + " " + quality;
+    stream.name = config.addonName + "\n" + quality;
     stream.tag = quality
     stream.type = streamInfo.type;
     stream.infoHash = infoHash;
