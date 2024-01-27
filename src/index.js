@@ -178,7 +178,7 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
         stream.fileIdx = null;
     }
     let title = streamInfo.name + ' ' + (streamInfo.season && streamInfo.episode ? ` ${helper.episodeTag(streamInfo.season, streamInfo.episode)}` : streamInfo.year);
-    const subtitle = `👤 ${tor.seeders}/${tor.peers}  💾 ${helper.toHomanReadable(tor.size)}  ⚙️  ${tor.from}`;
+    const subtitle = `👤 ${tor.seeders}/${tor.peers}  💾 ${helper.toHomanReadable(tor.size)} ⚙️ ${tor.from}`;
 
     title += (title.indexOf('\n') > -1 ? '\r\n' : '\r\n\r\n') + subtitle;
     const quality = helper.findQuality(tor.extraTag)
@@ -237,35 +237,25 @@ async function addResults(info, streams, source, signal) {
         }
 
         config.debug && console.log('Received ' + responseBody.streams.length + ' streams from ' + name)
-        const regex = /👤 (\d+) /
+
         responseBody.streams.forEach(torrent => {
+            const newStream = {}
             const quality = helper.findQuality(torrent.title);
-            torrent.name = torrent.name.replace(name, config.addonName);
-            torrent.tag = quality;
-            torrent.type = info.type;
-            torrent.infoHash = torrent.infoHash.toLowerCase();
+            newStream.fileIdx = torrent.fileIdx;
+            newStream.name = torrent.name.replace(name, config.addonName);
+            newStream.tag = quality;
+            newStream.type = info.type;
+            newStream.infoHash = torrent.infoHash.toLowerCase();
+            newStream.sources = global.TRACKERS.map(x => { return "tracker:" + x; }).concat(["dht:" + torrent.infoHash]);
 
-            const seedersMatch = torrent.title.match(regex)
-            if (seedersMatch && seedersMatch[1]) {
-                torrent.seeders = parseInt(seedersMatch[1]);
-                if (torrent.seeders < config.minimumSeeds) {
-                    return;
-                }
-            } else {
-                console.error("Couldn't find seeders for : ", torrent.name);
-            }
-
-            torrent.sources = global.TRACKERS.map(x => { return "tracker:" + x; }).concat(["dht:" + torrent.infoHash]);
-            const stats = helper.normalizeTitle(torrent.title)
-            torrent.title = info.name + ' ' + (info.season && info.episode ? ` ${helper.episodeTag(info.season, info.episode)}` : info.year) + '\n';
-            torrent.title += '\r\n' + stats;
-
+            helper.normalizeTitle(torrent, info)
+            newStream.title = torrent.title;
+            newStream.seeders = torrent.seeders;
             torrent.behaviorHints = {
                 bingieGroup: "Jackett|" + quality,
             }
 
-
-            streams.push(torrent);
+            streams.push(newStream);
             config.debug && console.log('Adding addition source stream: ', torrent)
         })
     } catch (error) {
