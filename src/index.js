@@ -252,6 +252,7 @@ async function addResults(info, streams, source, signal) {
             newStream.title = torrent.title;
             newStream.seeders = torrent.seeders;
 
+
             newStream.behaviorHints = {
                 bingieGroup: "Jackett|" + quality + "|" + newStream.infoHash,
             }
