@@ -65,7 +65,7 @@ const helper = {
     },
 
     normalizeTitle: (title) => {
-        let name = '👤 11/2 💾 2 gb ⚙️ rarbg';
+        let name = '👤 11/2 💾 2 gb ⚙️ therarbg';
         const title_list = title.split("\n");
         title_list.forEach(element => {
             if (element.includes("👤")) {
