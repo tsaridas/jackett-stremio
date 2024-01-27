@@ -154,7 +154,7 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
         } else {
             let regEx = null;
             if (streamInfo.type === 'movie') {
-                regEx = new RegExp(`${streamInfo.name.split(' ').join('.*')}.*${streamInfo.year}.*`, 'i');
+                regEx = new RegExp(`${streamInfo.name.split(' ').join('.*')}.*${config.searchByYear && streamInfo.year ? streamInfo.year : ''}.*`, 'i');
             } else {
                 regEx = new RegExp(`${streamInfo.name.split(' ').join('.*')}.*${helper.episodeTag(streamInfo.season, streamInfo.episode)}.*`, 'i');
             }
