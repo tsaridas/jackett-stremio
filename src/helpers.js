@@ -77,7 +77,7 @@ const helper = {
                 if (match) {
                     const digit = match[1];
                     if (!name.match(/👤 \d+\/\d+/)) {
-                        name = name.replace(/👤 (\d+)/, `👤 ${digit}/${Math.round(digit * 0.6)}`).toLowerCase();
+                        name = name.replace(/👤 (\d+)/, `👤 ${Math.round(digit / 1.2)}/${Math.round(digit * 0.6)}`).toLowerCase();
                     }
                 }
                 return name
