@@ -65,19 +65,19 @@ const helper = {
     },
 
     normalizeTitle: (title) => {
-        let name = '👤 11/2 💾 2 gb ⚙️ rarbg';
+        let name = '👤 11/2 💾 2 gb ⚙️ therarbg';
         const title_list = title.split("\n");
         title_list.forEach(element => {
             if (element.includes("👤")) {
                 name = element;
                 if (!name.includes("⚙️")) {
-                    name += " ⚙️ rarbg";
+                    name += " ⚙️ therarbg";
                 }
                 const match = name.match(/👤 (\d+)/);
                 if (match) {
                     const digit = match[1];
                     if (!name.match(/👤 \d+\/\d+/)) {
-                        name = name.replace(/👤 (\d+)/, `👤 ${digit}/${Math.round(digit * 0.6)}`).toLowerCase();
+                        name = name.replace(/👤 (\d+)/, `👤 ${Math.round(digit / 1.2)}/${Math.round(digit * 0.6)}`).toLowerCase();
                     }
                 }
                 return name

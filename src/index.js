@@ -158,7 +158,7 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
         } else {
             let regEx = null;
             if (streamInfo.type === 'movie') {
-                regEx = new RegExp(`${streamInfo.name.split(' ').join('.*')}.*${streamInfo.year}.*`, 'i');
+                regEx = new RegExp(`${streamInfo.name.split(' ').join('.*')}.*${config.searchByYear && streamInfo.year ? streamInfo.year : ''}.*`, 'i');
             } else {
                 regEx = new RegExp(`${streamInfo.name.split(' ').join('.*')}.*${helper.episodeTag(streamInfo.season, streamInfo.episode)}.*`, 'i');
             }
@@ -197,7 +197,7 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
         }
     }
 
-    stream.name = config.addonName + " " + quality;
+    stream.name = config.addonName + "\n" + quality;
     stream.tag = quality
     stream.type = streamInfo.type;
     stream.infoHash = infoHash;
@@ -236,7 +236,7 @@ async function addResults(info, streams, source, signal) {
             throw new Error(`Could not any additional streams: ${response.status}`)
         }
 
-        config.debug && console.log('Received ' + responseBody.streams.length + ' streams from  an additional source.')
+        config.debug && console.log('Received ' + responseBody.streams.length + ' streams from ' + name)
         const regex = /👤 (\d+) /
         responseBody.streams.forEach(torrent => {
             const quality = helper.findQuality(torrent.title);
@@ -248,9 +248,13 @@ async function addResults(info, streams, source, signal) {
             const seedersMatch = torrent.title.match(regex)
             if (seedersMatch && seedersMatch[1]) {
                 torrent.seeders = parseInt(seedersMatch[1]);
+                if (torrent.seeders < config.minimumSeeds) {
+                    return;
+                }
             } else {
-                torrent.seeders = 5;
+                console.error("Couldn't find seeders for : ", torrent.name);
             }
+
             torrent.sources = global.TRACKERS.map(x => { return "tracker:" + x; }).concat(["dht:" + torrent.infoHash]);
             const stats = helper.normalizeTitle(torrent.title)
             torrent.title = info.name + ' ' + (info.season && info.episode ? ` ${helper.episodeTag(info.season, info.episode)}` : info.year) + '\n';
