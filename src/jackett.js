@@ -9,7 +9,7 @@ const getIndexers = async (host, apiKey, abortSignals) => {
 	try {
 		const cachedData = getCacheVariable(host);
 		if (cachedData) {
-			config.debug && console.log("Returning indexers from cache");
+			config.debug && console.log("Loading indexers for " + host + "from cache.");
 			return cachedData;
 		}
 		const controller = new AbortController();
@@ -31,7 +31,6 @@ const getIndexers = async (host, apiKey, abortSignals) => {
 
 		try {
 			indexers = xmlJs.xml2js(response.data);
-			setCacheVariable(host, indexers, config.cacheIndexersTime);
 		} catch (err) {
 			console.error("Could not parse indexers for ", host, err);
 			return [];
@@ -39,6 +38,7 @@ const getIndexers = async (host, apiKey, abortSignals) => {
 
 		if (indexers && indexers.elements && indexers.elements[0] && indexers.elements[0].elements) {
 			indexers = indexers.elements[0].elements;
+			setCacheVariable(host, indexers, config.cacheIndexersTime);
 			return indexers;
 		} else {
 			console.error("Could not find indexers for ", host);
