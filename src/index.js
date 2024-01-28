@@ -30,9 +30,9 @@ const manifest = {
     "name": config.addonName,
     "description": "Stremio Add-on to get torrent results from Jackett",
 
-    "icon": "https://svgur.com/i/12T2.svg",
+    "icon": "https://svgur.com/i/12Ss.svg",
+    "logo": "https://uxwing.com/wp-content/themes/uxwing/download/clothes-and-accessories/hoodie-jacket-icon.png",
 
-    // set what type of resources we will return
     "resources": [
         {
             "name": "stream",
