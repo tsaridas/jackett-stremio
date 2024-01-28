@@ -215,7 +215,7 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
     stream.title = title;
     stream.seeders = tor.seeders;
     stream.behaviorHints = {
-        bingieGroup: "Jackett|" + quality + "|" + infoHash,
+        bingieGroup: "Jackett|" + infoHash,
     }
     cb(stream);
 }
@@ -268,7 +268,7 @@ async function addResults(info, streams, source, abortSignals) {
             newStream.seeders = torrent.seeders;
 
             newStream.behaviorHints = {
-                bingieGroup: "Jackett|" + quality + "|" + newStream.infoHash,
+                bingieGroup: "Jackett|" + newStream.infoHash,
             }
 
             streams.push(newStream);
