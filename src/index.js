@@ -46,6 +46,13 @@ const manifest = {
         }
     ],
 
+    "behaviorHints": {
+        "p2p": true,
+        "configurable": false,
+        "adult": false,
+        "configurationRequired": false
+    },
+
     // works for both movies and series
     "types": ["movie", "series"],
 
