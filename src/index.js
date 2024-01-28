@@ -65,7 +65,7 @@ async function getConemataInfo(streamInfo, abortSignals) {
     config.debug && console.log("Cinemata url", url);
     const controller = new AbortController();
     const signal = controller.signal;
-    abortSignals.push(signal)
+    abortSignals.push(controller)
     const response = await axios({
         method: 'get',
         url: url,
@@ -223,7 +223,7 @@ async function addResults(info, streams, source, abortSignals) {
     try {
         const controller = new AbortController();
         const signal = controller.signal;
-        abortSignals.push(signal)
+        abortSignals.push(controller)
         const streamUrl = url + info.type + '/' + info.imdbId + (info.season && info.episode ? ':' + info.season + ':' + info.episode + '.json' : '.json');
         config.debug && console.log('Additional source url is :', streamUrl)
         const response = await axios.get(streamUrl, {
@@ -364,7 +364,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         try {
             const controller = new AbortController();
             const signal = controller.signal;
-            abortSignals.push(signal)
+            abortSignals.push(controller)
             config.debug && console.log("Processing link: ", task.link);
             const response = await axios.get(task.link, {
                 timeout: 5000, // we don't want to overdo it here and neither set something in config. Request should timeout anyway.

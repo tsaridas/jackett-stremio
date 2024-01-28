@@ -7,10 +7,11 @@ const getIndexers = async (host, apiKey, abortSignals) => {
 	try {
 		const controller = new AbortController();
 		const signal = controller.signal;
-		abortSignals.push(signal)
+		abortSignals.push(controller)
 		const response = await axios.get(host + 'api/v2.0/indexers/' + config.jackett.indexerFilters + '/results/torznab/api?apikey=' + apiKey + '&t=indexers&configured=true', {
 			timeout: config.jackett.readTimeout, // Equivalent to 'read_timeout' in needle
 			responseType: 'text',
+			signal: signal
 		});
 
 		if (!response || !response.data) {
