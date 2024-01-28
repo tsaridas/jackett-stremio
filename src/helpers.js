@@ -1,4 +1,5 @@
 const videoNameParser = require('video-name-parser');
+const config = require('./config');
 
 const helper = {
     unique: (array) => {
@@ -85,6 +86,7 @@ const helper = {
                         torrent.title += '\r\n' + name;
                         torrent.seeders = seeds;
                         found = true;
+                        config.debug && console.log("Normalised title for ", torrent);
                         return;
                     }
                 }
