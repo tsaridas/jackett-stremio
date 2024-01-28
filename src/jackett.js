@@ -199,7 +199,6 @@ const search = async (query, abortSignals, cb, end) => {
 			}));
 		} catch (error) {
 			console.error("Could not process host :", host, error.message);
-
 		}
 	}));
 	end([]);
