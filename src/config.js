@@ -34,6 +34,8 @@ const defaultConfig = {
 
   "downloadTorrentQueue": parseInt(process.env.DOWNLOAD_TORRENT_QUEUE) || 10,
 
+  "cacheIndexersTime": parseInt(process.env.CACHE_INDEXERS_TIME) || 30,
+
   "jackett": {
 
     "hosts": process.env.JACKETT_HOSTS || process.env.JACKETT_HOST || "http://127.0.0.1:9117/", // JACKETT_HOST is for backwards compatibility

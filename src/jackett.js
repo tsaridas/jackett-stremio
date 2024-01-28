@@ -3,9 +3,15 @@ const axios = require('axios');
 const { AbortController } = require('abort-controller');
 const helper = require('./helpers');
 const config = require('./config');
+const { setCacheVariable, getCacheVariable } = require('./cache');
 
 const getIndexers = async (host, apiKey, abortSignals) => {
 	try {
+		const cachedData = getCacheVariable(host);
+		if (cachedData) {
+			config.debug && console.log("Returning indexers from cache");
+			return cachedData;
+		}
 		const controller = new AbortController();
 		abortSignals.push(controller)
 		const signal = controller.signal;
@@ -25,6 +31,7 @@ const getIndexers = async (host, apiKey, abortSignals) => {
 
 		try {
 			indexers = xmlJs.xml2js(response.data);
+			setCacheVariable(host, indexers, config.cacheIndexersTime);
 		} catch (err) {
 			console.error("Could not parse indexers for ", host, err);
 			return [];
