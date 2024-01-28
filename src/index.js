@@ -352,9 +352,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         config.debug && console.log("Parsing magnet :", uri);
         const parsedTorrent = parseTorrent(uri);
         streamFromParsed(task, parsedTorrent, streamInfo, stream => {
-            if (stream) {
-                streams.push(stream);
-            }
+            streams.push(stream);
         });
     };
 
@@ -399,9 +397,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
                 config.debug && console.log(`Processing torrent : ${task.link}.`);
                 const parsedTorrent = parseTorrent(responseBody);
                 streamFromParsed(task, parsedTorrent, streamInfo, stream => {
-                    if (stream) {
-                        streams.push(stream);
-                    }
+                    streams.push(stream);
                 });
                 config.debug && console.log("Parsed torrent : ", task.link);
             }
