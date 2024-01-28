@@ -55,14 +55,17 @@ const manifest = {
     "catalogs": []
 };
 
-addon.get('/manifest.json', (_, res) => {
-    config.debug && console.log("Sending manifest.");
+addon.get('/manifest.json', (req, res) => {
+    console.log("Sending manifest to .", req.ip);
     respond(res, manifest);
 });
 
-async function getConemataInfo(streamInfo, signal) {
+async function getConemataInfo(streamInfo, abortSignals) {
     const url = 'https://v3-cinemeta.strem.io/meta/' + streamInfo.type + '/' + streamInfo.imdbId + '.json';
     config.debug && console.log("Cinemata url", url);
+    const controller = new AbortController();
+    abortSignals.push(controller)
+    const signal = controller.signal;
 
     const response = await axios({
         method: 'get',
@@ -210,7 +213,7 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
     cb(stream);
 }
 
-async function addResults(info, streams, source, signal) {
+async function addResults(info, streams, source, abortSignals) {
 
     const [url, name] = source.split("||").length === 2 ? source.split("||") : [null, null];
     if (!url && !name) {
@@ -219,6 +222,10 @@ async function addResults(info, streams, source, signal) {
     }
 
     try {
+        const controller = new AbortController();
+        abortSignals.push(controller);
+        const signal = controller.signal;
+
         const streamUrl = url + info.type + '/' + info.imdbId + (info.season && info.episode ? ':' + info.season + ':' + info.episode + '.json' : '.json');
         config.debug && console.log('Additional source url is :', streamUrl)
         const response = await axios.get(streamUrl, {
@@ -276,8 +283,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 
     let streamInfo = {};
     const streams = [];
-    const controller = new AbortController();
-    const signal = controller.signal;
+    const abortSignals = [];
 
     const startTime = Date.now();
 
@@ -294,7 +300,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 
 
     try {
-        await getConemataInfo(streamInfo, signal);
+        await getConemataInfo(streamInfo, abortSignals);
     } catch (err) {
         console.error(err.message);
         return respond(res, { streams: [] });
@@ -302,11 +308,11 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 
     if (config.additionalSources) {
         config.additionalSources.forEach(source => {
-            addResults(streamInfo, streams, source, signal);
+            addResults(streamInfo, streams, source, abortSignals);
         });
     }
 
-    console.log(`Q / imdbiID: ${streamInfo.imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${streamInfo.year}` +
+    console.log(`Q: ip: ${req.ip} / imdbiID: ${streamInfo.imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${streamInfo.year}` +
         (streamInfo.season && streamInfo.episode ? ` / season: ${streamInfo.season} / episode: ${streamInfo.episode}` : '') +
         '.');
 
@@ -319,11 +325,15 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && inProgressCount === 0 && asyncQueue.idle))) {
             requestSent = true;
             asyncQueue.kill();
-            controller.abort();
+            config.debug && console.log("There are " + abortSignals.length + " controllers to abort.");
+            abortSignals.forEach((controller) => {
+                controller.abort();
+            });
+
             clearInterval(intervalId);
             const finalData = processTorrentList(streams);
             config.debug && console.log("Sliced & Sorted data ", finalData);
-            console.log("A / imdbiID: " + streamInfo.imdbId + " / Results " + finalData.length + " / Timeout: " + (elapsedTime >= config.responseTimeout) + " / Search Finished: " + searchFinished + " / Queue Idle: " + asyncQueue.idle() + " / Pending Downloads : " + inProgressCount + " / Discarded : " + (streams.length - finalData.length));
+            console.log(`A ip: ${req.ip} / imdbiID: ${streamInfo.imdbId} / Results ${finalData.length} / Timeout: ${(elapsedTime >= config.responseTimeout)} / Search Finished: ${searchFinished} / Queue Idle: ${asyncQueue.idle()} / Pending Downloads : ${inProgressCount} / Discarded : ${(streams.length - finalData.length)}`);
             return respond(res, {
                 streams: finalData,
                 "cacheMaxAge": 1440,
@@ -355,12 +365,15 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         }
         inProgressCount++;
         try {
+            const controller = new AbortController();
+            const signal = controller.signal;
+            abortSignals.push(controller)
             config.debug && console.log("Processing link: ", task.link);
             const response = await axios.get(task.link, {
-                timeout: 5000, // we don't want to overdo it here and neither set something in config. Request should timeout anyway.
+                timeout: config.responseTimeout, // we don't want to overdo it here and neither set something in config. Request should timeout anyway.
                 maxRedirects: 0, // Equivalent to 'redirect: 'manual'' in fetch
                 validateStatus: null,
-                cancelToken: signal.token,
+                signal: signal,
                 responseType: 'arraybuffer', // Specify the response type as 'arraybuffer'
             });
 
@@ -402,7 +415,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
     const asyncQueue = async.queue(processLinks, config.downloadTorrentQueue);
 
 
-    jackettApi.search(streamInfo, signal,
+    jackettApi.search(streamInfo, abortSignals,
         (tempResults) => {
             if (!requestSent && tempResults && tempResults.length > 0) {
                 const { magnets, links } = partitionURL(tempResults);

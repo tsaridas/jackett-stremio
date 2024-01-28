@@ -1,13 +1,19 @@
 const xmlJs = require('xml-js');
 const axios = require('axios');
+const { AbortController } = require('abort-controller');
 const helper = require('./helpers');
 const config = require('./config');
 
-const getIndexers = async (host, apiKey) => {
+const getIndexers = async (host, apiKey, abortSignals) => {
 	try {
+		const controller = new AbortController();
+		abortSignals.push(controller)
+		const signal = controller.signal;
+
 		const response = await axios.get(host + 'api/v2.0/indexers/' + config.jackett.indexerFilters + '/results/torznab/api?apikey=' + apiKey + '&t=indexers&configured=true', {
 			timeout: config.jackett.readTimeout, // Equivalent to 'read_timeout' in needle
 			responseType: 'text',
+			signal: signal
 		});
 
 		if (!response || !response.data) {
@@ -37,9 +43,10 @@ const getIndexers = async (host, apiKey) => {
 	}
 };
 
-const search = async (query, signal, cb, end) => {
+const search = async (query, abortSignals, cb, end) => {
 	const hostsAndApiKeys = config.jackett.hosts.split(',').map((host, i) => ({ host, apiKey: config.jackett.apiKeys.split(',')[i] }));
 	config.debug && console.log("Found " + hostsAndApiKeys.length + " Jacket servers.");
+
 	let searchQuery = "";
 	let countResults = 0;
 	let countFinished = 0;
@@ -69,10 +76,13 @@ const search = async (query, signal, cb, end) => {
 	}
 
 	await Promise.all(hostsAndApiKeys.map(async ({ host, apiKey }) => {
-		const apiIndexersArray = await getIndexers(host, apiKey);
+		const apiIndexersArray = await getIndexers(host, apiKey, abortSignals);
 
 		try {
 			config.debug && console.log("Found " + apiIndexersArray.length + " indexers for " + host);
+			if (apiIndexersArray.length == 0) {
+				return;
+			}
 
 			await Promise.all(apiIndexersArray.map(async (indexer) => {
 				if (!(indexer && indexer.attributes && indexer.attributes.id)) {
@@ -85,6 +95,10 @@ const search = async (query, signal, cb, end) => {
 				} else {
 					searchedIndexers[indexer.attributes.id] = { "host": host, "status": "started" };
 				}
+
+				const controller = new AbortController();
+				abortSignals.push(controller)
+				const signal = controller.signal;
 
 				const url = host + 'api/v2.0/indexers/' + indexer.attributes.id + '/results/torznab/api?apikey=' + apiKey + searchQuery;
 				const response = await axios.get(url, {
@@ -185,7 +199,6 @@ const search = async (query, signal, cb, end) => {
 			}));
 		} catch (error) {
 			console.error("Could not process host :", host, error.message);
-
 		}
 	}));
 	end([]);
