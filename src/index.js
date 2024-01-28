@@ -30,7 +30,7 @@ const manifest = {
     "name": config.addonName,
     "description": "Stremio Add-on to get torrent results from Jackett",
 
-    "icon": "https://static1.squarespace.com/static/55c17e7ae4b08ccd27be814e/t/599b81c32994ca8ff6c1cd37/1508813048508/Jackett-logo-2.jpg",
+    "icon": "https://svgur.com/i/12T2.svg",
 
     // set what type of resources we will return
     "resources": [
@@ -352,9 +352,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         config.debug && console.log("Parsing magnet :", uri);
         const parsedTorrent = parseTorrent(uri);
         streamFromParsed(task, parsedTorrent, streamInfo, stream => {
-            if (stream) {
-                streams.push(stream);
-            }
+            streams.push(stream);
         });
     };
 
@@ -399,9 +397,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
                 config.debug && console.log(`Processing torrent : ${task.link}.`);
                 const parsedTorrent = parseTorrent(responseBody);
                 streamFromParsed(task, parsedTorrent, streamInfo, stream => {
-                    if (stream) {
-                        streams.push(stream);
-                    }
+                    streams.push(stream);
                 });
                 config.debug && console.log("Parsed torrent : ", task.link);
             }
