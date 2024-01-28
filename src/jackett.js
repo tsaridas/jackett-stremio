@@ -3,8 +3,11 @@ const axios = require('axios');
 const helper = require('./helpers');
 const config = require('./config');
 
-const getIndexers = async (host, apiKey) => {
+const getIndexers = async (host, apiKey, abortSignals) => {
 	try {
+		const controller = new AbortController();
+		const signal = controller.signal;
+		abortSignals.push(signal)
 		const response = await axios.get(host + 'api/v2.0/indexers/' + config.jackett.indexerFilters + '/results/torznab/api?apikey=' + apiKey + '&t=indexers&configured=true', {
 			timeout: config.jackett.readTimeout, // Equivalent to 'read_timeout' in needle
 			responseType: 'text',
@@ -37,7 +40,7 @@ const getIndexers = async (host, apiKey) => {
 	}
 };
 
-const search = async (query, signal, cb, end) => {
+const search = async (query, abortSignals, cb, end) => {
 	const hostsAndApiKeys = config.jackett.hosts.split(',').map((host, i) => ({ host, apiKey: config.jackett.apiKeys.split(',')[i] }));
 	config.debug && console.log("Found " + hostsAndApiKeys.length + " Jacket servers.");
 	let searchQuery = "";
@@ -69,7 +72,7 @@ const search = async (query, signal, cb, end) => {
 	}
 
 	await Promise.all(hostsAndApiKeys.map(async ({ host, apiKey }) => {
-		const apiIndexersArray = await getIndexers(host, apiKey);
+		const apiIndexersArray = await getIndexers(host, apiKey, abortSignals);
 
 		try {
 			config.debug && console.log("Found " + apiIndexersArray.length + " indexers for " + host);
@@ -86,6 +89,9 @@ const search = async (query, signal, cb, end) => {
 					searchedIndexers[indexer.attributes.id] = { "host": host, "status": "started" };
 				}
 
+				const controller = new AbortController();
+				const signal = controller.signal;
+				abortSignals.push(signal)
 				const url = host + 'api/v2.0/indexers/' + indexer.attributes.id + '/results/torznab/api?apikey=' + apiKey + searchQuery;
 				const response = await axios.get(url, {
 					timeout: config.jackett.readTimeout,

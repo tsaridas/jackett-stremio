@@ -60,10 +60,12 @@ addon.get('/manifest.json', (_, res) => {
     respond(res, manifest);
 });
 
-async function getConemataInfo(streamInfo, signal) {
+async function getConemataInfo(streamInfo, abortSignals) {
     const url = 'https://v3-cinemeta.strem.io/meta/' + streamInfo.type + '/' + streamInfo.imdbId + '.json';
     config.debug && console.log("Cinemata url", url);
-
+    const controller = new AbortController();
+    const signal = controller.signal;
+    abortSignals.push(signal)
     const response = await axios({
         method: 'get',
         url: url,
@@ -210,7 +212,7 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
     cb(stream);
 }
 
-async function addResults(info, streams, source, signal) {
+async function addResults(info, streams, source, abortSignals) {
 
     const [url, name] = source.split("||").length === 2 ? source.split("||") : [null, null];
     if (!url && !name) {
@@ -219,6 +221,9 @@ async function addResults(info, streams, source, signal) {
     }
 
     try {
+        const controller = new AbortController();
+        const signal = controller.signal;
+        abortSignals.push(signal)
         const streamUrl = url + info.type + '/' + info.imdbId + (info.season && info.episode ? ':' + info.season + ':' + info.episode + '.json' : '.json');
         config.debug && console.log('Additional source url is :', streamUrl)
         const response = await axios.get(streamUrl, {
@@ -276,8 +281,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 
     let streamInfo = {};
     const streams = [];
-    const controller = new AbortController();
-    const signal = controller.signal;
+    const abortSignals = [];
 
     const startTime = Date.now();
 
@@ -294,7 +298,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 
 
     try {
-        await getConemataInfo(streamInfo, signal);
+        await getConemataInfo(streamInfo, abortSignals);
     } catch (err) {
         console.error(err.message);
         return respond(res, { streams: [] });
@@ -302,7 +306,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 
     if (config.additionalSources) {
         config.additionalSources.forEach(source => {
-            addResults(streamInfo, streams, source, signal);
+            addResults(streamInfo, streams, source, abortSignals);
         });
     }
 
@@ -319,7 +323,10 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && inProgressCount === 0 && asyncQueue.idle))) {
             requestSent = true;
             asyncQueue.kill();
-            controller.abort();
+            abortSignals.forEach((signal) => {
+                signal.abort();
+            });
+
             clearInterval(intervalId);
             const finalData = processTorrentList(streams);
             config.debug && console.log("Sliced & Sorted data ", finalData);
@@ -355,12 +362,15 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         }
         inProgressCount++;
         try {
+            const controller = new AbortController();
+            const signal = controller.signal;
+            abortSignals.push(signal)
             config.debug && console.log("Processing link: ", task.link);
             const response = await axios.get(task.link, {
                 timeout: 5000, // we don't want to overdo it here and neither set something in config. Request should timeout anyway.
                 maxRedirects: 0, // Equivalent to 'redirect: 'manual'' in fetch
                 validateStatus: null,
-                cancelToken: signal.token,
+                signal: signal,
                 responseType: 'arraybuffer', // Specify the response type as 'arraybuffer'
             });
 
@@ -402,7 +412,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
     const asyncQueue = async.queue(processLinks, config.downloadTorrentQueue);
 
 
-    jackettApi.search(streamInfo, signal,
+    jackettApi.search(streamInfo, abortSignals,
         (tempResults) => {
             if (!requestSent && tempResults && tempResults.length > 0) {
                 const { magnets, links } = partitionURL(tempResults);
