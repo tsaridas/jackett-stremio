@@ -9,7 +9,7 @@ const getIndexers = async (host, apiKey, abortSignals) => {
 	try {
 		const cachedData = getCacheVariable(host);
 		if (cachedData) {
-			config.debug && console.log("Loading indexers for " + host + "from cache.");
+			config.debug && console.log("Loading indexers for \"" + host + "\" from cache.");
 			return cachedData;
 		}
 		const controller = new AbortController();
