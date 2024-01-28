@@ -64,8 +64,9 @@ async function getConemataInfo(streamInfo, abortSignals) {
     const url = 'https://v3-cinemeta.strem.io/meta/' + streamInfo.type + '/' + streamInfo.imdbId + '.json';
     config.debug && console.log("Cinemata url", url);
     const controller = new AbortController();
-    const signal = controller.signal;
     abortSignals.push(controller)
+    const signal = controller.signal;
+
     const response = await axios({
         method: 'get',
         url: url,
@@ -222,8 +223,9 @@ async function addResults(info, streams, source, abortSignals) {
 
     try {
         const controller = new AbortController();
+        abortSignals.push(controller);
         const signal = controller.signal;
-        abortSignals.push(controller)
+
         const streamUrl = url + info.type + '/' + info.imdbId + (info.season && info.episode ? ':' + info.season + ':' + info.episode + '.json' : '.json');
         config.debug && console.log('Additional source url is :', streamUrl)
         const response = await axios.get(streamUrl, {
@@ -323,8 +325,9 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && inProgressCount === 0 && asyncQueue.idle))) {
             requestSent = true;
             asyncQueue.kill();
-            abortSignals.forEach((signal) => {
-                signal.abort();
+            config.debug && console.log("There are " + abortSignals.length + " controllers to abort.");
+            abortSignals.forEach((controller) => {
+                controller.abort();
             });
 
             clearInterval(intervalId);
