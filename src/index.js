@@ -215,7 +215,7 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
     stream.title = title;
     stream.seeders = tor.seeders;
     stream.behaviorHints = {
-        bingieGroup: "Jackett|" + quality + "|" + infoHash,
+        bingieGroup: "Jackett|" + infoHash,
     }
     cb(stream);
 }
@@ -240,7 +240,8 @@ async function addResults(info, streams, source, abortSignals) {
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
                 "Accept-Encoding": "gzip, deflate",
-                "Accept-Language": "en-US,en;q=0.9,el;q=0.8"
+                "Accept-Language": "en-US,en;q=0.9,el;q=0.8",
+                'Cache-Control': 'public, max-age=604800'
             },
             timeout: config.responseTimeout,
             signal: signal
@@ -267,7 +268,7 @@ async function addResults(info, streams, source, abortSignals) {
             newStream.seeders = torrent.seeders;
 
             newStream.behaviorHints = {
-                bingieGroup: "Jackett|" + quality + "|" + newStream.infoHash,
+                bingieGroup: "Jackett|" + newStream.infoHash,
             }
 
             streams.push(newStream);
@@ -339,7 +340,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
             clearInterval(intervalId);
             const finalData = processTorrentList(streams);
             config.debug && console.log("Sliced & Sorted data ", finalData);
-            console.log(`A: imdbiID: ${streamInfo.imdbId} / Results ${finalData.length} / Timeout: ${(elapsedTime >= config.responseTimeout)} / Search Finished: ${searchFinished} / Queue Idle: ${asyncQueue.idle()} / Pending Downloads : ${inProgressCount} / Discarded : ${(streams.length - finalData.length)}`);
+            console.log(`A: T: ${elapsedTime} / imdbiID: ${streamInfo.imdbId} / Results ${finalData.length} / Timeout: ${(elapsedTime >= config.responseTimeout)} / Search Finished: ${searchFinished} / Queue Idle: ${asyncQueue.idle()} / Pending Downloads : ${inProgressCount} / Discarded : ${(streams.length - finalData.length)}`);
             return respond(res, {
                 streams: finalData,
                 "cacheMaxAge": 1440,
