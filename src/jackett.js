@@ -61,14 +61,15 @@ const search = async (query, abortSignals, cb, end) => {
 	let sortedReults = [];
 
 	const simpleName = encodeURIComponent(helper.simpleName(query.name));
-
-	if (config.searchByType) {
+	// This is not ideal and should probably be moved to a configuration file, but currently, I cannot think of any other items that are miscategorized.
+	if (query.name.includes('UFC')) {
+		searchQuery = '&t=search&cat=2000,5000&q=' + simpleName;
+	} else if (config.searchByType) {
 		const searchType = query.type && query.type == 'movie' ? "movie" : "tvsearch";
 		if (query.season && query.episode) {
 			searchQuery = '&t=' + searchType + '&q=' + simpleName + '&season=' + query.season + '&ep=' + query.episode;
 		} else {
-			const year = (config.searchByYear && query.year) ? '&year=' + query.year : '';
-			searchQuery = '&t=' + searchType + '&q=' + simpleName + year;
+			searchQuery = '&t=' + searchType + '&q=' + simpleName + '&year=' + query.year;
 		}
 	} else {
 		const cat = query.type && query.type == 'movie' ? 2000 : 5000;
@@ -78,7 +79,7 @@ const search = async (query, abortSignals, cb, end) => {
 			// Issue is that when they return a magnet we don't know which file to choose.
 			searchQuery += '%20' + helper.episodeTag(query.season, query.episode);
 		} else {
-			searchQuery += (config.searchByYear ? '%20' + query.year : '');
+			searchQuery += '%20' + query.year;
 		}
 	}
 
