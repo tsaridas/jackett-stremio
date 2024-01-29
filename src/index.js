@@ -319,7 +319,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         });
     }
 
-    console.log(`Q: imdbiID: ${streamInfo.imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${streamInfo.year}` +
+    console.log(`Q: id: ${streamInfo.imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${streamInfo.year}` +
         (streamInfo.season && streamInfo.episode ? ` / season: ${streamInfo.season} / episode: ${streamInfo.episode}` : '') +
         '.');
 
@@ -340,7 +340,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
             clearInterval(intervalId);
             const finalData = processTorrentList(streams);
             config.debug && console.log("Sliced & Sorted data ", finalData);
-            console.log(`A: T: ${elapsedTime} / imdbiID: ${streamInfo.imdbId} / Results ${finalData.length} / Timeout: ${(elapsedTime >= config.responseTimeout)} / Search Finished: ${searchFinished} / Queue Idle: ${asyncQueue.idle()} / Pending Downloads : ${inProgressCount} / Discarded : ${(streams.length - finalData.length)}`);
+            console.log(`A: time: ${elapsedTime} / id: ${streamInfo.imdbId} / results: ${finalData.length} / timeout: ${(elapsedTime >= config.responseTimeout)} / search finished: ${searchFinished} / queue idle: ${asyncQueue.idle()} / pending downloads: ${inProgressCount} / discarded: ${(streams.length - finalData.length)}`);
             return respond(res, {
                 streams: finalData,
                 "cacheMaxAge": 1440,
@@ -348,7 +348,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
                 "staleError": 10080
             });
         }
-        config.debug && console.log(`S: imdbiID: ${streamInfo.imdbId} / Time Pending: ${(config.responseTimeout - elapsedTime)} / Search Finished: ${searchFinished} / Queue Idle: ${asyncQueue.idle()} / Pending Downloads : ${inProgressCount} / Processed Streams : ${streams.length}`);
+        config.debug && console.log(`s: id: ${streamInfo.imdbId} / time pending: ${(config.responseTimeout - elapsedTime)} / search finished: ${searchFinished} / queue idle: ${asyncQueue.idle()} / pending downloads: ${inProgressCount} / processed streams: ${streams.length}`);
 
     }, config.interval);
 
