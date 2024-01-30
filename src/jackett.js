@@ -38,6 +38,27 @@ const getIndexers = async (host, apiKey, abortSignals) => {
 
 		if (indexers && indexers.elements && indexers.elements[0] && indexers.elements[0].elements) {
 			indexers = indexers.elements[0].elements;
+			indexers.forEach((elem, index) => {
+				if (elem.elements[5].elements[3].elements) {
+					for (const cat of elem.elements[5].elements[3].elements) {
+						if (indexers[index].movie && indexers[index].series) {
+							break; // Exit the loop when both movie and series are found
+						}
+						if (!cat.attributes.id) {
+							continue; // Skip this iteration if cat.attributes.id is falsy
+						}
+						if (cat.attributes.id === '2000') {
+							config.debug && console.log("Found category Movies for: ", indexers[index].attributes.id);
+							indexers[index].movie = true;
+							continue;
+						} else if (cat.attributes.id === '5000') {
+							config.debug && console.log("Found category TV for: ", indexers[index].attributes.id);
+							indexers[index].series = true;
+							continue
+						}
+					}
+				}
+			});
 			setCacheVariable(host, indexers, config.cacheIndexersTime);
 			return indexers;
 		} else {
@@ -94,6 +115,11 @@ const search = async (query, abortSignals, cb, end) => {
 
 			await Promise.all(apiIndexersArray.map(async (indexer) => {
 				if (!(indexer && indexer.attributes && indexer.attributes.id)) {
+					return;
+				}
+
+				if (!indexer[query.type]) {
+					config.debug && console.log("Skipping " + indexer.attributes.id + " because it has no category " + query.type);
 					return;
 				}
 
