@@ -248,7 +248,7 @@ async function addResults(info, streams, source, abortSignals) {
         });
         const responseBody = response.data;
         if (!responseBody || !responseBody.streams || responseBody.streams.length === 0) {
-            throw new Error(`Could not any additional streams: ${response.status}`)
+            throw new Error(`Could not load any additional streams: ${response.status}`)
         }
 
         config.debug && console.log('Received ' + responseBody.streams.length + ' streams from ' + name)
