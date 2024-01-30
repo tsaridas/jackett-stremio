@@ -28,7 +28,12 @@ jobs:
         id: check
         run: |
           VERSION=$(curl -s https://api.github.com/repos/tsaridas/jackett-stremio/releases/latest | grep \"name | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-          NEWVERSION=${VERSION:0:-1}$((${VERSION: -1}+1))
+          IFS='.' read -ra version_parts <<< "$VERSION"
+          major="${version_parts[0]}"
+          minor="${version_parts[1]}"
+          last_digit="${version_parts[2]}"
+          new_last_digit=$((last_digit + 1))
+          NEWVERSION="$major.$minor.$new_last_digit"
           echo "We will release $NEWVERSION"
           echo "version=$NEWVERSION" >> $GITHUB_OUTPUT
           jq ".version = \"$NEWVERSION\"" < package.json > package.json.tmp && mv package.json.tmp package.json
