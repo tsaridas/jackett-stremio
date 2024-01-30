@@ -43,7 +43,9 @@ const helper = {
     },
 
     episodeTag: (season, episode) => {
-        return `S${('0' + season).slice(-2)}E${('0' + episode).slice(-2)}`;
+        const paddedSeason = season < 10 ? `0${season}` : season;
+        const paddedEpisode = episode < 10 ? `0${episode}` : episode;
+        return `S${paddedSeason}E${paddedEpisode}`;
     },
 
     simpleName: (name) => {

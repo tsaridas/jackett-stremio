@@ -43,6 +43,14 @@ const RUSSIAN_TRACKERS = [
     "http://bt4.t-ru.org/ann?magnet",
 ];
 
+const BLACKLIST_TRACKERS = [
+    // these don't resolve
+    "udp://ipv4.tracker.harry.lu:80/announce",
+    "http://ipv4.tracker.harry.lu:80/announce",
+    "udp://ipv6.tracker.harry.lu:80/announce",
+    "http://ipv6.tracker.harry.lu:80/announce"
+]
+
 
 
 const getBlacklistTrackers = async () => {
@@ -103,6 +111,7 @@ const getTrackers = async () => {
     }
     if (config.removeBlacklistTrackers) {
         blacklist_trackers = await getBlacklistTrackers();
+        blacklist_trackers = helper.unique(blacklist_trackers.concat(BLACKLIST_TRACKERS));
         console.log(`Loading : ${blacklist_trackers.length} blacklisted trackers.`);
     }
 
