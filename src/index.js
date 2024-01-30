@@ -68,7 +68,7 @@ addon.get('/manifest.json', (req, res) => {
 });
 
 async function getConemataInfo(streamInfo, abortSignals) {
-    const url = 'https://v3-cinemeta.strem.io/meta/' + streamInfo.type + '/' + streamInfo.imdbId + '.json';
+    const url = 'https://cinemeta-live.strem.io/meta/' + streamInfo.type + '/' + streamInfo.imdbId + '.json';
     config.debug && console.log("Cinemata url", url);
     const controller = new AbortController();
     abortSignals.push(controller)
@@ -80,16 +80,12 @@ async function getConemataInfo(streamInfo, abortSignals) {
         maxRedirects: 3,  // Equivalent to 'redirect: 'follow'' in fetch
         timeout: config.responseTimeout,
         signal: signal,  // Assuming 'signal' is an AbortSignal instance
-        responseType: 'json',  // Automatically parses JSON response
-        validateStatus: function (status) {
-            return status >= 200 && status < 300;  // Only consider HTTP 2xx responses as successful
-        },
-    }
-    );
-    const responseBody = response.data;
+        responseType: 'json',
+    });
 
+    const responseBody = response.data;
     if (!responseBody || !responseBody.meta || !responseBody.meta.name) {
-        throw new Error(`Could not get info from Cinemata: ${url}`);
+        throw new Error(`Could not get info from Cinemata: ${url} - ${response.statusCode}`);
     }
 
     streamInfo.name = responseBody.meta.name;
