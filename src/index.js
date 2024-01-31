@@ -19,9 +19,6 @@ const respond = (res, data) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
     res.setHeader('Content-Type', 'application/json');
-    if (data.streams && data.streams.length > 0) {
-        res.setHeader('Cache-Control', 'max-age=7200, stale-while-revalidate=14400, stale-if-error=604800, public');
-    }
     res.send(data);
 };
 
@@ -340,6 +337,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
             config.debug && console.log("Sliced & Sorted data ", finalData);
             console.log(`A: time: ${elapsedTime} / id: ${streamInfo.imdbId} / results: ${finalData.length} / timeout: ${(elapsedTime >= config.responseTimeout)} / search finished: ${searchFinished} / queue idle: ${asyncQueue.idle()} / pending downloads: ${inProgressCount} / discarded: ${(streams.length - finalData.length)}`);
             if (finalData.length > 0) {
+                res.setHeader('Cache-Control', 'max-age=7200, stale-while-revalidate=14400, stale-if-error=604800, public');
                 // Set cache-related headers if "streams" contains data
                 return respond(res, {
                     streams: finalData,
