@@ -19,7 +19,9 @@ const respond = (res, data) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
     res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Cache-Control', 'max-age=7200, stale-while-revalidate=14400, stale-if-error=604800, public');
+    if (data.streams && data.streams.length > 0) {
+        res.setHeader('Cache-Control', 'max-age=7200, stale-while-revalidate=14400, stale-if-error=604800, public');
+    }
     res.send(data);
 };
 
@@ -85,7 +87,7 @@ async function getConemataInfo(streamInfo, abortSignals) {
 
     const responseBody = response.data;
     if (!responseBody || !responseBody.meta || !responseBody.meta.name) {
-        throw new Error(`Could not get info from Cinemata: ${url} - ${response.statusCode}`);
+        throw new Error(`Could not get info from Cinemata: ${url} - ${response.status}`);
     }
 
     streamInfo.name = responseBody.meta.name;
@@ -337,12 +339,20 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
             const finalData = processTorrentList(streams);
             config.debug && console.log("Sliced & Sorted data ", finalData);
             console.log(`A: time: ${elapsedTime} / id: ${streamInfo.imdbId} / results: ${finalData.length} / timeout: ${(elapsedTime >= config.responseTimeout)} / search finished: ${searchFinished} / queue idle: ${asyncQueue.idle()} / pending downloads: ${inProgressCount} / discarded: ${(streams.length - finalData.length)}`);
-            return respond(res, {
-                streams: finalData,
-                "cacheMaxAge": 1440,
-                "staleRevalidate": 240,
-                "staleError": 10080
-            });
+            if (finalData.length > 0) {
+                // Set cache-related headers if "streams" contains data
+                return respond(res, {
+                    streams: finalData,
+                    "cacheMaxAge": 7200,
+                    "staleRevalidate": 14400,
+                    "staleError": 604800
+                });
+            } else {
+                // If "streams" is empty, do not set cache-related headers
+                return respond(res, {
+                    streams: finalData
+                });
+            }
         }
         config.debug && console.log(`s: id: ${streamInfo.imdbId} / time pending: ${(config.responseTimeout - elapsedTime)} / search finished: ${searchFinished} / queue idle: ${asyncQueue.idle()} / pending downloads: ${inProgressCount} / processed streams: ${streams.length}`);
 
