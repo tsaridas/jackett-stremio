@@ -67,7 +67,7 @@ addon.get('/manifest.json', (req, res) => {
 });
 
 async function getConemataInfo(streamInfo, abortSignals) {
-    const url = 'https://cinemeta-live.strem.io/meta/' + streamInfo.type + '/' + streamInfo.imdbId + '.json';
+    const url = 'https://v3-cinemeta.strem.io/meta/' + streamInfo.type + '/' + streamInfo.imdbId + '.json';
     config.debug && console.log("Cinemata url", url);
     const controller = new AbortController();
     abortSignals.push(controller)
@@ -76,10 +76,10 @@ async function getConemataInfo(streamInfo, abortSignals) {
     const response = await axios({
         method: 'get',
         url: url,
-        maxRedirects: 3,  // Equivalent to 'redirect: 'follow'' in fetch
+        maxRedirects: 5,  // Equivalent to 'redirect: 'follow'' in fetch
         timeout: config.responseTimeout,
         signal: signal,  // Assuming 'signal' is an AbortSignal instance
-        responseType: 'json',
+        responseType: 'json'
     });
 
     const responseBody = response.data;
