@@ -100,8 +100,12 @@ const helper = {
         }
     },
 
+    parseVideo: (name) => {
+        return videoNameParser(name + '.mp4');
+    },
+
     extraTag: (name, searchQuery) => {
-        const parsedName = videoNameParser(name + '.mp4');
+        const parsedName = helper.parseVideo(name + '.mp4');
         let extraTag = helper.simpleName(name);
         searchQuery = helper.simpleName(searchQuery);
 
