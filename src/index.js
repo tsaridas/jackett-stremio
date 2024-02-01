@@ -360,7 +360,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
                 res.setHeader('Cache-Control', 'max-age=7200, stale-while-revalidate=14400, stale-if-error=604800, public');
                 // Set cache-related headers if "streams" contains data
                 if (config.cacheResultsTime && config.cacheResultsTime != 0) {
-                    config.debug("Caching results for ", req.params.id);
+                    config.debug && console.log("Caching results for ", req.params.id);
                     setCacheVariable(req.params.id, finalData, config.cacheResultsTime)
                 }
                 return respond(res, {
