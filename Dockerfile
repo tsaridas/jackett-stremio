@@ -41,4 +41,4 @@ RUN apk update && apk upgrade && rm -rf /var/cache/apk/*
 RUN npm install --no-fund --omit=dev
 
 
-ENTRYPOINT ["npm", "start"]
+ENTRYPOINT ["start.sh"]
