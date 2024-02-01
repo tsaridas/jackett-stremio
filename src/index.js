@@ -299,7 +299,12 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         const cached = getCacheVariable(req.params.id);
         if (cached) {
             config.debug && console.log("Found cached results for " + req.params.id);
-            return respond(res, { streams: cached });
+            return respond(res, {
+                streams: cached,
+                "cacheMaxAge": 7200,
+                "staleRevalidate": 14400,
+                "staleError": 604800
+            });
         }
     }
 
