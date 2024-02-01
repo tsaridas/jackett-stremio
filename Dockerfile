@@ -37,8 +37,9 @@ LABEL version=${VERSION}
 
 
 COPY . .
+RUN chmod +x start.sh
 RUN apk update && apk upgrade && rm -rf /var/cache/apk/*
 RUN npm install --no-fund --omit=dev
 
 
-ENTRYPOINT ["/srv/start.sh"]
+ENTRYPOINT ["./start.sh"]
