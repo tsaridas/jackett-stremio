@@ -1,4 +1,4 @@
-!/bin/sh
+#!/bin/sh
 if [ -z "$DEBUG" ]; then
   # Your commands or code when DEBUG is not set
   echo "Cleaning up debug logs";
