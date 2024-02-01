@@ -34,6 +34,8 @@ const defaultConfig = {
 
   "cacheIndexersTime": parseInt(process.env.CACHE_INDEXERS_TIME) || 30,
 
+  "cacheResultsTime": parseInt(process.env.CACHE_RESULTS_TIME) || 180,
+
   "jackett": {
 
     "hosts": process.env.JACKETT_HOSTS || process.env.JACKETT_HOST || "http://127.0.0.1:9117/", // JACKETT_HOST is for backwards compatibility
