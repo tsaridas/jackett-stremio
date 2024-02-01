@@ -22,6 +22,11 @@ const getIndexers = async (host, apiKey, abortSignals) => {
 			signal: signal
 		});
 
+		const index = abortSignals.indexOf(controller);
+		if (index !== -1) {
+			abortSignals.splice(index, 1); // Remove the controller from the array
+		}
+
 		if (!response || !response.data) {
 			console.error("No indexers for ", host);
 			return [];
@@ -140,6 +145,11 @@ const search = async (query, abortSignals, cb, end) => {
 					responseType: 'text',
 					signal: signal
 				});
+
+				const index = abortSignals.indexOf(controller);
+				if (index !== -1) {
+					abortSignals.splice(index, 1); // Remove the controller from the array
+				}
 
 				config.debug && console.log(`Finished searching indexer ${indexer.attributes.id} with url ${url}`);
 

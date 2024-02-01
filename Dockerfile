@@ -25,6 +25,7 @@ ENV REMOVE_BLACKLIST_TRACKERS=
 ENV INDEXER_FILTERS=
 ENV ADDON_NAME=
 ENV CACHE_INDEXERS_TIME=
+ENV CACHE_RESULTS_TIME=
 # 
 ENV NODE_ENV=production
 
@@ -36,8 +37,9 @@ LABEL version=${VERSION}
 
 
 COPY . .
+RUN chmod +x start.sh
 RUN apk update && apk upgrade && rm -rf /var/cache/apk/*
 RUN npm install --no-fund --omit=dev
 
 
-ENTRYPOINT ["npm", "start"]
+ENTRYPOINT ["./start.sh"]

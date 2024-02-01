@@ -10,6 +10,7 @@ const helper = require('./helpers');
 const config = require('./config');
 const { getTrackers } = require('./trackers');
 const { configureConnectionPooling } = require('./requests');
+const { setCacheVariable, getCacheVariable } = require('./cache');
 const version = require('../package.json').version;
 
 global.TRACKERS = [];
@@ -81,6 +82,11 @@ async function getConemataInfo(streamInfo, abortSignals) {
         signal: signal,  // Assuming 'signal' is an AbortSignal instance
         responseType: 'json'
     });
+
+    const index = abortSignals.indexOf(controller);
+    if (index !== -1) {
+        abortSignals.splice(index, 1); // Remove the controller from the array
+    }
 
     const responseBody = response.data;
     if (!responseBody || !responseBody.meta || !responseBody.meta.name) {
@@ -241,6 +247,12 @@ async function addResults(info, streams, source, abortSignals) {
             timeout: config.responseTimeout,
             signal: signal
         });
+
+        const index = abortSignals.indexOf(controller);
+        if (index !== -1) {
+            abortSignals.splice(index, 1); // Remove the controller from the array
+        }
+
         const responseBody = response.data;
         if (!responseBody || !responseBody.streams || responseBody.streams.length === 0) {
             throw new Error(`Could not load any additional streams: ${response.status}`)
@@ -282,6 +294,19 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 
     config.debug && console.log("Received request for :", req.params.type, req.params.id);
 
+    // cache
+    if (config.cacheResultsTime && config.cacheResultsTime != 0) {
+        const cached = getCacheVariable(req.params.id);
+        if (cached) {
+            console.log("C: Serving cached results for  " + req.params.type + " id: " + req.params.id);
+            return respond(res, {
+                streams: cached,
+                "cacheMaxAge": 7200,
+                "staleRevalidate": 14400,
+                "staleError": 604800
+            });
+        }
+    }
 
     let streamInfo = {};
     const streams = [];
@@ -339,6 +364,10 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
             if (finalData.length > 0) {
                 res.setHeader('Cache-Control', 'max-age=7200, stale-while-revalidate=14400, stale-if-error=604800, public');
                 // Set cache-related headers if "streams" contains data
+                if (config.cacheResultsTime && config.cacheResultsTime != 0) {
+                    config.debug && console.log("Caching results for ", req.params.id);
+                    setCacheVariable(req.params.id, finalData, config.cacheResultsTime)
+                }
                 return respond(res, {
                     streams: finalData,
                     "cacheMaxAge": 7200,
@@ -385,11 +414,13 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
                 signal: signal,
                 responseType: 'arraybuffer', // Specify the response type as 'arraybuffer'
             });
-
+            const index = abortSignals.indexOf(controller);
+            if (index !== -1) {
+                abortSignals.splice(index, 1); // Remove the controller from the array
+            }
             // It takes some time to dowload the torrent file and we don't want to continue althought it will probably timeout.
             if (requestSent || response.status >= 400) {
-                config.debug && console.log("Abort processing of : " + task.link + " - " + (requestSent ? "Request sent is "
-                    + requestSent : "Response code : " + response.statusCode));
+                config.debug && console.log("Abort processing of : " + task.link + " - " + (requestSent ? "Request sent is " + requestSent : "Response code : " + response.statusCode));
                 inProgressCount--;
                 return;
             }
