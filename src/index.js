@@ -298,7 +298,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
     if (config.cacheResultsTime && config.cacheResultsTime != 0) {
         const cached = getCacheVariable(req.params.id);
         if (cached) {
-            config.debug && console.log("Found cached results for " + req.params.id);
+            console.log("C: Serving cached results for id " + req.params.id + " type " + req.params.type);
             return respond(res, {
                 streams: cached,
                 "cacheMaxAge": 7200,
