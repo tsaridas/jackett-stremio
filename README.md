@@ -46,13 +46,13 @@ The below options can be set as an evironment variable.
 | `JACKETT_RTIMEOUT` | 8000 | `20000` | Jackett http read timeout in millisecond. Don't set these higher than the RESPONSE_TIMEOUT. |
 | `DONT_PARSE_TORRENT_FILES` | false | `true` | Parsing torrent files ( not magnets) takes time and is slow. This is disabled by default. **If enabled you will see less results depending on your indexer**. |
 | `DOWNLOAD_TORRENT_QUEUE` | 10 | `100` | Because external http downloads go through Jackett doing many downloads at the same time might cause some DDOS so I setup a queue for this. |
-| `RESPONSE_TIMEOUT` | 8000 | `12000` | This will timeout any queries to jackett after this given value in millisecond. The higher the most result you will get from slow indexers. |
+| `RESPONSE_TIMEOUT` | 8000 | `12000` | This is the maximun time in millisecond that the request will last. The higher the most result you will get from slow indexers. |
 | `PORT` | 7000 | `8888` | The port which the Addon service will run on. |
 | `MIN_SEED` | 5 | `10` | The minimum amount of seeds we should return results for. |
 | `MAX_RESULTS` | 5 | `10` | Maximum results to return. |
 | `MAX_SIZE` | 5GB | `5GB` | Maximum size of the results we want to receive. Value is in Bytes. Default is 10GB. Supported formats: B/KB/MB/GB/TB . |
 | `DEBUG` | false | `true` | Spams your terminal with info. |
-| `SEARCH_BY_TYPE` | false | `true` | By enabled this, it will search by movie or tvshow instead of default search by category. |
+| `SEARCH_BY_TYPE` | false | `true` | By enabling this, we search by movie or tvshow instead of default search by category (2000,5000). |
 | `INTERVAL` | 500 | `100` | How often to check in miliseconds if we should return results based on user's timeout. |
 | `ADD_BEST_TRACKERS` | false | `true` | We download a list of best trackers from [Best Trackers](https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt) and add them to all torrents found |
 | `ADD_RUSSIAN_TRACKERS` | false | `true` | We add some Russian trackers. Check trackers.js for more info.|
@@ -60,7 +60,7 @@ The below options can be set as an evironment variable.
 | `REMOVE_BLACKLIST_TRACKERS` | false | `true` | Remove trackers that are blacklisted. Download list from : [Blacklisted trackers](https://raw.githubusercontent.com/ngosang/trackerslist/master/blacklist.txt") |
 | `INDEXER_FILTERS` | status:healthy,test:passed | `all` | This is the filter when we fetch indexers. This config is clear text, we encode it before using. [Jackett Documentation](https://github.com/Jackett/Jackett/tree/v0.21.1594?tab=readme-ov-file#filter-indexers) |
 | `CACHE_INDEXERS_TIME` | 30 | `360` | The time in minutes to cache indexers and don't call jackett to get all of them every time.|
-| `CACHE_RESULTS_TIME` | 180 | `360` | The time in minutes to cache results in memory. If set to 0 its disabled.|
+| `CACHE_RESULTS_TIME` | 180 | `360` | The time in minutes to cache results in memory. Set to 0 to disable and always search in jackett.|
 
 
 ## Builds
