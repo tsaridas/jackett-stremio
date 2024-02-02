@@ -1,7 +1,7 @@
 # Stremio Jackett Add-on
 
 ## General
-This is a Stremio addon that requires the ]Jackett](https://github.com/Jackett/Jackett) to search for torrents, which cant be installed and run locally. To add the addon to Stremio, use the provided URL, and it should provide you with search results. By default, this addon will only work when the Stremio web player uses HTTP. If you want to use it with an HTTPS Stremio web player, you'll also need to ensure that the service is running with HTTPS. Please note that teaching you how to achieve this is beyond the scope of this guide.
+This is a Stremio addon that requires the [Jackett](https://github.com/Jackett/Jackett) to search for torrents, which cant be installed and run locally. To add the addon to Stremio, use the provided URL, and it should provide you with search results. By default, this addon will only work when the Stremio web player uses HTTP. If you want to use it with an HTTPS Stremio web player, you'll also need to ensure that the service is running with HTTPS. Please note that teaching you how to achieve this is beyond the scope of this guide.
 
 You can take a look at my other repo if you want to have stremio run in HTTP in docker [stremio-docker](https://github.com/tsaridas/stremio-docker) .
 
