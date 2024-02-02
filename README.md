@@ -64,14 +64,14 @@ The below options can be set as an evironment variable.
 
 ## Builds
 
-Builds are setup to make images for the below archs :
+Builds are configured to generate images for the following architectures:
 
-* linux/arm/v6
-* linux/amd64
-* linux/arm64/v8
-* linux/arm/v7
+- linux/arm/v6
+- linux/amd64
+- linux/arm64/v8
+- linux/arm/v7
 
-I can add more build archs if you require them and you can ask but I doubt anybody ever will need to install these containers in anything else.
+If you ever need additional build architectures, feel free to ask. However, it's unlikely that anyone will require these containers to be installed on anything other than these specified architectures.
 
 ## Images
 
