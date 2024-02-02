@@ -1,17 +1,16 @@
 # Stremio Jackett Add-on
 
 ## General
-This is a stremio addon which requires Jackett application to search for torrents which is meant to be installed/ran locally. You add the addon to stremio by the URL it provides and it should send you results.
-This addon by default will only work if also stremio web player uses http. If you want to use this on a HTTPS stremio web player then you need to also have this service in HTTPS. 
-It's out of the scope of this guide, to teach you how to achieve that. 
+This is a Stremio addon that requires the ]Jackett](https://github.com/Jackett/Jackett) to search for torrents, which cant be installed and run locally. To add the addon to Stremio, use the provided URL, and it should provide you with search results. By default, this addon will only work when the Stremio web player uses HTTP. If you want to use it with an HTTPS Stremio web player, you'll also need to ensure that the service is running with HTTPS. Please note that teaching you how to achieve this is beyond the scope of this guide.
 
 You can take a look at my other repo if you want to have stremio run in HTTP in docker [stremio-docker](https://github.com/tsaridas/stremio-docker) .
 
 ## Showcase
 
-You can find the Addon's manifest at [Beamup-Club](https://a0964931e94e-jackett-stremio.baby-beamup.club/manifest.json). Copy the link and paste it to your streamio addons.
-This is connected to some jackett servers that only have 2 indexers and shouldn't produce many results in most cases.
-You can install the plugin locally and setup your own Indexers for better results.
+You can find the addon's manifest at [Beamup-Club](https://a0964931e94e-jackett-stremio.baby-beamup.club/manifest.json). Simply copy the link and paste it into your Stremio addons.
+
+This addon is connected to specific Jackett servers with a limited number of indexers, so it may not produce many results in most cases. For better results, you can install the plugin locally and set up your own indexers in Jackett.
+
 
 ## Run
 Images are pushed to [Docker Hub](https://hub.docker.com/r/tsaridas/jackett-stremio) for each release automatically.
@@ -99,11 +98,17 @@ You need jackett installed for this addon to work. Going into detail on how to d
 
 ### Setup Jackett
 
-Open your browser, go on `http://{{ YOUR IP }}:9117/`. Replace `{{ YOUR IP }}` with your LAN IP. Press "+ Add Indexer", add as many indexers as you want.
+1. Open your web browser and navigate to `http://{{ YOUR LAN IP }}:9117/`. Replace `{{ YOUR LAN IP }}` with your local network IP address.
 
-Copy the text from the input where it writes "API Key" from top right of the menu in Jackett and setup the indexers you want.
+2. Click on "+ Add Indexer" to add as many indexers as you require.
 
-Once that is done change the ENV variables JACKETT_HOSTS and JACKETT_APIKEYS to match your host on the container that you used.
+3. Locate the "API Key" in the top-right corner of the Jackett menu. Copy the text from the input field.
+
+4. Configure the indexers according to your preferences.
+
+5. Once you have completed the above steps, update the ENV variables `JACKETT_HOSTS` and `JACKETT_APIKEYS` to match your container's host configuration.
+
+Remember that the indexer's responsiveness can significantly impact the time it takes to retrieve results for users, so consider this when configuring your setup.
 
 ### Add Jackett Add-on to Stremio
 
