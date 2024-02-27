@@ -360,7 +360,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         return respond(res, { streams: [] });
     }
 
-    if (config.additionalSources) {
+    if (config.additionalSources && streamInfo.db === 'tt') {
         config.additionalSources.forEach(source => {
             addResults(streamInfo, streams, source, abortSignals);
         });
@@ -499,17 +499,16 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 const runAddon = async () => {
     config.addonPort = await getPort({ port: config.addonPort });
 
-    // Function to update trackers every 5 minutes
     const updateTrackers = async () => {
         const { trackers, blacklist_trackers } = await getTrackers();
         global.TRACKERS = trackers;
         global.BLACKLIST_TRACKERS = blacklist_trackers;
-        console.log("Trackers updated!");
+        config.debug && console.log("Loaded all trackers !");
     };
 
-    // Initial run and then every 5 minutes
     await updateTrackers();
-    setInterval(updateTrackers, 5 * 60 * 1000); // 5 minutes in milliseconds
+    setInterval(updateTrackers, config.updateTrackersInterval * 60 * 1000);
+
     configureConnectionPooling();
     addon.listen(config.addonPort, () => {
         console.log("Version: " + version + ' Add-on Manifest URL: http://{{ IP ADDRESS }}:' + config.addonPort + '/manifest.json');
