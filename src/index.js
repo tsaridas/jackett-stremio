@@ -110,7 +110,7 @@ async function getStreamInfo(streamInfo, abortSignals) {
         if (!responseBody) {
             throw new Error(`Could not get info from tmdb: ${url} - ${response.status}`);
         }
-        streamInfo.name = responseBody.original_name ? responseBody.original_name : responseBody.original_title;
+        streamInfo.name = responseBody.name ? responseBody.name : responseBody.title;
         streamInfo.year = (responseBody.release_date) ? responseBody.release_date.match(/\b\d{4}\b/)[0] : (responseBody.last_air_date) ? responseBody.last_air_date.match(/\b\d{4}\b/)[0] : '';
     }
 }
