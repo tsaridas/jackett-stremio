@@ -36,6 +36,10 @@ const defaultConfig = {
 
   "cacheResultsTime": parseInt(process.env.CACHE_RESULTS_TIME) || 180,
 
+  "tmdbAPIKey": process.env.TMDB_APIKEY || "",
+
+  "updateTrackersInterval": parseInt(process.env.UPDATE_TRACKERS_INTERVAL) || 1440,
+
   "jackett": {
 
     "hosts": process.env.JACKETT_HOSTS || process.env.JACKETT_HOST || "http://127.0.0.1:9117/", // JACKETT_HOST is for backwards compatibility
