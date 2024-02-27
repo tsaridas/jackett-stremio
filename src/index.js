@@ -41,7 +41,8 @@ const manifest = {
                 "series"
             ],
             "idPrefixes": [
-                "tt"
+                "tt",
+                "tmdb"
             ]
         }
     ],
@@ -57,7 +58,7 @@ const manifest = {
     "types": ["movie", "series"],
 
     // prefix of item IDs (ie: "tt0032138")
-    "idPrefixes": ["tt"],
+    "idPrefixes": ["tt", "tmdb"],
 
     "catalogs": []
 };
@@ -67,9 +68,18 @@ addon.get('/manifest.json', (req, res) => {
     respond(res, manifest);
 });
 
-async function getConemataInfo(streamInfo, abortSignals) {
-    const url = 'https://v3-cinemeta.strem.io/meta/' + streamInfo.type + '/' + streamInfo.imdbId + '.json';
-    config.debug && console.log("Cinemata url", url);
+async function getStreamInfo(streamInfo, abortSignals) {
+    let url = "";
+    if (streamInfo.db === 'tt') {
+        url = 'https://v3-cinemeta.strem.io/meta/' + streamInfo.type + '/' + streamInfo.Id + '.json';
+    } else if (streamInfo.db == 'tmdb' && config.tmdbAPIKey) {
+        const type = streamInfo.type == 'movie' ? "movie" : "tv";
+        url = 'https://api.themoviedb.org/3/' + type + '/' + streamInfo.Id + '?api_key=' + config.tmdbAPIKey;
+    } else {
+        throw new Error(`Could not get info from Cinemata`);
+    }
+
+    config.debug && console.log("DB url", url);
     const controller = new AbortController();
     abortSignals.push(controller)
     const signal = controller.signal;
@@ -89,12 +99,20 @@ async function getConemataInfo(streamInfo, abortSignals) {
     }
 
     const responseBody = response.data;
-    if (!responseBody || !responseBody.meta || !responseBody.meta.name) {
-        throw new Error(`Could not get info from Cinemata: ${url} - ${response.status}`);
-    }
+    if (streamInfo.db === 'tt') {
+        if (!responseBody) {
+            throw new Error(`Could not get info from Cinemata: ${url} - ${response.status}`);
+        }
 
-    streamInfo.name = responseBody.meta.name;
-    streamInfo.year = (responseBody.meta.year) ? responseBody.meta.year.match(/\b\d{4}\b/)[0] : (responseBody.meta.releaseInfo) ? responseBody.meta.releaseInfo.match(/\b\d{4}\b/)[0] : '';
+        streamInfo.name = responseBody.meta.name;
+        streamInfo.year = (responseBody.meta.year) ? responseBody.meta.year.match(/\b\d{4}\b/)[0] : (responseBody.meta.releaseInfo) ? responseBody.meta.releaseInfo.match(/\b\d{4}\b/)[0] : '';
+    } else {
+        if (!responseBody) {
+            throw new Error(`Could not get info from tmdb: ${url} - ${response.status}`);
+        }
+        streamInfo.name = responseBody.original_name;
+        streamInfo.year = (responseBody.release_date) ? responseBody.release_date.match(/\b\d{4}\b/)[0] : (responseBody.last_air_date) ? responseBody.last_air_date.match(/\b\d{4}\b/)[0] : '';
+    }
 }
 
 function partitionURL(list) {
@@ -234,7 +252,7 @@ async function addResults(info, streams, source, abortSignals) {
         abortSignals.push(controller);
         const signal = controller.signal;
 
-        const streamUrl = url + info.type + '/' + info.imdbId + (info.season && info.episode ? ':' + info.season + ':' + info.episode + '.json' : '.json');
+        const streamUrl = url + info.type + '/' + info.Id + (info.season && info.episode ? ':' + info.season + ':' + info.episode + '.json' : '.json');
         config.debug && console.log('Additional source url is :', streamUrl)
         const response = await axios.get(streamUrl, {
             headers: {
@@ -315,31 +333,40 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
     const startTime = Date.now();
 
     function extractVideoInf(req, streamInfo) {
-        const idParts = req.params.id.split(':');
-        streamInfo.imdbId = idParts[0];
-        streamInfo.type = req.params.type;
-        streamInfo.season = idParts[1] ? idParts[1] : null;
-        streamInfo.episode = idParts[2] ? idParts[2] : null;
+        if (req.params.id.startsWith("tmdb")) {
+            const idParts = req.params.id.split(':');
+            streamInfo.Id = idParts.slice(1).join(':');
+            streamInfo.type = req.params.type;
+            streamInfo.season = idParts[2] ? idParts[2] : null;
+            streamInfo.episode = idParts[3] ? idParts[3] : null;
+            streamInfo.db = "tmdb";
+        } else {
+            const idParts = req.params.id.split(':');
+            streamInfo.Id = idParts[0];
+            streamInfo.type = req.params.type;
+            streamInfo.season = idParts[1] ? idParts[1] : null;
+            streamInfo.episode = idParts[2] ? idParts[2] : null;
+            streamInfo.db = "tt";
+        }
     }
 
     extractVideoInf(req, streamInfo);
 
 
-
     try {
-        await getConemataInfo(streamInfo, abortSignals);
+        await getStreamInfo(streamInfo, abortSignals);
     } catch (err) {
         console.error(err.message);
         return respond(res, { streams: [] });
     }
 
-    if (config.additionalSources) {
+    if (config.additionalSources && streamInfo.db === 'tt') {
         config.additionalSources.forEach(source => {
             addResults(streamInfo, streams, source, abortSignals);
         });
     }
 
-    console.log(`Q: id: ${streamInfo.imdbId} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${streamInfo.year}` +
+    console.log(`Q: id: ${streamInfo.Id} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${streamInfo.year}` +
         (streamInfo.season && streamInfo.episode ? ` / season: ${streamInfo.season} / episode: ${streamInfo.episode}` : '') +
         '.');
 
@@ -360,7 +387,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
             clearInterval(intervalId);
             const finalData = processTorrentList(streams);
             config.debug && console.log("Sliced & Sorted data ", finalData);
-            console.log(`A: time: ${elapsedTime} / id: ${streamInfo.imdbId} / results: ${finalData.length} / timeout: ${(elapsedTime >= config.responseTimeout)} / search finished: ${searchFinished} / queue idle: ${asyncQueue.idle()} / pending downloads: ${inProgressCount} / discarded: ${(streams.length - finalData.length)}`);
+            console.log(`A: id: ${streamInfo.Id} / time: ${elapsedTime} / results: ${finalData.length} / timeout: ${(elapsedTime >= config.responseTimeout)} / search finished: ${searchFinished} / queue idle: ${asyncQueue.idle()} / pending downloads: ${inProgressCount} / discarded: ${(streams.length - finalData.length)}`);
             if (finalData.length > 0) {
                 res.setHeader('Cache-Control', 'max-age=7200, stale-while-revalidate=14400, stale-if-error=604800, public');
                 // Set cache-related headers if "streams" contains data
@@ -381,7 +408,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
                 });
             }
         }
-        config.debug && console.log(`s: id: ${streamInfo.imdbId} / time pending: ${(config.responseTimeout - elapsedTime)} / search finished: ${searchFinished} / queue idle: ${asyncQueue.idle()} / pending downloads: ${inProgressCount} / processed streams: ${streams.length}`);
+        config.debug && console.log(`s: id: ${streamInfo.Id} / time pending: ${(config.responseTimeout - elapsedTime)} / search finished: ${searchFinished} / queue idle: ${asyncQueue.idle()} / pending downloads: ${inProgressCount} / processed streams: ${streams.length}`);
 
     }, config.interval);
 
@@ -471,9 +498,17 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 
 const runAddon = async () => {
     config.addonPort = await getPort({ port: config.addonPort });
-    const { trackers, blacklist_trackers } = await getTrackers();
-    global.TRACKERS = trackers;
-    global.BLACKLIST_TRACKERS = blacklist_trackers;
+
+    const updateTrackers = async () => {
+        const { trackers, blacklist_trackers } = await getTrackers();
+        global.TRACKERS = trackers;
+        global.BLACKLIST_TRACKERS = blacklist_trackers;
+        config.debug && console.log("Loaded all trackers !");
+    };
+
+    await updateTrackers();
+    setInterval(updateTrackers, config.updateTrackersInterval * 60 * 1000);
+
     configureConnectionPooling();
     addon.listen(config.addonPort, () => {
         console.log("Version: " + version + ' Add-on Manifest URL: http://{{ IP ADDRESS }}:' + config.addonPort + '/manifest.json');

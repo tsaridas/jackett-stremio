@@ -60,6 +60,8 @@ The below options can be set as an evironment variable.
 | `INDEXER_FILTERS` | status:healthy,test:passed | `all` | This is the filter when we fetch indexers. This config is clear text, we encode it before using. [Jackett Documentation](https://github.com/Jackett/Jackett/tree/v0.21.1594?tab=readme-ov-file#filter-indexers) |
 | `CACHE_INDEXERS_TIME` | 30 | `360` | The time in minutes to cache indexers and don't call jackett to get all of them every time.|
 | `CACHE_RESULTS_TIME` | 180 | `360` | The time in minutes to cache results in memory. Set to 0 to disable and always search in jackett.|
+| `TMDB_APIKEY` | 'sdfasdf23r' | `` | TMDB API key.|
+
 
 
 ## Builds
