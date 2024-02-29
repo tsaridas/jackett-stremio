@@ -24,7 +24,7 @@ const getIndexers = async (host, apiKey, abortSignals) => {
 
 		const index = abortSignals.indexOf(controller);
 		if (index !== -1) {
-			abortSignals.splice(index, 1); // Remove the controller from the array
+			abortSignals.splice(index, 1);
 		}
 
 		if (!response || !response.data) {

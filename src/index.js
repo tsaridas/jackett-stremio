@@ -314,7 +314,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 
     // cache
     if (config.cacheResultsTime && config.cacheResultsTime != 0) {
-        const cached = getCacheVariable(req.params.id);
+        const cached = getCacheVariable(req.params.id, config.cacheResultsTime);
         if (cached) {
             console.log("C: Serving cached results for  " + req.params.type + " id: " + req.params.id);
             return respond(res, {
@@ -366,7 +366,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         });
     }
 
-    console.log(`Q: id: ${streamInfo.Id} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${streamInfo.year}` +
+    console.log(`Q: ${streamInfo.Id} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${streamInfo.year}` +
         (streamInfo.season && streamInfo.episode ? ` / season: ${streamInfo.season} / episode: ${streamInfo.episode}` : '') +
         '.');
 
@@ -387,7 +387,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
             clearInterval(intervalId);
             const finalData = processTorrentList(streams);
             config.debug && console.log("Sliced & Sorted data ", finalData);
-            console.log(`A: id: ${streamInfo.Id} / time: ${elapsedTime} / results: ${finalData.length} / timeout: ${(elapsedTime >= config.responseTimeout)} / search finished: ${searchFinished} / queue idle: ${asyncQueue.idle()} / pending downloads: ${inProgressCount} / discarded: ${(streams.length - finalData.length)}`);
+            console.log(`A: ${streamInfo.Id} / time: ${elapsedTime} / results: ${finalData.length} / timeout: ${(elapsedTime >= config.responseTimeout)} / search finished: ${searchFinished} / queue idle: ${asyncQueue.idle()} / pending downloads: ${inProgressCount} / discarded: ${(streams.length - finalData.length)}`);
             if (finalData.length > 0) {
                 res.setHeader('Cache-Control', 'max-age=7200, stale-while-revalidate=14400, stale-if-error=604800, public');
                 // Set cache-related headers if "streams" contains data
