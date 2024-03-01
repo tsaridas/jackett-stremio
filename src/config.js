@@ -20,6 +20,8 @@ const defaultConfig = {
 
   "searchByType": process.env.SEARCH_BY_TYPE || false,
 
+  "searchByYear": process.env.SEARCH_BY_YEAR || false,
+
   "responseTimeout": parseInt(process.env.RESPONSE_TIMEOUT) || 8000,
 
   "addonPort": parseInt(process.env.PORT) || 7000,
@@ -29,6 +31,8 @@ const defaultConfig = {
   "maximumResults": parseInt(process.env.MAX_RESULTS) || 5,
 
   "maximumSize": process.env.MAX_SIZE || "5GB",
+
+  "ignoreTitles": process.env.IGNORE_TITLES || "\\b(Telecine|CAMRip|HQCAM)\\b|\\b(?:HD-?)?T(?:ELE)?S(?:YNC)?\\b|\\b(?:HD-?)?CAM\\b",
 
   "downloadTorrentQueue": parseInt(process.env.DOWNLOAD_TORRENT_QUEUE) || 10,
 
