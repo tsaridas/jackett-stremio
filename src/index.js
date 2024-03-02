@@ -310,7 +310,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
     config.debug && console.log("Received request for :", req.params.type, req.params.id);
 
     // cache
-    if (config.cacheResultsTime && config.cacheResultsTime != 0) {
+    if (config.cacheResultsTime && config.cacheResultsTime != 0 && !req.headers['no-cache']) {
         const cached = getCacheVariable(req.params.id, config.cacheResultsTime);
         if (cached) {
             console.log("C: " + req.params.id + " cached.");
