@@ -24,7 +24,7 @@ const respond = (res, data) => {
 };
 
 const manifest = {
-    "id": "org.stremio.community.jackett",
+    "id": "org.stremio.jackett",
     "version": version,
 
     "name": config.addonName,
