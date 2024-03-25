@@ -85,6 +85,7 @@ const search = async (query, abortSignals, cb, end) => {
 	let countFinished = 0;
 	let searchedIndexers = {};
 	let sortedReults = [];
+	let ignoreTitles = null;
 
 	const simpleName = encodeURIComponent(helper.simpleName(query.name));
 	// This is not ideal and should probably be moved to a configuration file, but currently, I cannot think of any other items that are miscategorized.
@@ -107,6 +108,10 @@ const search = async (query, abortSignals, cb, end) => {
 		} else {
 			searchQuery += '%20' + query.year;
 		}
+	}
+
+	if (config.ignoreTitles) {
+		ignoreTitles = new RegExp(config.ignoreTitles, 'i');
 	}
 
 	await Promise.all(hostsAndApiKeys.map(async ({ host, apiKey }) => {
@@ -183,6 +188,10 @@ const search = async (query, abortSignals, cb, end) => {
 								if (tempObj[ofInterestElm])
 									newObj[ofInterestElm] = tempObj[ofInterestElm];
 							});
+
+							if (ignoreTitles && ignoreTitles.test(newObj.title)) {
+								return;
+							}
 
 							const toInt = ['seeders', 'peers', 'size', 'files'];
 

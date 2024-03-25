@@ -28,7 +28,7 @@ const manifest = {
     "version": version,
 
     "name": config.addonName,
-    "description": "Stremio Add-on to get torrent results from Jackett",
+    "description": "Stremio Add-on to get torrent results from Jackett.",
 
     "icon": "https://svgur.com/i/12Ss.svg",
     "logo": "https://uxwing.com/wp-content/themes/uxwing/download/clothes-and-accessories/hoodie-jacket-icon.png",
@@ -54,10 +54,7 @@ const manifest = {
         "configurationRequired": false
     },
 
-    // works for both movies and series
     "types": ["movie", "series"],
-
-    // prefix of item IDs (ie: "tt0032138")
     "idPrefixes": ["tt", "tmdb"],
 
     "catalogs": []
@@ -187,7 +184,7 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
         } else {
             let regEx = null;
             if (streamInfo.type === 'movie') {
-                regEx = new RegExp(`${streamInfo.name.split(' ').join('.*')}.*${config.searchByYear && streamInfo.year ? streamInfo.year : ''}.*`, 'i');
+                regEx = new RegExp(`${streamInfo.name.split(' ').join('.*')}.*${!config.dontSearchByYear && streamInfo.year ? streamInfo.year : ''}.*`, 'i');
             } else {
                 regEx = new RegExp(`${streamInfo.name.split(' ').join('.*')}.*${helper.episodeTag(streamInfo.season, streamInfo.episode)}.*`, 'i');
             }
@@ -313,10 +310,10 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
     config.debug && console.log("Received request for :", req.params.type, req.params.id);
 
     // cache
-    if (config.cacheResultsTime && config.cacheResultsTime != 0) {
+    if (config.cacheResultsTime && config.cacheResultsTime != 0 && !req.headers['no-cache']) {
         const cached = getCacheVariable(req.params.id, config.cacheResultsTime);
         if (cached) {
-            console.log("C: Serving cached results for  " + req.params.type + " id: " + req.params.id);
+            console.log("C: " + req.params.id + " cached.");
             return respond(res, {
                 streams: cached,
                 "cacheMaxAge": 7200,
@@ -366,9 +363,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         });
     }
 
-    console.log(`Q: ${streamInfo.Id} / title: ${streamInfo.name} / type: ${streamInfo.type} / year: ${streamInfo.year}` +
-        (streamInfo.season && streamInfo.episode ? ` / season: ${streamInfo.season} / episode: ${streamInfo.episode}` : '') +
-        '.');
+    console.log(`Q: ${req.params.id} / title: ${streamInfo.name} / year: ${streamInfo.year}`);
 
     let inProgressCount = 0;
     let searchFinished = false;
@@ -387,7 +382,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
             clearInterval(intervalId);
             const finalData = processTorrentList(streams);
             config.debug && console.log("Sliced & Sorted data ", finalData);
-            console.log(`A: ${streamInfo.Id} / time: ${elapsedTime} / results: ${finalData.length} / timeout: ${(elapsedTime >= config.responseTimeout)} / search finished: ${searchFinished} / queue idle: ${asyncQueue.idle()} / pending downloads: ${inProgressCount} / discarded: ${(streams.length - finalData.length)}`);
+            console.log(`A: ${req.params.id} / time: ${elapsedTime} / results: ${finalData.length} / timeout: ${(elapsedTime >= config.responseTimeout)} / search finished: ${searchFinished} / queue idle: ${asyncQueue.idle()} / pending downloads: ${inProgressCount} / discarded: ${(streams.length - finalData.length)}`);
             if (finalData.length > 0) {
                 res.setHeader('Cache-Control', 'max-age=7200, stale-while-revalidate=14400, stale-if-error=604800, public');
                 // Set cache-related headers if "streams" contains data
@@ -408,12 +403,12 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
                 });
             }
         }
-        config.debug && console.log(`s: id: ${streamInfo.Id} / time pending: ${(config.responseTimeout - elapsedTime)} / search finished: ${searchFinished} / queue idle: ${asyncQueue.idle()} / pending downloads: ${inProgressCount} / processed streams: ${streams.length}`);
+        config.debug && console.log(`S: id: ${streamInfo.Id} / time pending: ${(config.responseTimeout - elapsedTime)} / search finished: ${searchFinished} / queue idle: ${asyncQueue.idle()} / pending downloads: ${inProgressCount} / processed streams: ${streams.length}`);
 
     }, config.interval);
 
     const processMagnets = async (task) => {
-        if (requestSent) { // Check the flag before processing each task
+        if (requestSent) {
             return;
         }
         const uri = task.magneturl || task.link;
@@ -436,7 +431,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
             config.debug && console.log("Processing link: ", task.link);
             const response = await axios.get(task.link, {
                 timeout: config.responseTimeout, // we don't want to overdo it here and neither set something in config. Request should timeout anyway.
-                maxRedirects: 0, // Equivalent to 'redirect: 'manual'' in fetch
+                maxRedirects: 0,
                 validateStatus: null,
                 signal: signal,
                 responseType: 'arraybuffer', // Specify the response type as 'arraybuffer'

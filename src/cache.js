@@ -11,9 +11,8 @@ function getCacheVariable(key, renewalMinutes = 0) {
     const cachedItem = cache[key];
 
     if (cachedItem && Date.now() < cachedItem.expirationTime) {
-        // Renew the expiration time
-        if (renewalMinutes > 0) {
-            cachedItem.expirationTime = Date.now() + renewalMinutes * 60 * 1000;
+        if (renewalMinutes > 0 && cache[key]) {
+            cache[key].expirationTime = Date.now() + renewalMinutes * 60 * 1000;
         }
         return cachedItem.value;
     }
