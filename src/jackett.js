@@ -90,7 +90,12 @@ const search = async (query, abortSignals, cb, end) => {
 	const simpleName = encodeURIComponent(helper.simpleName(query.name));
 	// This is not ideal and should probably be moved to a configuration file, but currently, I cannot think of any other items that are miscategorized.
 	if (query.name.includes('UFC')) {
-		searchQuery = '&t=search&cat=2000,5000&q=' + simpleName;
+		let ufcMatch = query.name.match(/UFC\s*\d+/i);
+		let ufcSearchName = simpleName; // Default to original simpleName
+		if (ufcMatch && ufcMatch[0]) {
+			ufcSearchName = encodeURIComponent(ufcMatch[0]);
+		}
+		searchQuery = '&t=search&cat=2000,5000&q=' + ufcSearchName;
 	} else if (config.searchByType) {
 		const searchType = query.type && query.type == 'movie' ? "movie" : "tvsearch";
 		if (query.season && query.episode) {
