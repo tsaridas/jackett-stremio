@@ -213,11 +213,10 @@ const search = async (query, abortSignals, cb, end) => {
 								return;
 							}
 
-							// We prefer magnet links as they don't require downloading (faster) but we should probaly have an option for this.
-							// Problem with magnet links is that they don't have a file list. On the other hand, torrents need to be downloaded as a file which requires extra processing.
+							// Keep the http download link when both are present so we can parse the
+							// torrent file and resolve fileIdx. Magnets alone rarely include file lists.
 							if (newObj.magneturl && newObj.magneturl.startsWith("magnet:") && (newObj.link && newObj.link.startsWith("http://"))) {
-								config.debug && console.log("Found magneturl " + newObj.magneturl + " and link " + newObj.link);
-								newObj.link = newObj.magneturl;
+								config.debug && console.log("Found magneturl " + newObj.magneturl + " and torrent link " + newObj.link);
 							}
 
 							// Not sure if this is required and if I ever saw it happen.

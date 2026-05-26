@@ -1,6 +1,6 @@
 {
   "name": "jackett-stremio",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "description": "Stremio Add-on to get torrent results from Jackett",
   "main": "src/index.js",
   "scripts": {
@@ -23,13 +23,13 @@
   },
   "dependencies": {
     "abort-controller": "^3.0.0",
-    "agentkeepalive": "^4.5.0",
-    "async": "^2.6.3",
-    "axios": "^1.6.6",
-    "express": "^4.18.2",
+    "agentkeepalive": "^4.6.0",
+    "async": "^2.6.4",
+    "axios": "^1.7.9",
+    "express": "^4.21.2",
     "get-port": "^5.1.1",
     "parse-torrent": "^9.1.5",
-    "video-name-parser": "^1.4.6",
+    "video-name-parser": "^1.4.7",
     "xml-js": "^1.6.11"
   },
   "devDependencies": {
