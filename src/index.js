@@ -14,7 +14,7 @@ const { setCacheVariable, getCacheVariable } = require('./cache');
 const version = require('../package.json').version;
 
 global.TRACKERS = [];
-global.BLACKLIST_TRACKERS = [];
+global.BLACKLIST_TRACKERS = new Set();
 
 const respond = (res, data) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -208,18 +208,24 @@ function applyTorrentDelivery(stream, infoHash, trackers, fileIdx, magnetUri) {
     stream.url = magnetUri || buildMagnetUri(infoHash, trackers);
 }
 
+function getFileMatchRegExp(streamInfo) {
+    if (!streamInfo._fileMatchRegEx) {
+        if (streamInfo.type === 'movie') {
+            streamInfo._fileMatchRegEx = new RegExp(`${streamInfo.name.split(' ').join('.*')}.*${!config.dontSearchByYear && streamInfo.year ? streamInfo.year : ''}.*`, 'i');
+        } else {
+            streamInfo._fileMatchRegEx = new RegExp(`${streamInfo.name.split(' ').join('.*')}.*${helper.episodeTag(streamInfo.season, streamInfo.episode)}.*`, 'i');
+        }
+    }
+    return streamInfo._fileMatchRegEx;
+}
+
 function resolveFileIdx(parsedTorrent, streamInfo) {
     if (parsedTorrent && parsedTorrent.files) {
         if (parsedTorrent.files.length == 1) {
             return 0;
         }
 
-        let regEx = null;
-        if (streamInfo.type === 'movie') {
-            regEx = new RegExp(`${streamInfo.name.split(' ').join('.*')}.*${!config.dontSearchByYear && streamInfo.year ? streamInfo.year : ''}.*`, 'i');
-        } else {
-            regEx = new RegExp(`${streamInfo.name.split(' ').join('.*')}.*${helper.episodeTag(streamInfo.season, streamInfo.episode)}.*`, 'i');
-        }
+        const regEx = getFileMatchRegExp(streamInfo);
         const matchingItems = parsedTorrent.files.filter(item => regEx.test(item.name));
         if (matchingItems.length > 0) {
             return parsedTorrent.files.indexOf(matchingItems.reduce((maxItem, currentItem) => {
@@ -238,8 +244,12 @@ function resolveFileIdx(parsedTorrent, streamInfo) {
     return null;
 }
 
-async function enrichFileIdxFromTorrent(torrentLink, task, streamInfo, streams, abortSignals, isCancelled) {
+async function enrichFileIdxFromTorrent(torrentLink, task, streamInfo, streamsByHash, abortSignals, isCancelled) {
     if (config.dontParseTorrentFiles || isCancelled()) {
+        return;
+    }
+
+    if (isCancelled()) {
         return;
     }
 
@@ -263,14 +273,18 @@ async function enrichFileIdxFromTorrent(torrentLink, task, streamInfo, streams, 
             return;
         }
 
+        if (isCancelled()) {
+            return;
+        }
+
         const parsedTorrent = parseTorrent(Buffer.from(response.data));
         const fileIdx = resolveFileIdx(parsedTorrent, streamInfo);
-        if (fileIdx === null) {
+        if (fileIdx === null || fileIdx <= 0) {
             return;
         }
 
         const infoHash = parsedTorrent.infoHash.toLowerCase();
-        const existing = streams.find(stream => stream.infoHash === infoHash);
+        const existing = streamsByHash.get(infoHash);
         if (existing) {
             const trackers = (parsedTorrent.announce || []).concat(global.TRACKERS || []);
             applyTorrentDelivery(existing, infoHash, helper.unique(trackers), fileIdx, null);
@@ -309,8 +323,8 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb, magnetUri) {
         trackers = trackers.slice(0, maxTrackers);
     }
 
-    if (global.BLACKLIST_TRACKERS) {
-        const filteredTrackers = trackers.filter(item => !global.BLACKLIST_TRACKERS.includes(item));
+    if (global.BLACKLIST_TRACKERS && global.BLACKLIST_TRACKERS.size > 0) {
+        const filteredTrackers = trackers.filter(item => !global.BLACKLIST_TRACKERS.has(item));
         if ((trackers.length - filteredTrackers.length) != 0) {
             config.debug && console.log("Removed : " + (trackers.length - filteredTrackers.length) + " blacklisted trackers.");
             trackers = filteredTrackers;
@@ -418,7 +432,15 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 
     let streamInfo = {};
     const streams = [];
+    const streamsByHash = new Map();
     const abortSignals = [];
+
+    const pushStream = (stream) => {
+        streams.push(stream);
+        if (stream.infoHash) {
+            streamsByHash.set(stream.infoHash, stream);
+        }
+    };
 
     const startTime = Date.now();
 
@@ -464,9 +486,10 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
 
     const intervalId = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
-        if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && inProgressCount === 0 && asyncQueue.idle))) {
+        if (!requestSent && ((elapsedTime >= config.responseTimeout) || (searchFinished && inProgressCount === 0 && asyncQueue.idle() && enrichQueue.idle()))) {
             requestSent = true;
             asyncQueue.kill();
+            enrichQueue.kill();
             config.debug && console.log("There are " + abortSignals.length + " controllers to abort.");
             abortSignals.forEach((controller) => {
                 controller.abort();
@@ -475,7 +498,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
             clearInterval(intervalId);
             const finalData = processTorrentList(streams);
             config.debug && console.log("Sliced & Sorted data ", finalData);
-            console.log(`A: ${req.params.id} / time: ${elapsedTime} / results: ${finalData.length} / timeout: ${(elapsedTime >= config.responseTimeout)} / search finished: ${searchFinished} / queue idle: ${asyncQueue.idle()} / pending downloads: ${inProgressCount} / discarded: ${(streams.length - finalData.length)}`);
+            console.log(`A: ${req.params.id} / time: ${elapsedTime} / results: ${finalData.length} / timeout: ${(elapsedTime >= config.responseTimeout)} / search finished: ${searchFinished} / queue idle: ${asyncQueue.idle()} / enrich idle: ${enrichQueue.idle()} / pending downloads: ${inProgressCount} / discarded: ${(streams.length - finalData.length)}`);
             if (finalData.length > 0) {
                 res.setHeader('Cache-Control', 'max-age=7200, stale-while-revalidate=14400, stale-if-error=604800, public');
                 // Set cache-related headers if "streams" contains data
@@ -496,9 +519,18 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
                 });
             }
         }
-        config.debug && console.log(`S: id: ${streamInfo.Id} / time pending: ${(config.responseTimeout - elapsedTime)} / search finished: ${searchFinished} / queue idle: ${asyncQueue.idle()} / pending downloads: ${inProgressCount} / processed streams: ${streams.length}`);
+        config.debug && console.log(`S: id: ${streamInfo.Id} / time pending: ${(config.responseTimeout - elapsedTime)} / search finished: ${searchFinished} / queue idle: ${asyncQueue.idle()} / enrich idle: ${enrichQueue.idle()} / pending downloads: ${inProgressCount} / processed streams: ${streams.length}`);
 
     }, config.interval);
+
+    const processEnrich = async ({ torrentLink, task }) => {
+        if (requestSent) {
+            return;
+        }
+        await enrichFileIdxFromTorrent(torrentLink, task, streamInfo, streamsByHash, abortSignals, () => requestSent);
+    };
+
+    const enrichQueue = async.queue(processEnrich, config.downloadTorrentQueue);
 
     const processMagnets = async (task) => {
         if (requestSent) {
@@ -508,13 +540,11 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         config.debug && console.log("Parsing magnet :", uri);
         const parsedTorrent = parseTorrent(uri);
         const magnetUri = uri && uri.startsWith("magnet:") ? uri : null;
-        streamFromParsed(task, parsedTorrent, streamInfo, stream => {
-            streams.push(stream);
-        }, magnetUri);
+        streamFromParsed(task, parsedTorrent, streamInfo, pushStream, magnetUri);
 
         const torrentLink = task.link && task.link.startsWith("http") ? task.link : null;
-        if (torrentLink) {
-            enrichFileIdxFromTorrent(torrentLink, task, streamInfo, streams, abortSignals, () => requestSent);
+        if (torrentLink && streamInfo.type === 'series') {
+            enrichQueue.push({ torrentLink, task });
         }
     };
 
@@ -560,9 +590,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
                 const responseBody = Buffer.from(response.data);
                 config.debug && console.log(`Processing torrent : ${task.link}.`);
                 const parsedTorrent = parseTorrent(responseBody);
-                streamFromParsed(task, parsedTorrent, streamInfo, stream => {
-                    streams.push(stream);
-                });
+                streamFromParsed(task, parsedTorrent, streamInfo, pushStream);
                 config.debug && console.log("Parsed torrent : ", task.link);
             }
         } catch (err) {
@@ -596,7 +624,7 @@ const runAddon = async () => {
     const updateTrackers = async () => {
         const { trackers, blacklist_trackers } = await getTrackers();
         global.TRACKERS = trackers;
-        global.BLACKLIST_TRACKERS = blacklist_trackers;
+        global.BLACKLIST_TRACKERS = new Set(blacklist_trackers);
         config.debug && console.log("Loaded all trackers !");
     };
 
