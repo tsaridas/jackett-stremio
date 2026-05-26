@@ -6,3 +6,5 @@ package-lock.json
 deploy.sh
 .vscode
 src/dist
+server.js
+server.js.LICENSE.txt

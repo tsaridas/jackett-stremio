@@ -44,6 +44,8 @@ const defaultConfig = {
 
   "updateTrackersInterval": parseInt(process.env.UPDATE_TRACKERS_INTERVAL) || 1440,
 
+  "maxTrackers": parseInt(process.env.MAX_TRACKERS) || 20,
+
   "jackett": {
 
     "hosts": process.env.JACKETT_HOSTS || process.env.JACKETT_HOST || "http://127.0.0.1:9117/", // JACKETT_HOST is for backwards compatibility
