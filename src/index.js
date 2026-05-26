@@ -148,9 +148,10 @@ function processTorrentList(torrentList) {
             // If duplicate, update if the current torrent has higher seeders
             const existingTorrent = duplicatesMap.get(infoHash);
             if (torrent.seeders > existingTorrent.seeders) {
+                const mergedSources = [].concat(existingTorrent.sources || [], torrent.sources || []);
                 duplicatesMap.set(infoHash, {
                     ...torrent,
-                    sources: helper.unique([...existingTorrent.sources, ...torrent.sources]),
+                    ...(mergedSources.length > 0 ? { sources: helper.unique(mergedSources) } : {}),
                 });
             }
         } else {
@@ -165,6 +166,9 @@ function processTorrentList(torrentList) {
     uniqueTorrents.sort((a, b) => b.seeders - a.seeders);
     // Move the sources starting with 'dht' to the end of the list
     uniqueTorrents.forEach(torrent => {
+        if (!torrent.sources) {
+            return;
+        }
         const dhtSources = torrent.sources.filter(source => source.startsWith('dht'));
         const nonDhtSources = torrent.sources.filter(source => !source.startsWith('dht'));
         torrent.sources = [...nonDhtSources, ...dhtSources];
@@ -172,6 +176,36 @@ function processTorrentList(torrentList) {
     const slicedTorrents = uniqueTorrents.slice(0, config.maximumResults);
 
     return slicedTorrents;
+}
+
+// Stremio web player treats fileIdx 0 as falsy and requests /{infoHash}/-1, which fails probe/playback.
+function assignFileIdx(stream, fileIdx) {
+    if (fileIdx !== null && fileIdx > 0) {
+        stream.fileIdx = fileIdx;
+    }
+}
+
+function buildMagnetUri(infoHash, trackers) {
+    let uri = `magnet:?xt=urn:btih:${infoHash}`;
+    for (const tracker of trackers) {
+        uri += `&tr=${encodeURIComponent(tracker)}`;
+    }
+    return uri;
+}
+
+// Use a magnet URL (fileIdx=null on the server) unless a specific non-zero file index is required.
+function applyTorrentDelivery(stream, infoHash, trackers, fileIdx, magnetUri) {
+    stream.infoHash = infoHash;
+    if (fileIdx !== null && fileIdx > 0) {
+        delete stream.url;
+        assignFileIdx(stream, fileIdx);
+        stream.sources = trackers.map(x => "tracker:" + x).concat(["dht:" + infoHash]);
+        return;
+    }
+
+    delete stream.fileIdx;
+    delete stream.sources;
+    stream.url = magnetUri || buildMagnetUri(infoHash, trackers);
 }
 
 function resolveFileIdx(parsedTorrent, streamInfo) {
@@ -238,7 +272,8 @@ async function enrichFileIdxFromTorrent(torrentLink, task, streamInfo, streams, 
         const infoHash = parsedTorrent.infoHash.toLowerCase();
         const existing = streams.find(stream => stream.infoHash === infoHash);
         if (existing) {
-            existing.fileIdx = fileIdx;
+            const trackers = (parsedTorrent.announce || []).concat(global.TRACKERS || []);
+            applyTorrentDelivery(existing, infoHash, helper.unique(trackers), fileIdx, null);
             config.debug && console.log("Enriched fileIdx for " + infoHash + " to " + fileIdx + " from " + torrentLink);
         }
     } catch (err) {
@@ -246,13 +281,13 @@ async function enrichFileIdxFromTorrent(torrentLink, task, streamInfo, streams, 
     }
 }
 
-function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
+function streamFromParsed(tor, parsedTorrent, streamInfo, cb, magnetUri) {
     const stream = {};
     const infoHash = parsedTorrent.infoHash.toLowerCase();
 
-    stream.fileIdx = resolveFileIdx(parsedTorrent, streamInfo);
-    if (stream.fileIdx !== null) {
-        config.debug && console.log("Resolved fileIdx for " + streamInfo.name + " is " + stream.fileIdx, parsedTorrent.files);
+    const fileIdx = resolveFileIdx(parsedTorrent, streamInfo);
+    if (fileIdx !== null) {
+        config.debug && console.log("Resolved fileIdx for " + streamInfo.name + " is " + fileIdx, parsedTorrent.files);
     } else {
         config.debug && console.log("No fileIdx resolved for torrent ", streamInfo.name, parsedTorrent.files);
     }
@@ -285,8 +320,7 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
     stream.name = config.addonName + "\n" + quality;
     stream.tag = quality
     stream.type = streamInfo.type;
-    stream.infoHash = infoHash;
-    stream.sources = trackers.map(x => { return "tracker:" + x; }).concat(["dht:" + infoHash]);
+    applyTorrentDelivery(stream, infoHash, trackers, fileIdx, magnetUri);
     stream.title = title;
     stream.seeders = tor.seeders;
     stream.behaviorHints = {
@@ -337,7 +371,7 @@ async function addResults(info, streams, source, abortSignals) {
         responseBody.streams.forEach(torrent => {
             const newStream = {}
             const quality = helper.findQuality(torrent.title);
-            newStream.fileIdx = torrent.fileIdx;
+            assignFileIdx(newStream, torrent.fileIdx);
             newStream.name = torrent.name.replace(name, config.addonName);
             newStream.tag = quality;
             newStream.type = info.type;
@@ -473,9 +507,10 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         const uri = task.magneturl || task.link;
         config.debug && console.log("Parsing magnet :", uri);
         const parsedTorrent = parseTorrent(uri);
+        const magnetUri = uri && uri.startsWith("magnet:") ? uri : null;
         streamFromParsed(task, parsedTorrent, streamInfo, stream => {
             streams.push(stream);
-        });
+        }, magnetUri);
 
         const torrentLink = task.link && task.link.startsWith("http") ? task.link : null;
         if (torrentLink) {
