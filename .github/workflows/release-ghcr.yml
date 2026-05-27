@@ -54,7 +54,7 @@ jobs:
           #cache-to: type=gha,mode=max
 
       - name: Upload image
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: images
           path: /tmp/images/${{ env.TARFILE }}
@@ -73,7 +73,7 @@ jobs:
           - 5000:5000
     steps:
       - name: Download images
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: images
           path: /tmp/images
