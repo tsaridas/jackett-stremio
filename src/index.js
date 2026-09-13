@@ -220,6 +220,16 @@ function getFileMatchRegExp(streamInfo) {
     return streamInfo._fileMatchRegEx;
 }
 
+// Design note (don't re-litigate this in the next PR): the Stremio web player bug above means we
+// can never send fileIdx 0, so there is no point guessing a file when we aren't sure — a bare
+// magnet/infoHash makes the client fall back to its own "pick the biggest file" selection, which is
+// the same heuristic we'd otherwise duplicate here. That's fine for movies (the biggest file is
+// almost always the movie). It's not fine for series, where the biggest file is often the wrong
+// episode — hence enrichFileIdxFromTorrent downloads the real file list and regex-matches the
+// episode for series only; doing that for movies too would add cost for no accuracy gain.
+// Known residual gap: if the regex match for a series resolves to index 0, we still can't report it
+// (same fileIdx-0 bug) and fall back to full auto-select, which can pick the wrong episode. There is
+// no addon-side fix for this — it would require a client-side fix in Stremio.
 function resolveFileIdx(parsedTorrent, streamInfo) {
     if (parsedTorrent && parsedTorrent.files) {
         if (parsedTorrent.files.length == 1) {
