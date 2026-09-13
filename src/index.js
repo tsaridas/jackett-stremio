@@ -194,6 +194,7 @@ function buildMagnetUri(infoHash, trackers) {
 }
 
 // Use a magnet URL (fileIdx=null on the server) unless a specific non-zero file index is required.
+// fileIdx -1 means unknown (e.g. movie with no match / no file list) — also delivered as magnet.
 function applyTorrentDelivery(stream, infoHash, trackers, fileIdx, magnetUri) {
     stream.infoHash = infoHash;
     if (fileIdx !== null && fileIdx > 0) {
@@ -232,13 +233,13 @@ function resolveFileIdx(parsedTorrent, streamInfo) {
                 return currentItem.length > maxItem.length ? currentItem : maxItem;
             }, matchingItems[0]));
         }
+        // Multi-file torrent with no name match — we don't know which file is the movie.
         if (streamInfo.type === 'movie') {
-            return parsedTorrent.files.reduce((maxIdx, file, idx, files) => {
-                return file.length > files[maxIdx].length ? idx : maxIdx;
-            }, 0);
+            return -1;
         }
     } else if (streamInfo.type === 'movie') {
-        return 0;
+        // Magnets / torrents without a file list — unknown which file to play.
+        return -1;
     }
 
     return null;
