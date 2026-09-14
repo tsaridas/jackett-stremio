@@ -179,33 +179,24 @@ function processTorrentList(torrentList) {
 }
 
 // Stremio web player treats fileIdx 0 as falsy and requests /{infoHash}/-1, which fails probe/playback.
+// Tested 2026-09-14: sending fileIdx: -1 explicitly for the "unknown" case is WORSE, not better — the
+// web client drops the stream from the results list entirely (confirmed: web showed zero results with
+// -1 set, vs. working playback with fileIdx omitted). So omit fileIdx whenever we're not sure > 0; the
+// web player's stats overlay not showing in that case is an accepted trade-off, not a bug to "fix" by
+// sending -1 again.
 function assignFileIdx(stream, fileIdx) {
     if (fileIdx !== null && fileIdx > 0) {
         stream.fileIdx = fileIdx;
     }
 }
 
-function buildMagnetUri(infoHash, trackers) {
-    let uri = `magnet:?xt=urn:btih:${infoHash}`;
-    for (const tracker of trackers) {
-        uri += `&tr=${encodeURIComponent(tracker)}`;
-    }
-    return uri;
-}
-
-// Use a magnet URL (fileIdx=null on the server) unless a specific non-zero file index is required.
-function applyTorrentDelivery(stream, infoHash, trackers, fileIdx, magnetUri) {
+// Always deliver the standard infoHash+sources torrent object; only attach fileIdx when we're sure of
+// it (per the addon spec, an omitted fileIdx means "server picks the biggest file").
+function applyTorrentDelivery(stream, infoHash, trackers, fileIdx) {
     stream.infoHash = infoHash;
-    if (fileIdx !== null && fileIdx > 0) {
-        delete stream.url;
-        assignFileIdx(stream, fileIdx);
-        stream.sources = trackers.map(x => "tracker:" + x).concat(["dht:" + infoHash]);
-        return;
-    }
-
-    delete stream.fileIdx;
-    delete stream.sources;
-    stream.url = magnetUri || buildMagnetUri(infoHash, trackers);
+    delete stream.url;
+    assignFileIdx(stream, fileIdx);
+    stream.sources = trackers.map(x => "tracker:" + x).concat(["dht:" + infoHash]);
 }
 
 function getFileMatchRegExp(streamInfo) {
@@ -219,6 +210,17 @@ function getFileMatchRegExp(streamInfo) {
     return streamInfo._fileMatchRegEx;
 }
 
+// Design note (don't re-litigate this in the next PR): the Stremio web player bug above means we
+// can never send fileIdx 0 or -1 (see assignFileIdx), so there is no point guessing a file when we
+// aren't sure — null/-1 here both just mean "omit fileIdx", which makes the client auto-select
+// ("pick the biggest file") — the same heuristic we'd otherwise duplicate here. That's fine for
+// movies (the biggest file is almost always the movie). It's not fine for series, where the biggest
+// file is often the wrong episode — hence enrichFileIdxFromTorrent downloads the real file list and
+// regex-matches the episode for series only; doing that for movies too would add cost for no
+// accuracy gain.
+// Known residual gap: if the regex match for a series resolves to index 0, we still can't report it
+// (same fileIdx-0 bug) and fall back to full auto-select, which can pick the wrong episode. There is
+// no addon-side fix for this — it would require a client-side fix in Stremio.
 function resolveFileIdx(parsedTorrent, streamInfo) {
     if (parsedTorrent && parsedTorrent.files) {
         if (parsedTorrent.files.length == 1) {
@@ -232,13 +234,13 @@ function resolveFileIdx(parsedTorrent, streamInfo) {
                 return currentItem.length > maxItem.length ? currentItem : maxItem;
             }, matchingItems[0]));
         }
+        // Multi-file torrent with no name match — we don't know which file is the movie.
         if (streamInfo.type === 'movie') {
-            return parsedTorrent.files.reduce((maxIdx, file, idx, files) => {
-                return file.length > files[maxIdx].length ? idx : maxIdx;
-            }, 0);
+            return -1;
         }
     } else if (streamInfo.type === 'movie') {
-        return 0;
+        // Magnets / torrents without a file list — unknown which file to play.
+        return -1;
     }
 
     return null;
@@ -287,7 +289,7 @@ async function enrichFileIdxFromTorrent(torrentLink, task, streamInfo, streamsBy
         const existing = streamsByHash.get(infoHash);
         if (existing) {
             const trackers = (parsedTorrent.announce || []).concat(global.TRACKERS || []);
-            applyTorrentDelivery(existing, infoHash, helper.unique(trackers), fileIdx, null);
+            applyTorrentDelivery(existing, infoHash, helper.unique(trackers), fileIdx);
             config.debug && console.log("Enriched fileIdx for " + infoHash + " to " + fileIdx + " from " + torrentLink);
         }
     } catch (err) {
@@ -295,16 +297,11 @@ async function enrichFileIdxFromTorrent(torrentLink, task, streamInfo, streamsBy
     }
 }
 
-function streamFromParsed(tor, parsedTorrent, streamInfo, cb, magnetUri) {
+function streamFromParsed(tor, parsedTorrent, streamInfo, cb) {
     const stream = {};
     const infoHash = parsedTorrent.infoHash.toLowerCase();
 
     const fileIdx = resolveFileIdx(parsedTorrent, streamInfo);
-    if (fileIdx !== null) {
-        config.debug && console.log("Resolved fileIdx for " + streamInfo.name + " is " + fileIdx, parsedTorrent.files);
-    } else {
-        config.debug && console.log("No fileIdx resolved for torrent ", streamInfo.name, parsedTorrent.files);
-    }
     let title = streamInfo.name + ' ' + (streamInfo.season && streamInfo.episode ? ` ${helper.episodeTag(streamInfo.season, streamInfo.episode)}` : streamInfo.year);
     const subtitle = `👤 ${tor.seeders}/${tor.peers}  💾 ${helper.toHomanReadable(tor.size)} ⚙️ ${tor.from}`;
 
@@ -334,11 +331,11 @@ function streamFromParsed(tor, parsedTorrent, streamInfo, cb, magnetUri) {
     stream.name = config.addonName + "\n" + quality;
     stream.tag = quality
     stream.type = streamInfo.type;
-    applyTorrentDelivery(stream, infoHash, trackers, fileIdx, magnetUri);
+    applyTorrentDelivery(stream, infoHash, trackers, fileIdx);
     stream.title = title;
     stream.seeders = tor.seeders;
     stream.behaviorHints = {
-        bingieGroup: "Jackett|" + infoHash,
+        bingeGroup: config.addonName + "|" + quality,
     }
     cb(stream);
 }
@@ -397,7 +394,7 @@ async function addResults(info, streams, source, abortSignals) {
             newStream.seeders = torrent.seeders;
 
             newStream.behaviorHints = {
-                bingieGroup: "Jackett|" + newStream.infoHash,
+                bingeGroup: config.addonName + "|" + quality,
             }
 
             streams.push(newStream);
@@ -539,8 +536,7 @@ addon.get('/stream/:type/:id.json', async (req, res) => {
         const uri = task.magneturl || task.link;
         config.debug && console.log("Parsing magnet :", uri);
         const parsedTorrent = parseTorrent(uri);
-        const magnetUri = uri && uri.startsWith("magnet:") ? uri : null;
-        streamFromParsed(task, parsedTorrent, streamInfo, pushStream, magnetUri);
+        streamFromParsed(task, parsedTorrent, streamInfo, pushStream);
 
         const torrentLink = task.link && task.link.startsWith("http") ? task.link : null;
         if (torrentLink && streamInfo.type === 'series') {
